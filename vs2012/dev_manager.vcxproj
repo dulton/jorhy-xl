@@ -76,6 +76,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\dev_manager\DeviceManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\dev_manager\DeviceManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
