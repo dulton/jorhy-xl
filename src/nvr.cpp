@@ -13,8 +13,50 @@
 ///
 /// 修订说明：最初版本
 ///////////////////////////////////////////////////////////////////////////  
+#include "DbManager.h"
+#include "TcpServer4Client.h"
+#include "TcpServer4Device.h"
+
+#pragma comment(lib, "Debug\\core.lib")
+#pragma comment(lib, "Debug\\LibManager.lib")
+#pragma comment(lib, "Debug\\TcpServer.lib")
+
+J_DbAccess *g_dbAccess = NULL;
+CTcpServer4Device g_deviceServer;
+CTcpServer4Client g_clientServer;
 
 int main(int argc, char **argv)
 {
+	///初始化数据库
+	g_dbAccess = CDbManager::CreateInstance(J_SQLSERVER, "127.0.0.1", 1433, "sa", "123456");
+	if (!g_dbAccess)
+	{
+		J_OS::LOGINFO("数据库连接失败, IP地址:127.0.0.1,端口:1433,用户名:sa,密码:123456");
+		return -1;
+	}
+
+	///启动设备监听服务
+	if (g_deviceServer.StartService(8501) != J_OK)
+	{
+		J_OS::LOGINFO("启动设备监听服务失败, 端口:8501");
+		return -1;
+	}
+
+	///启动客户监听服务
+	if (g_clientServer.StartService(8502) != J_OK)
+	{
+		J_OS::LOGINFO("启动客户监听服务失败, 端口:8502");
+		return -1;
+	}
+
+	///停止客户监听服务
+	g_clientServer.StopService();
+	///停止设备监听服务
+	g_deviceServer.StopService();
+	///注销数据库连接
+	if (g_dbAccess)
+	{
+		CDbManager::ReleaseInstance(&g_dbAccess);
+	}
 	return 0;
 }

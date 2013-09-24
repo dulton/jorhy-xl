@@ -11,23 +11,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\db_manager\DbManager.h" />
+    <ClInclude Include="..\src\host\XlHost.h" />
+    <ClInclude Include="..\src\host\XlType.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\db_manager\DbManager.cpp" />
+    <ClCompile Include="..\src\host\XlHost.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4A684AAE-9DFF-4927-8840-E7F89DF3F644}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>db</RootNamespace>
-    <ProjectName>db_manager</ProjectName>
+    <ProjectName>XlHost</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>

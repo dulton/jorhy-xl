@@ -446,13 +446,13 @@ struct J_PlayerObj : virtual public J_Obj
 {
 	///播放视频
 	///@param	 hWnd 播放窗口
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t PlayMedia(j_wnd_t hWnd, j_int32_t nDevid) = 0;
 	///停止播放
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t StopMedia(j_int32_t nDevid) = 0;
 	///处理媒体数据
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t ProcessMedia() = 0;
 };
 
@@ -460,39 +460,39 @@ struct J_Player : virtual public J_Obj
 {
 	///播放视频
 	///@param	 hWnd 播放窗口
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t Play(j_wnd_t hWnd) = 0;
 	///停止播放
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t Stop() = 0;
 	///填充数据
 	///@param	 pData 数据缓存区
 	///@param	 nLen 数据长度
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t InputData(j_char_t *pData, J_StreamHeader &streamHeader) = 0;
 };
 
 struct J_Decoder : virtual public J_Obj
 {
 	///初始化解码器
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t InidDecoder() = 0;
 	///刷新解码缓冲
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t FlushBuffer() = 0;
 	///获取解码参数
 	///@param	 decParam 解码参数
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t GetDecodeParam(J_VideoDecodeParam &decParam) = 0;
 	///解码一帧数据
 	///@param	 pInputData 解码前数据
 	///@param	 nInputLen 解码前数据长度
 	///@param	 pOutuptData 解码后数据
 	///@param	 nOutputLen 解码后数据长度
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t DecodeOneFrame(j_char_t *pInputData, j_int32_t nInputLen, j_char_t *pOutuptData, j_int32_t &nOutputLen) = 0;
 	///释放解码器
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t DeinitDecoder() = 0;
 
 protected:
@@ -504,15 +504,78 @@ struct J_Render : virtual public J_Obj
 {
 	///初始化Render
 	///@param	 hwnd 窗口句柄
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t InitRender(j_wnd_t hwnd) = 0;
 	///显示图像
 	///@param	 pData YUV数据
 	///@param	 nLen 数据长度
 	virtual j_result_t DisplayFrame(j_char_t *pData, j_int32_t nLen) = 0;
 	///释放Render
-	///@return	 参见x_errtype.j
+	///@return	 参见x_errtype.h
 	virtual j_result_t DeinitRender() = 0;
+};
+
+struct J_DbAccess : virtual public J_Obj
+{
+	///连接数据库
+	///@param[in]		pAddr IP地址
+	///@param[in]		nPort 端口号
+	///@param[in]		pUa 用户名
+	///@param[in]		pPwd 密码
+	///@return			参见x_errtype.h
+	virtual j_result_t Connect(const j_char_t *pAddr, j_int16_t nPort, const j_char_t *pUa, const j_char_t *pPwd) = 0;
+	///释放数据库连接
+	///@return			参见x_errtype.h
+	virtual j_result_t Release() = 0;
+};
+
+struct J_Host : virtual public J_Obj 
+{
+	///设备注册
+	///@param[in]		nSock 设备连接socket
+	///@return			参见x_errtype.h
+	virtual j_result_t Register(const j_socket_t &nSock) = 0;
+	///设备注销
+	///@return			参见x_errtype.h
+	virtual j_result_t Release() = 0;
+	///设备校时
+	///@return			参见x_errtype.h
+	virtual j_result_t SetTime() = 0;
+	///获取设备信息
+	///@return			参见x_errtype.h
+	virtual j_result_t GetDeviceInfo() = 0;
+	///命令解析
+	///@param[in]		pData 数据缓存区
+	///@param[in]		nLen 数据长度
+	///@return			参见x_errtype.h
+	virtual j_result_t ParserCmd(const j_char_t *pData, j_int32_t nLen) = 0;
+};
+
+struct J_Channel : virtual public J_Obj 
+{
+	///打开实时视频
+	///@return			参见x_errtype.h
+	virtual j_result_t OpenStream() = 0;
+	///关闭实时视频
+	///@return			参见x_errtype.h
+	virtual j_result_t CloseStream() = 0;
+	///打开历史视频
+	///@return			参见x_errtype.h
+	virtual j_result_t OpenVod() = 0;
+	///关闭历史视频
+	///@return			参见x_errtype.h
+	virtual j_result_t CloseVod() = 0;
+	///开始录像下载
+	///@return			参见x_errtype.h
+	virtual j_result_t OpenFileByTime() = 0;
+	///关闭录像下载
+	///@return			参见x_errtype.h
+	virtual j_result_t CloseFileByTime() = 0;
+};
+
+struct J_Stream : virtual public J_Obj 
+{
+
 };
 
 template <typename CBase>
