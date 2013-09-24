@@ -578,6 +578,11 @@ struct J_Stream : virtual public J_Obj
 
 };
 
+struct J_Client : virtual public J_Obj 
+{
+
+};
+
 template <typename CBase>
 class J_BaseVideoStream : public CBase
 {

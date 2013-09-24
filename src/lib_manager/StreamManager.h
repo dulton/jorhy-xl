@@ -29,5 +29,23 @@ class JO_STREAMMAN_API CStreamManager
 public:
 	CStreamManager();
 	~CStreamManager();
+
+public:
+	/// 开始数据传输
+	/// @param[in]
+	/// @param[in]  
+	/// @param[out]   
+	/// @return		  参见j_errtype.h 
+	/// @see   
+	/// @note
+	j_result_t StartTrans();
+	/// 停止传输数据
+	/// @param[in]
+	/// @param[in]  
+	/// @param[out]   
+	/// @return		  参见j_errtype.h 
+	/// @see   
+	/// @note    
+	j_result_t StopTrans();
 };
 #endif//~__STREAMMANAGER_H_

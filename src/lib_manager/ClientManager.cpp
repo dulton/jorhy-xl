@@ -35,7 +35,12 @@ void CClientManager::Logout(j_uint32_t nUserId)
 
 }
 
-j_result_t CClientManager::RequestData(const j_char_t *pData, const j_int32_t &nLen, j_char_t **pRetData, j_int32_t &nRetLen)
+j_result_t CClientManager::RequestData(j_uint32_t nUserId, const j_char_t *pData, const j_int32_t &nLen, j_char_t **pRetData, j_int32_t &nRetLen)
 {
 	return J_OK;
+}
+
+J_Client *CClientManager::GetClientObj(j_uint32_t nUserId)
+{
+	return NULL;
 }

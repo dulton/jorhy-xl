@@ -44,11 +44,16 @@ public:
 	/// @return		     
 	void Logout(j_uint32_t nUserId);
 	/// 用户请求及回复
+	/// @param[in]		nUserId 用户ID 
 	/// @param[in]		pData请求数据
 	/// @param[in]		nLen请求数据长度
 	/// @param[out]	pRetData回复数据,需要释放	
 	/// @param[out]	nRetLen回复数据长度
 	/// @return			参见j_errtype.h 
-	j_result_t RequestData(const j_char_t *pData, const j_int32_t &nLen, j_char_t **pRetData, j_int32_t &nRetLen);
+	j_result_t RequestData(j_uint32_t nUserId, const j_char_t *pData, const j_int32_t &nLen, j_char_t **pRetData, j_int32_t &nRetLen);
+	/// 获取客户端对象
+	/// @param[in]		nUserId 用户ID 
+	/// @return			Client对象,NULL-未找到   
+	J_Client *GetClientObj(j_uint32_t nUserId);
 };
 #endif //~__CLIENT_MANAGER_H_
