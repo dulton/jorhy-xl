@@ -78,6 +78,12 @@
 ///报警管理Singleton对象
 #define JoAlarmManager \
 	JO_INSTANSE(AlarmManager)
+///设备管理Singleton对象
+#define JoDeviceManager \
+	JO_INSTANSE(DeviceManager)
+///客户端管理Singleton对象
+#define JoClientManager \
+	JO_INSTANSE(ClientManager)
 
 #include "x_errtype.h"
 
@@ -219,6 +225,7 @@ struct J_AsioDataBase
 	/// 执行的异步IO调用
 	enum J_IoCall
 	{
+		j_keep_e = 0,
 		j_accept_e = 1,
 		j_connect_e,
 		j_disconnect_e,
@@ -226,7 +233,15 @@ struct J_AsioDataBase
 		j_recvfrom_e,
 		j_write_e,
 		j_sendto_e,
-		j_ioctrl_e
+		j_ioctrl_e, 
+		j_read_write_e,
+	};
+
+	/// 执行的异步IO调用类型
+	enum J_IoType
+	{
+		j_command_e = 1,
+		j_data_e,
 	};
 
 	struct J_IoAccept
@@ -306,8 +321,9 @@ struct J_AsioDataBase
 	typedef void (*JoFIoCallback)(J_AsioDataBase& ioData, j_result_t ret);
 
 	j_asio_handle ioHandle;		///异步Io句柄
-	J_Obj *ioUser;				///< 异步Io使用者
-	J_IoCall ioCall;			/// 执行的异步Io调用
+	J_Obj *ioUser;						///< 异步Io使用者
+	J_IoCall ioCall;						/// 执行的异步Io调用
+	J_IoType ioType;					/// 执行的异步Io调用类型
 	union
 	{
 		J_IoAccept ioAccept;

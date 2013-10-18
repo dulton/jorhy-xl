@@ -24,7 +24,7 @@ int CXAsio::Init()
 	if (!m_bStarted)
 	{
 		m_hCompletionPort = INVALID_HANDLE_VALUE;
-		if ((m_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0)) == NULL)
+		if ((m_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 10)) == NULL)
 		{
 			J_OS::LOGINFO( "CRdAsio::Init() CreateIoCompletionPort failed with error: %d\n", GetLastError());
 			return J_SOCKET_ERROR;
@@ -79,7 +79,7 @@ int CXAsio::Listen(J_AsioDataBase *pAsioData)
 int CXAsio::AddUser(j_socket_t nSocket, J_AsioUser *pUser)
 {
 	TLock(m_user_locker);
-	if (CreateIoCompletionPort((HANDLE)nSocket.sock, m_hCompletionPort, (DWORD)&nSocket, 0) == NULL)
+	if (CreateIoCompletionPort((HANDLE)nSocket.sock, m_hCompletionPort, (DWORD)&nSocket, 10) == NULL)
 	{
 		J_OS::LOGINFO("CXAsio::AddUser CreateIoCompletionPort failed with error %d\n", WSAGetLastError());
 		return J_SOCKET_ERROR;
@@ -170,27 +170,30 @@ void CXAsio::OnWork()
 		if (pPerIoData->ioCall == J_AsioDataBase::j_read_e)
 		{
 			//read
-			//printf("%d = %d\n", pPerIoData->ioRead.bufLen, dwBytesTransferred);
 			j_sleep(1);
-			J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>((J_Obj *)pPerIoData->ioUser);
-			if (pPerIoData->ioRead.bufLen < 0)
+			try 
 			{
-				pPerIoData->ioRead.finishedLen += dwBytesTransferred;
-				if (strstr(pPerIoData->ioRead.buf, pPerIoData->ioRead.until_buf) == NULL)
-					Read(pPerIoData->ioHandle, pPerIoData);
-				else
-					pAsioUser->OnRead(pPerIoData, J_OK);
-			}
-			else
-			{
-				pPerIoData->ioRead.finishedLen += dwBytesTransferred;
-				if (pPerIoData->ioRead.finishedLen < pPerIoData->ioRead.bufLen)
+				J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>((J_Obj *)pPerIoData->ioUser);
+				if (pPerIoData->ioRead.bufLen < 0)
 				{
-					Read(pPerIoData->ioHandle, pPerIoData);
+					pPerIoData->ioRead.finishedLen += dwBytesTransferred;
+					if (strstr(pPerIoData->ioRead.buf, pPerIoData->ioRead.until_buf) == NULL)
+						Read(pPerIoData->ioHandle, pPerIoData);
+					else
+						pAsioUser->OnRead(pPerIoData, J_OK);
 				}
 				else
-					pAsioUser->OnRead(pPerIoData, J_OK);
+				{
+					pPerIoData->ioRead.finishedLen += dwBytesTransferred;
+					if (pPerIoData->ioRead.finishedLen < pPerIoData->ioRead.bufLen)
+					{
+						Read(pPerIoData->ioHandle, pPerIoData);
+					}
+					else
+						pAsioUser->OnRead(pPerIoData, J_OK);
+				}
 			}
+			catch(...){}
 		}
 		else if (pPerIoData->ioCall == J_AsioDataBase::j_write_e)
 		{
@@ -199,8 +202,12 @@ void CXAsio::OnWork()
 			assert(pPerIoData->ioWrite.bufLen == dwBytesTransferred);
 			//printf("%d = %d\n", pPerIoData->ioWrite.bufLen, dwBytesTransferred);
 			pPerIoData->ioWrite.finishedLen = dwBytesTransferred;
-			J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>((J_Obj *)pPerIoData->ioUser);
-			pAsioUser->OnWrite(pPerIoData, J_OK);
+			try 
+			{
+				J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>((J_Obj *)pPerIoData->ioUser);
+				pAsioUser->OnWrite(pPerIoData, J_OK);
+			}
+			catch(...){}
 		}
 	}
 }
@@ -272,10 +279,6 @@ int CXAsio::Read(j_socket_t nSocket, J_AsioDataBase *pAsioData)
 	if (dwError == SOCKET_ERROR)
 	{
 		dwError = WSAGetLastError();
-		//if (dwError == WSAECONNABORTED || dwError == WSAECONNRESET)
-		//{
-		//	ProcessIoEvent(nSocket, J_AsioDataBase::j_disconnect_e);
-		//}
 		if (dwError != ERROR_IO_PENDING)
 		{
 			ProcessIoEvent(nSocket, J_AsioDataBase::j_disconnect_e);

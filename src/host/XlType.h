@@ -17,22 +17,37 @@
 #define __XLTYPE_H_
 #include "j_includes.h"
 
+/// 命令状态
+enum CmdState
+{
+	xl_init_state = 0,
+	xl_read_head_state,
+	xl_read_data_state,
+	xl_write_body_state,
+};
+
 /// 操作指令定义  
 enum CmdType
 {
 	xl_register = 0,					///< DVR主机注册
 	xl_set_time,						///< 服务器校时
 	xl_get_loginfo,					///< 获取DVR开关机日志
-	xl_heartbeat,						///< 心跳检测
+	xl_heartbeat = 4,				///< 心跳检测
 	xl_get_alraminfo,				///< 报警获取
 	xl_get_devinfo,					///< 设备信息获取
-	xl_real_view,						///< 实时视频浏览
-	xl_vod_view,						///< 录像回放
-	xl_vod_download,				///< 录像下载
-	xl_alarm_download,			///< 报警记录下载
+	xl_real_play,						///< 开始实时视频播放
+	xl_real_stop,						///< 停止实时视频播放
+	xl_vod_play,						///< 开始录像回放
+	xl_vod_stop,						///< 停止录像回放
+	xl_start_alarm_download,	///< 开始报警记录下载
+	xl_stop_alarm_download,	///< 停止报警记录下载
 	xl_errcode_download,		///< 系统异常下载
+	xl_login,							///< 登录
+	xl_logout,							///< 注销
 };
 
+#pragma pack(push)
+#pragma pack(1)
 /// 指令头结构  
 typedef struct _cmdHeader
 {
@@ -54,7 +69,7 @@ typedef struct _cmdTail
 typedef struct _registerReq
 {
 
-} RegisterReq, *LPRegisterResp;
+} RegisterReq, *LPRegisterReq;
 
 /// 注册回复
 typedef struct _registerResp
@@ -116,7 +131,7 @@ typedef struct _alarmInfoReq
 /// 报警信息回复  
 typedef struct _alarmInfoResp
 {
-	unsigned char bAlarm;						///< 报警信息
+	BOOL bAlarm;								///< 报警信息
 	struct  
 	{
 		double dLatitude;
@@ -142,56 +157,54 @@ typedef struct _hostInfoResp
 	unsigned char bTotleChannels;			///< 未知
 } HostInfoResp, *LPHostInfoResp;
 
-/// 实时预览请求 
-typedef struct _realViewReq
+/// 实时播放请求 
+typedef struct _realPlayReq
 {
 	char hostId[32];						///< 设备ID
 	unsigned char channel;			///< 通道号				
-} RealViewReq, *LPRealViewReq;
+} RealPlayReq, *LPRealPlayReq;
 
-/// 实时预览回复  
-typedef struct _realViewResp
+/// 实时播放回复  
+typedef struct _realPlayResp
 {
+	char ret;								///< 0-成功, 1-失败
+} RealPlayResp, *LPRealPlayResp;
 
-} RealViewResp, *LPRealViewResp;
+/// 停止实时播放请求 
+typedef _realPlayReq RealStopReq, *LPRealPlayReq;
+
+/// 停止实时播放回复  
+typedef _realPlayResp RealStopResp, *LPRealStopResp;
 
 /// 历史回放请求  
-typedef struct _vodReq
-{
-	char hostId[32];						///< 设备ID
-	unsigned char channel;			///< 通道号	
-	time_t tmStartTime;				///< 开始时间
-} VodReq, LPVodReq;
-
-/// 历史回放回复  
-typedef struct _vodResp
-{
-
-} VodResp, *LPVodResp;
-
-/// 录像下载请求  
-typedef struct _vodDownLoadReq
+typedef struct _vodPlayReq
 {
 	char hostId[32];						///< 设备ID
 	unsigned char channel;			///< 通道号	
 	time_t tmStartTime;				///< 开始时间
 	time_t tmEndTime;				///< 结束时间
-} VodDownLoadReq, *LPVodDownLoadReq;
+} VodPlayReq, LPVodPlayReq;
 
-/// 录像下载回复  
-typedef struct _vodDownLoadResp
+/// 历史回放回复  
+typedef struct _vodPlayResp
 {
 
-} VodDownLoadResp, *LPVodDownLoadResp;
+} VodPlayResp, *LPVodPlayResp;
 
-/// 报警数据下载请求  
+/// 停止历史回放请求  
+typedef _vodPlayReq VodStopReq, *LPVodStopReq;
+
+/// 停止历史回放回复  
+typedef _vodPlayResp VodStopResp, *LPVodStopResp;
+
+/// 开始报警数据下载请求  
 typedef struct _alarmDownLoadReq
 {
 	time_t tmStart;						///< 开始时间
 	time_t tmEnd;						///< 结束时间
 } AlarmDownLoadReq, *LPAlarmDownLoadReq;
 
-/// 报警数据下载回复  
+/// 开始报警数据下载回复  
 typedef struct _alarmDownLoadResp
 {
 
@@ -208,5 +221,35 @@ typedef struct _sysErrorCodeResp
 {
 	char ret;					///< 0-0xFF的异常信息码
 } SysErrorCodeResp, *LPSysErrorCodeResp;
+
+/// 登录请求  
+typedef struct _loginReq
+{
+	char user[16];			///< 用户名
+	char passWord[32];	///< 密码
+} LoginReq, *LPLoginReq;
+
+/// 登录回复  
+typedef struct _loginResp
+{
+	char ret;					///< 0-成功,1-失败
+} LoginResp, *LPLoginResp;
+
+/// 注销请求  
+typedef _loginReq LogoutReq, *LPLogoutReq;
+
+/// 注销回复  
+typedef _loginResp LogoutResp, *LPLogoutResp;
+
+#pragma pack(pop)
+
+/*typedef struct _tagBlockHeader
+{
+	unsigned char szID[32];
+	unsigned int uChannelID;
+	USERDATAINFO DataInfo;
+	VIDEOINFO VideoInfo;
+	time_t tmTimeStamp;
+} BlockHeader, *LPBlockHeader;*/
 
 #endif//~__XLTYPE_H_

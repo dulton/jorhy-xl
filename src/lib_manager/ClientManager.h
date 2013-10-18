@@ -16,6 +16,7 @@
 #ifndef __CLIENT_MANAGER_H_
 #define __CLIENT_MANAGER_H_
 #include "j_includes.h"
+#include "x_lock.h"
 
 #ifdef   LIBMANAGER_EXPORTS 
 #define   JO_CLIENTMAN_API           __declspec(dllexport) 
@@ -28,11 +29,25 @@
 /// 管理客户端的登录、退出、请求数据等操作
 class JO_CLIENTMAN_API CClientManager
 {
+	typedef std::map<j_socket_t, J_Client *>	ClientMap;
 public:
 	CClientManager();
 	~CClientManager();
 
 public:
+	/// 创建客户端对象
+	/// @param[in]		nSock 设备连接 
+	/// @param[out]   NULL-失败,否则为Client对象
+	/// @return			参见j_errtype.h 
+	J_Client *CreateClientObj(j_socket_t nSock);
+	/// 获取客户端对象
+	/// @param[in]		nnSock 设备连接 
+	/// @return			Client对象,NULL-未找到   
+	J_Client *GetClientObj(j_socket_t nSock);
+	///删除客户端对象
+	/// @param[in]		nSock 设备连接 
+	/// @return			
+	void ReleaseClientObj(j_socket_t nSock);
 	/// 登录
 	/// @param[in]		nSock  连接Socket
 	/// @param[in]		pUserName 用户名
@@ -43,17 +58,12 @@ public:
 	/// @param[in]		nUserId 用户ID 
 	/// @return		     
 	void Logout(j_uint32_t nUserId);
-	/// 用户请求及回复
-	/// @param[in]		nUserId 用户ID 
-	/// @param[in]		pData请求数据
-	/// @param[in]		nLen请求数据长度
-	/// @param[out]	pRetData回复数据,需要释放	
-	/// @param[out]	nRetLen回复数据长度
-	/// @return			参见j_errtype.h 
-	j_result_t RequestData(j_uint32_t nUserId, const j_char_t *pData, const j_int32_t &nLen, j_char_t **pRetData, j_int32_t &nRetLen);
-	/// 获取客户端对象
-	/// @param[in]		nUserId 用户ID 
-	/// @return			Client对象,NULL-未找到   
-	J_Client *GetClientObj(j_uint32_t nUserId);
+
+private:
+	J_OS::CTLock m_locker;
+	ClientMap m_clientMap;
 };
+
+JO_DECLARE_SINGLETON(ClientManager)
+
 #endif //~__CLIENT_MANAGER_H_

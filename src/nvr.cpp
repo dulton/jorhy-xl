@@ -19,7 +19,6 @@
 
 #pragma comment(lib, "Debug\\core.lib")
 #pragma comment(lib, "Debug\\LibManager.lib")
-#pragma comment(lib, "Debug\\TcpServer.lib")
 
 J_DbAccess *g_dbAccess = NULL;
 CTcpServer4Device g_deviceServer;
@@ -36,7 +35,7 @@ int main(int argc, char **argv)
 	}
 
 	///启动设备监听服务
-	if (g_deviceServer.StartService(8501) != J_OK)
+	if (g_deviceServer.StartService(8503) != J_OK)
 	{
 		J_OS::LOGINFO("启动设备监听服务失败, 端口:8501");
 		return -1;
@@ -47,6 +46,11 @@ int main(int argc, char **argv)
 	{
 		J_OS::LOGINFO("启动客户监听服务失败, 端口:8502");
 		return -1;
+	}
+
+	while (true)
+	{
+		Sleep(100);
 	}
 
 	///停止客户监听服务

@@ -156,20 +156,6 @@ struct J_MediaStream : virtual public J_Obj
 	virtual j_result_t RingBufferCount() = 0;
 };
 
-/*struct J_MediaRecord : virtual public J_Obj
-{
-	///启动视频录像
-	///@param[in] 	pResid 全局唯一标识
-	///@param[in] 	nDuration 录像持续时间,单位毫秒
-	///@return 		参见x_error_type.h
-	virtual int StartRecord(const char *pResid, int nDuration) = 0;
-
-	///停止视频录像
-	///@param[in] 	pResid 全局唯一标识
-	///@return 		参见x_error_type.h
-	virtual int StopRecord(const char *pResid) = 0;
-};*/
-
 struct J_MediaParser : virtual public J_Obj
 {
 	///初始化解析器
@@ -395,21 +381,21 @@ struct J_AsioUser : virtual public J_Obj
 	///连接事件完成(用于网络IO)
 	///@param[in]	asioData IO数据集
 	///@param[in]	错误码,见x_error_type.h	
-	virtual j_result_t OnAccept(const J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
+	virtual j_result_t OnAccept(J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
 
 	///读事件完成
 	///@param[in]	asioData IO数据集
 	///@param[in]	错误码,见x_error_type.h
-	virtual j_result_t OnRead(const J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
+	virtual j_result_t OnRead(J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
 
 	///写事件完成
 	///@param[in]	asioData IO数据集
 	///@param[in]	错误码,见x_error_type.h
-	virtual j_result_t OnWrite(const J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
+	virtual j_result_t OnWrite(J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
 
 	///断线事件完成(用于网络IO)
 	///@param[in]	错误码,见x_error_type.h
-	virtual j_result_t OnBroken(const J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
+	virtual j_result_t OnBroken(J_AsioDataBase *pAsioData, j_result_t nRet) = 0;
 };
 
 struct J_CommandParser : virtual public J_Obj
@@ -529,48 +515,42 @@ struct J_DbAccess : virtual public J_Obj
 	virtual j_result_t Release() = 0;
 };
 
+struct J_Channel : virtual public J_Obj 
+{
+	///打开实时视频
+	///@param[in]		pRingBuffer 流队列对象
+	///@return			参见x_errtype.h
+	virtual j_result_t OpenStream(CRingBuffer *pRingBuffer) = 0;
+	///关闭实时视频
+	///@param[in]		pRingBuffer 流队列对象
+	///@return			参见x_errtype.h
+	virtual j_result_t CloseStream(CRingBuffer *pRingBuffer) = 0;
+};
+
 struct J_Host : virtual public J_Obj 
 {
-	///设备注册
-	///@param[in]		nSock 设备连接socket
+	///获取通道对象
+	///@param[in]		nChannelNum 通道号 
+	///@param[out]	pObj 通道对象
 	///@return			参见x_errtype.h
-	virtual j_result_t Register(const j_socket_t &nSock) = 0;
-	///设备注销
+	virtual j_result_t MakeChannel(const j_int32_t nChannelNum, J_Channel *&pObj) = 0;
+	///判断设备是否就绪
+	///@return			true-就绪,false-未就绪
+	virtual j_boolean_t IsReady() = 0;
+	///获取设备ID
+	///@param[out]	strDevId 设备ID
 	///@return			参见x_errtype.h
-	virtual j_result_t Release() = 0;
+	virtual j_result_t GetHostId(j_string_t &strDevId) = 0;
 	///设备校时
 	///@return			参见x_errtype.h
 	virtual j_result_t SetTime() = 0;
 	///获取设备信息
 	///@return			参见x_errtype.h
 	virtual j_result_t GetDeviceInfo() = 0;
-	///命令解析
-	///@param[in]		pData 数据缓存区
-	///@param[in]		nLen 数据长度
-	///@return			参见x_errtype.h
-	virtual j_result_t ParserCmd(const j_char_t *pData, j_int32_t nLen) = 0;
-};
-
-struct J_Channel : virtual public J_Obj 
-{
-	///打开实时视频
-	///@return			参见x_errtype.h
-	virtual j_result_t OpenStream() = 0;
-	///关闭实时视频
-	///@return			参见x_errtype.h
-	virtual j_result_t CloseStream() = 0;
-	///打开历史视频
-	///@return			参见x_errtype.h
-	virtual j_result_t OpenVod() = 0;
-	///关闭历史视频
-	///@return			参见x_errtype.h
-	virtual j_result_t CloseVod() = 0;
-	///开始录像下载
-	///@return			参见x_errtype.h
-	virtual j_result_t OpenFileByTime() = 0;
-	///关闭录像下载
-	///@return			参见x_errtype.h
-	virtual j_result_t CloseFileByTime() = 0;
+	///用户请求及回复
+	///@param[in][out]	pAsioData异步数据	
+	///@return				参见x_errtype.h
+	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData) = 0;
 };
 
 struct J_Stream : virtual public J_Obj 
@@ -580,7 +560,10 @@ struct J_Stream : virtual public J_Obj
 
 struct J_Client : virtual public J_Obj 
 {
-
+	/// 用户请求及回复
+	/// @param[in][out]	pAsioData异步数据	
+	/// @return				参见j_errtype.h 
+	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData) = 0;
 };
 
 template <typename CBase>
