@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "XlType.h"
 #include "ClientDemoImpl.h"
-#include "XDvr1000Base.h"
 
 #include <stdlib.h>
 #include <stdio.h>
