@@ -5,6 +5,9 @@
 #pragma once
 #include "ClientDemoImpl.h"
 #include "afxwin.h"
+#include "afxdtctl.h"
+#include "atlcomtime.h"
+#include "afxcmn.h"
 
 // CClientDemoDlg dialog
 class CClientDemoDlg : public CDialogEx
@@ -51,6 +54,14 @@ public:
 	afx_msg void OnBnClickedBtn6();
 	afx_msg void OnBnClickedBtn7();
 	afx_msg void OnBnClickedBtn8();
+	afx_msg void OnBnClickedBtnVodStart();
+	afx_msg void OnBnClickedBtnVodStop();
+	afx_msg void OnBnClickedBtnSettime();
+	afx_msg void OnBnClickedBtnGetDevInfo();
+	afx_msg void OnBnClickedBtnGetalarminfo();
+	afx_msg void OnBnClickedBtnStopalarminfo();
+	afx_msg void OnBnClickedBtnGetsyserror();
+	afx_msg void OnBnClickedBtnGetLog();
 	CStatic m_video_1;
 	CStatic m_video_2;
 	CStatic m_video_3;
@@ -59,4 +70,23 @@ public:
 	CStatic m_video_6;
 	CStatic m_video_7;
 	CStatic m_video_8;
+	CStatic m_VodWnd1;
+	CStatic m_VodWnd2;
+	CStatic m_VodWnd3;
+	CStatic m_VodWnd4;
+	CStatic m_VodWnd5;
+	CComboBox m_VodChannel;
+	CTime m_dateStart;
+	CTime m_dateStop;
+	CTime m_timeStart;
+	CTime m_timeStop;
+	CTime m_sysDate;
+	CTime m_sysTime;
+	CTime m_alarmStartDate;
+	CTime m_alarmStartTime;
+	CTime m_alarmStopDate;
+	CTime m_alarmStopTime;
+	CIPAddressCtrl m_ipAddr;
+	CEdit m_strPort;
+	afx_msg void OnClose();
 };

@@ -67,15 +67,10 @@ private:
 	AsioUserMap m_userMap;
 	j_socket_t m_listenSocket;
 	J_AsioDataBase *m_listenAsioData;
-	typedef std::map<j_socket_t, std::queue<J_AsioDataBase *> >AsioDataMap;
-	AsioDataMap m_readMap;
-	AsioDataMap m_writeMap;
 
 	CJoThread m_workThread;
 	J_OS::CTLock m_user_locker;
 	J_OS::CTLock m_listen_locker;
-	J_OS::CTLock m_read_locker;
-	J_OS::CTLock m_write_locker;
 
 	j_boolean_t m_bStarted;
 #ifdef WIN32

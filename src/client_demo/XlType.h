@@ -30,8 +30,8 @@ enum CmdType
 	xl_real_stop,						///< 停止实时视频播放
 	xl_vod_play,						///< 开始录像回放
 	xl_vod_stop,						///< 停止录像回放
-	xl_start_alarm_download,	///< 开始报警记录下载
-	xl_stop_alarm_download,	///< 停止报警记录下载
+	xl_start_real_alarm,			///< 开始报警记录下载
+	xl_stop_real_alarm,			///< 停止报警记录下载
 	xl_errcode_download,		///< 系统异常下载
 	xl_login,							///< 登录
 	xl_logout,							///< 注销
@@ -39,6 +39,16 @@ enum CmdType
 
 #pragma pack(push)
 #pragma pack(1)
+
+///设备信息
+typedef struct _devInfo
+{
+	char hostId[32];					///< 设备ID
+	char vehicleNum[16];		///< 列车号
+	char phoneNum[12];			///< 电话号码
+	char totalChannels;			///< 通道数目
+} DevInfo, *PLDevInfo;
+
 /// 指令头结构  
 typedef struct _cmdHeader
 {
@@ -83,21 +93,15 @@ typedef struct _setTimeResp
 /// 日志信息请求 
 typedef struct _getLogInfoReq
 {
-	union
-	{
-		char all;					///< 数据为空
-		struct 
-		{
-			time_t tmStart;		///< 开始时间
-			time_t tmEnd;		///< 结束时间
-		} info;
-	};
+	char hostId[32];		///< 设备ID
+	time_t tmStart;		///< 开始时间
+	time_t tmEnd;		///< 结束时间
 } GetLogInfoReq, *LPGetLogInfoReq;
 
 /// 日志信息回复  
 typedef struct _getLogInfoResp
 {
-	char bStatus;				///< 设备状态,0-开机,1-关机
+	__int64 bStatus;			///< 设备状态,0-开机,1-关机
 	time_t tmTime;				///< 开关机时间
 } GetLogInfoResp, *LPGetLogInfoResp;
 
@@ -116,13 +120,15 @@ typedef struct _heartBeatResp
 /// 报警信息请求  
 typedef struct _alarmInfoReq
 {
-
+	char hostId[32];				///< 设备ID
+	time_t tmStart;				///< 开始时间
+	time_t tmEnd;				///< 结束时间
 } AlarmInfoReq, *LPAlarmInfoReq;
 
 /// 报警信息回复  
 typedef struct _alarmInfoResp
 {
-	BOOL bAlarm;								///< 报警信息
+	__int64 bAlarm;								///< 报警信息
 	struct  
 	{
 		double dLatitude;
@@ -136,17 +142,11 @@ typedef struct _alarmInfoResp
 /// 设备信息请求  
 typedef struct _hostInfoReq
 {
-
+	char hostId[32];									///< 设备ID
 }HostInfoReq, *LPHostInfoReq;
 
 /// 设备信息回复  
-typedef struct _hostInfoResp
-{
-	char hostId[32];									///< 设备ID
-	char vehicleNum[8];							///< 车辆号
-	char phoneNum[11];							///< 手机号
-	unsigned char bTotleChannels;			///< 未知
-} HostInfoResp, *LPHostInfoResp;
+typedef DevInfo HostInfoResp, *LPHostInfoResp;
 
 /// 实时播放请求 
 typedef struct _realPlayReq
@@ -171,7 +171,7 @@ typedef _realPlayResp RealStopResp, *LPRealStopResp;
 typedef struct _vodPlayReq
 {
 	char hostId[32];						///< 设备ID
-	unsigned char channel;			///< 通道号	
+	__int64 channel;					///< 通道号	
 	time_t tmStartTime;				///< 开始时间
 	time_t tmEndTime;				///< 结束时间
 } VodPlayReq, LPVodPlayReq;
@@ -183,28 +183,34 @@ typedef struct _vodPlayResp
 } VodPlayResp, *LPVodPlayResp;
 
 /// 停止历史回放请求  
-typedef _vodPlayReq VodStopReq, *LPVodStopReq;
+typedef struct _vodStopReq 
+{
+	char hostId[32];						///< 设备ID
+	__int64 channel;					///< 通道号	
+} VodStopReq, *LPVodStopReq;
 
 /// 停止历史回放回复  
-typedef _vodPlayResp VodStopResp, *LPVodStopResp;
+typedef struct _vodStopResp 
+{
+	char ret;
+} VodStopResp, *LPVodStopResp;
 
 /// 开始报警数据下载请求  
-typedef struct _alarmDownLoadReq
+typedef struct _alarmStopReq
 {
-	time_t tmStart;						///< 开始时间
-	time_t tmEnd;						///< 结束时间
-} AlarmDownLoadReq, *LPAlarmDownLoadReq;
+	char hostId[32];				///< 设备ID
+} AlarmStopReq, *LPAlarmStopReq;
 
 /// 开始报警数据下载回复  
-typedef struct _alarmDownLoadResp
+typedef struct _alarmStopResp
 {
-
-} AlarmDownLoadResp, *LPAlarmDownLoadResp;
+	char ret;
+} AlarmStopResp, *LPAlarmStopResp;
 
 /// 系统异常请求  
 typedef struct _sysErrorCodeReq
 {
-
+	
 } SysErrorCodeReq, *LPSysErrorCodeReq;
 
 /// 系统异常回复  

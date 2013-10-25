@@ -52,11 +52,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../src/core;../../src/lib_manager;../../src/tcp_server</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/core;../../src/TransServer</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -77,7 +78,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\nvr.cpp" />
+    <ClCompile Include="..\..\src\TransServer\ClientManager.cpp" />
+    <ClCompile Include="..\..\src\TransServer\DeviceManager.cpp" />
+    <ClCompile Include="..\..\src\TransServer\MsSqlServer.cpp" />
+    <ClCompile Include="..\..\src\TransServer\TcpServer4Client.cpp" />
+    <ClCompile Include="..\..\src\TransServer\TcpServer4Device.cpp" />
+    <ClCompile Include="..\..\src\TransServer\TransServer.cpp" />
+    <ClCompile Include="..\..\src\TransServer\XlChannel.cpp" />
+    <ClCompile Include="..\..\src\TransServer\XlClient.cpp" />
+    <ClCompile Include="..\..\src\TransServer\XlHost.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\TransServer\ClientManager.h" />
+    <ClInclude Include="..\..\src\TransServer\DeviceManager.h" />
+    <ClInclude Include="..\..\src\TransServer\MsSqlServer.h" />
+    <ClInclude Include="..\..\src\TransServer\TcpServer4Client.h" />
+    <ClInclude Include="..\..\src\TransServer\TcpServer4Device.h" />
+    <ClInclude Include="..\..\src\TransServer\XlChannel.h" />
+    <ClInclude Include="..\..\src\TransServer\XlClient.h" />
+    <ClInclude Include="..\..\src\TransServer\XlHost.h" />
+    <ClInclude Include="..\..\src\TransServer\XlType.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

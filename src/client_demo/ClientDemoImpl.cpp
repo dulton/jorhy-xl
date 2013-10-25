@@ -26,15 +26,15 @@ CClientDemoImpl::~CClientDemoImpl()
 	WSACleanup();
 }
 
-void CClientDemoImpl::Login(const char *pUser, const char *pPasswd)
+void CClientDemoImpl::Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd)
 {
 	if (!m_bLogin)
 	{
 		m_sock = socket(AF_INET, SOCK_STREAM, 0);
 		SOCKADDR_IN addr;
-		addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+		addr.sin_addr.S_un.S_addr = htonl(dwAddr);
 		addr.sin_family = AF_INET;
-		addr.sin_port = htons(8502);
+		addr.sin_port = htons(nPort);
 
 		if(SOCKET_ERROR == connect(m_sock, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN)))
 		{
@@ -109,6 +109,108 @@ void CClientDemoImpl::RealStop(const char *pDevId, char chId)
 	m_codec.StopRMDisplay(chId);
 }
 
+void CClientDemoImpl::VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t start, __time64_t end)
+{
+	struct VodPlayBody {
+		CmdHeader head;
+		VodPlayReq data;
+		CmdTail tail;
+	} vodPlayBody;
+	memset(&vodPlayBody, 0, sizeof(VodPlayBody));
+	memcpy(vodPlayBody.data.hostId, pDevId, strlen(pDevId));
+	vodPlayBody.data.channel = chId;
+	vodPlayBody.data.tmStartTime = start;
+	vodPlayBody.data.tmEndTime = end;
+
+	MakeCommand(xl_vod_play, (char *)&vodPlayBody.data, sizeof(VodPlayReq), (char *)&vodPlayBody);
+	send(m_sock, (char *)&vodPlayBody, sizeof(VodPlayBody), 0);
+	m_vodCodec.StartPlayback(hWnd, chId );
+}
+
+void CClientDemoImpl::VodStop(const char *pDevId, char chId)
+{
+	struct VodStopBody {
+		CmdHeader head;
+		VodStopReq data;
+		CmdTail tail;
+	} vodStopBody;
+	memset(&vodStopBody, 0, sizeof(VodStopBody));
+	memcpy(vodStopBody.data.hostId, pDevId, strlen(pDevId));
+	vodStopBody.data.channel = chId;
+
+	MakeCommand(xl_vod_stop, (char *)&vodStopBody.data, sizeof(VodStopReq), (char *)&vodStopBody);
+	send(m_sock, (char *)&vodStopBody, sizeof(VodStopBody), 0);
+	m_vodCodec.StopPlayback(chId);
+}
+
+void CClientDemoImpl::SetTime(__time64_t sysTime)
+{
+	struct SysTimeBody {
+		CmdHeader head;
+		SetTimeReq data;
+		CmdTail tail;
+	} sysTimeBody;
+	sysTimeBody.data.systime = sysTime;
+	MakeCommand(xl_set_time, (char *)&sysTimeBody.data, sizeof(SetTimeReq), (char *)&sysTimeBody);
+	send(m_sock, (char *)&sysTimeBody, sizeof(SysTimeBody), 0);
+}
+
+void CClientDemoImpl::GetDevInfo(const char *pDevId)
+{
+	struct DevInfoBody {
+		CmdHeader head;
+		HostInfoReq data;
+		CmdTail tail;
+	} devInfoBody;
+	memset(&devInfoBody, 0, sizeof(DevInfoBody));
+	memcpy(devInfoBody.data.hostId, pDevId, strlen(pDevId));
+	MakeCommand(xl_get_devinfo, (char *)&devInfoBody.data, sizeof(HostInfoReq), (char *)&devInfoBody);
+	send(m_sock, (char *)&devInfoBody, sizeof(DevInfoBody), 0);
+}
+
+void CClientDemoImpl::GetAlarmInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
+{
+	struct AlarmInfoBody {
+		CmdHeader head;
+		AlarmInfoReq data;
+		CmdTail tail;
+	} alarmInfoBody;
+	memset(&alarmInfoBody, 0, sizeof(AlarmInfoBody));
+	alarmInfoBody.data.tmStart = tmStart;
+	alarmInfoBody.data.tmEnd = tmEnd;
+	memcpy(alarmInfoBody.data.hostId, pDevId, strlen(pDevId));
+	MakeCommand(xl_start_real_alarm, (char *)&alarmInfoBody.data, sizeof(AlarmInfoReq), (char *)&alarmInfoBody);
+	send(m_sock, (char *)&alarmInfoBody, sizeof(AlarmInfoBody), 0);
+}
+
+void CClientDemoImpl::StopAlarmInfo(const char *pDevId)
+{
+	struct AlarmStopBody {
+		CmdHeader head;
+		AlarmStopReq data;
+		CmdTail tail;
+	} alarmStopBody;
+	memset(&alarmStopBody, 0, sizeof(AlarmStopBody));
+	memcpy(alarmStopBody.data.hostId, pDevId, strlen(pDevId));
+	MakeCommand(xl_stop_real_alarm, (char *)&alarmStopBody.data, sizeof(AlarmStopReq), (char *)&alarmStopBody);
+	send(m_sock, (char *)&alarmStopBody, sizeof(AlarmStopBody), 0);
+}
+
+void CClientDemoImpl::GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
+{
+	struct LogInfoBody {
+		CmdHeader head;
+		GetLogInfoReq data;
+		CmdTail tail;
+	} logInfoBody;
+	memset(&logInfoBody, 0, sizeof(LogInfoBody));
+	memcpy(logInfoBody.data.hostId, pDevId, strlen(pDevId));
+	logInfoBody.data.tmStart = tmStart;
+	logInfoBody.data.tmEnd = tmEnd;
+	MakeCommand(xl_get_loginfo, (char *)&logInfoBody.data, sizeof(GetLogInfoReq), (char *)&logInfoBody);
+	send(m_sock, (char *)&logInfoBody, sizeof(LogInfoBody), 0);
+}
+
 int CClientDemoImpl::MakeCommand(char bCmd, char *pData, int nLen, char *pBody)
 {
 	//Ìî³äÍ·ÐÅÏ¢
@@ -165,34 +267,82 @@ void CClientDemoImpl::OnRecive()
 		}
 		ASSERT(retValue == sizeof(CmdHeader));
 		CmdHeader *pHeader = (CmdHeader *)pRecvBuff;
-		retValue = recv(m_sock, pRecvBuff + sizeof(CmdHeader), pHeader->length + sizeof(CmdTail), 0);
-		if(SOCKET_ERROR == retValue || 0 == retValue)
+
+		int nTotleLen = pHeader->length + sizeof(CmdTail);
+		int nRecvLen = 0;
+		while (nTotleLen > 0)
 		{
-			closesocket(m_sock);
-			m_bLogin = FALSE;	
-			break;
+			nRecvLen = recv(m_sock, pRecvBuff + retValue, nTotleLen, 0);
+			if(SOCKET_ERROR == nRecvLen || 0 == nRecvLen)
+			{
+				closesocket(m_sock);
+				m_bLogin = FALSE;	
+				break;
+			}
+			retValue += nRecvLen;
+			nTotleLen -= nRecvLen;
 		}
-		ASSERT(retValue == pHeader->length + sizeof(CmdTail));
+		ASSERT(retValue == pHeader->length + sizeof(CmdTail) + sizeof(CmdHeader));
 		if((pHeader->cmd & 0xFF) == xl_real_play)
 		{
 			RealPlayReq *pReps = (RealPlayReq *)(pRecvBuff + sizeof(CmdHeader));
-			wchar_t hostId[64] = {0};
-			wsprintf(hostId, L"%s", pReps->hostId);
-			ShowInfo(L"host hostId = %s, channel = %d", hostId, pReps->channel & 0xFF);
+			//wchar_t hostId[64] = {0};
+			//wsprintf(hostId, L"%s", pReps->hostId);
+			//ShowInfo(L"host hostId = %s, channel = %d", hostId, pReps->channel & 0xFF);
 			AFX_MANAGE_STATE(AfxGetStaticModuleState());
 			m_codec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
 		}
-		ShowInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
-
-		switch (pHeader->cmd)
+		else if ((pHeader->cmd & 0xFF) == xl_vod_play)
 		{
-		case xl_logout:
-			m_bRun = FALSE;
-			closesocket(m_sock);
-			break;
-		default:
-			break;
+			RealPlayReq *pReps = (RealPlayReq *)(pRecvBuff + sizeof(CmdHeader));
+			//wchar_t hostId[64] = {0};
+			//wsprintf(hostId, L"%s", pReps->hostId);
+			//ShowInfo(L"host hostId = %s, channel = %d", hostId, pReps->channel & 0xFF);
+			AFX_MANAGE_STATE(AfxGetStaticModuleState());
+			m_vodCodec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
 		}
+		else
+		{
+			ShowInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
+			switch (pHeader->cmd)
+			{
+			case xl_logout:
+				m_bRun = FALSE;
+				closesocket(m_sock);
+				break;
+			case xl_set_time:
+				break;
+			case xl_get_devinfo:
+				{
+					HostInfoResp *pReps = (HostInfoResp *)(pRecvBuff + sizeof(CmdHeader));
+					wchar_t defInfo[256] = {0};
+					wsprintf(defInfo, L"host hostId=%S, vehicle=%S, phone=%S, channelNum=%d\n", 
+						pReps->hostId, pReps->vehicleNum, pReps->phoneNum, pReps->totalChannels & 0xFF);
+					ShowInfo(defInfo);
+				}
+				break;
+			case xl_get_loginfo:
+				{
+					GetLogInfoResp *pReps = (GetLogInfoResp *)(pRecvBuff + sizeof(CmdHeader));
+					wchar_t logInfo[256] = {0};
+					wsprintf(logInfo, L"state=%I64d, time_stamp=%d\n", pReps->bStatus & 0xFF, pReps->tmTime);
+					ShowInfo(logInfo);
+				}
+				break;
+			case xl_get_alraminfo:
+				{
+					AlarmInfoResp *pReps = (AlarmInfoResp *)(pRecvBuff + sizeof(CmdHeader));
+					CString alarmInfo;
+					alarmInfo.Format(L"Alarm=%I64d, Latitude=%f, Longitude=%f, GPSSpeed=%f, Speed=%f, TimeStamp=%I64d\n", 
+						pReps->bAlarm & 0xFF, pReps->gps.dLatitude, pReps->gps.dLongitude, pReps->gps.dGPSSpeed, pReps->speed, pReps->tmTimeStamp);
+					m_listBox->InsertString(0, alarmInfo);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
 	}
 	delete pRecvBuff;
 }

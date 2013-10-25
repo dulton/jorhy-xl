@@ -50,6 +50,11 @@ END_MESSAGE_MAP()
 CClientDemoDlg::CClientDemoDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CClientDemoDlg::IDD, pParent)
 	, m_impl(&m_infoList)
+	, m_sysDate(COleDateTime::GetCurrentTime())
+	, m_sysTime(COleDateTime::GetCurrentTime())
+	, m_alarmStartDate(COleDateTime::GetCurrentTime())
+	, m_alarmStopDate(COleDateTime::GetCurrentTime())
+	, m_alarmStopTime(COleDateTime::GetCurrentTime())
 {
 	m_bLogin = FALSE;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -67,6 +72,24 @@ void CClientDemoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_6, m_video_6);
 	DDX_Control(pDX, IDC_STATIC_7, m_video_7);
 	DDX_Control(pDX, IDC_STATIC_8, m_video_8);
+	DDX_Control(pDX, IDC_STATIC_Vod1, m_VodWnd1);
+	DDX_Control(pDX, IDC_STATIC_Vod2, m_VodWnd2);
+	DDX_Control(pDX, IDC_STATIC_Vod3, m_VodWnd3);
+	DDX_Control(pDX, IDC_STATIC_Vod4, m_VodWnd4);
+	DDX_Control(pDX, IDC_STATIC_Vod5, m_VodWnd5);
+	DDX_Control(pDX, IDC_COMBO_Channel, m_VodChannel);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_Date1, m_dateStart);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_Date2, m_dateStop);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_Time1, m_timeStart);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_Time2, m_timeStop);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_SysDate, m_sysDate);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_SysTime, m_sysTime);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_AlarmStartDate, m_alarmStartDate);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_AlarmStartTime, m_alarmStartTime);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_AlarmStopDate, m_alarmStopDate);
+	DDX_DateTimeCtrl(pDX, IDC_DATETIMEPICKER_AlarmStopTime, m_alarmStopTime);
+	DDX_Control(pDX, IDC_IPADDRESS_Ip, m_ipAddr);
+	DDX_Control(pDX, IDC_EDIT_Port, m_strPort);
 }
 
 BEGIN_MESSAGE_MAP(CClientDemoDlg, CDialogEx)
@@ -83,6 +106,15 @@ BEGIN_MESSAGE_MAP(CClientDemoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_6, &CClientDemoDlg::OnBnClickedBtn6)
 	ON_BN_CLICKED(IDC_BTN_7, &CClientDemoDlg::OnBnClickedBtn7)
 	ON_BN_CLICKED(IDC_BTN_8, &CClientDemoDlg::OnBnClickedBtn8)
+	ON_BN_CLICKED(IDC_BTN_VOD_START, &CClientDemoDlg::OnBnClickedBtnVodStart)
+	ON_BN_CLICKED(IDC_BTN_VOD_STOP, &CClientDemoDlg::OnBnClickedBtnVodStop)
+	ON_BN_CLICKED(IDC_BTN_SetTime, &CClientDemoDlg::OnBnClickedBtnSettime)
+	ON_BN_CLICKED(IDC_BTN_GetDevInfo, &CClientDemoDlg::OnBnClickedBtnGetDevInfo)
+	ON_BN_CLICKED(IDC_BTN_GetAlarmInfo, &CClientDemoDlg::OnBnClickedBtnGetalarminfo)
+	ON_BN_CLICKED(IDC_BTN_StopAlarmInfo, &CClientDemoDlg::OnBnClickedBtnStopalarminfo)
+	ON_BN_CLICKED(IDC_BTN_GetSysError, &CClientDemoDlg::OnBnClickedBtnGetsyserror)
+	ON_BN_CLICKED(IDC_BTN_GetLog, &CClientDemoDlg::OnBnClickedBtnGetLog)
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -118,6 +150,28 @@ BOOL CClientDemoDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	m_VodChannel.AddString(L"0");
+	m_VodChannel.AddString(L"1");
+	m_VodChannel.AddString(L"2");
+	m_VodChannel.AddString(L"3");
+	m_VodChannel.AddString(L"4");
+	m_VodChannel.SetCurSel(0);
+
+	time_t tm;
+	time(&tm);
+	m_dateStart = tm;
+	m_dateStop = tm;
+	m_timeStart = tm;
+	m_timeStop = tm;
+	m_sysDate = tm;
+	m_sysTime = tm;
+	m_alarmStartDate = tm;
+	m_alarmStartTime = tm;
+	m_alarmStopDate = tm;
+	m_alarmStopTime = tm;
+	m_ipAddr.SetAddress(127, 0, 0, 1);
+	m_strPort.SetCueBanner(L"8502");
+	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -176,7 +230,9 @@ void CClientDemoDlg::OnBnClickedBtnLogin()
 	// TODO: Add your control notification handler code here
 	if (!m_bLogin)
 	{
-		m_impl.Login("admin", "admin");
+		DWORD dwAddr = 0; 
+		m_ipAddr.GetAddress(dwAddr);
+		m_impl.Login(dwAddr, _wtoi(m_strPort.GetCueBanner().GetString()), "admin", "admin");
 		m_bPlay_1 = FALSE;
 		m_bPlay_2 = FALSE;
 		m_bPlay_3 = FALSE;
@@ -206,7 +262,6 @@ void CClientDemoDlg::OnBnClickedBtnLogout()
 		m_bLogin = FALSE;
 	}
 }
-
 
 void CClientDemoDlg::OnBnClickedBtn1()
 {
@@ -359,4 +414,145 @@ void CClientDemoDlg::OnBnClickedBtn8()
 			m_bPlay_8 = FALSE;
 		}
 	}
+}
+
+
+void CClientDemoDlg::OnBnClickedBtnVodStart()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CTime tempStartTime(m_dateStart.GetYear()
+		,m_dateStart.GetMonth()
+		,m_dateStart.GetDay()
+		,m_timeStart.GetHour()
+		,m_timeStart.GetMinute()
+		,m_timeStart.GetSecond());
+
+	CTime tempEndTime(m_dateStop.GetYear()
+		,m_dateStop.GetMonth()
+		,m_dateStop.GetDay()
+		,m_timeStop.GetHour()
+		,m_timeStop.GetMinute()
+		,m_timeStop.GetSecond());
+
+	if (m_bLogin)
+	{
+		int nChannel = m_VodChannel.GetCurSel();
+		HWND hwnd = NULL;
+		switch (nChannel)
+		{
+		case 0:
+			hwnd = m_VodWnd1.m_hWnd;
+			break;
+		case 1:
+			hwnd = m_VodWnd2.m_hWnd;
+			break;
+		case 2:
+			hwnd = m_VodWnd3.m_hWnd;
+			break;
+		case 3:
+			hwnd = m_VodWnd4.m_hWnd;
+			break;
+		case 4:
+			hwnd = m_VodWnd5.m_hWnd;
+			break;
+		default:
+			break;
+		}
+		m_impl.VodPlay("CD508893472E", nChannel, hwnd, tempStartTime.GetTime(), tempEndTime.GetTime());
+	}
+}
+
+
+void CClientDemoDlg::OnBnClickedBtnVodStop()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	if (m_bLogin)
+	{
+		m_impl.VodStop("CD508893472E", m_VodChannel.GetCurSel());
+	}
+}
+
+void CClientDemoDlg::OnBnClickedBtnSettime()
+{
+	// TODO: Add your control notification handler code here
+	if (m_bLogin)
+	{
+		UpdateData(TRUE);
+		CTime tempSysTime(m_sysDate.GetYear()
+			,m_sysDate.GetMonth()
+			,m_sysDate.GetDay()
+			,m_sysTime.GetHour()
+			,m_sysTime.GetMinute()
+			,m_sysTime.GetSecond());
+
+		m_impl.SetTime(tempSysTime.GetTime());
+	}
+}
+
+
+void CClientDemoDlg::OnBnClickedBtnGetDevInfo()
+{
+	// TODO: Add your control notification handler code here
+	if (m_bLogin)
+	{
+		m_impl.GetDevInfo("XLL325487EDC");
+	}
+}
+
+
+void CClientDemoDlg::OnBnClickedBtnGetalarminfo()
+{
+	// TODO: Add your control notification handler code here
+	if (m_bLogin)
+	{
+		UpdateData(TRUE);
+		CTime tempStartTime(m_alarmStartDate.GetYear()
+			,m_alarmStartDate.GetMonth()
+			,m_alarmStartDate.GetDay()
+			,m_alarmStartTime.GetHour()
+			,m_alarmStartTime.GetMinute()
+			,m_alarmStartTime.GetSecond());
+
+		CTime tempEndTime(m_alarmStopDate.GetYear()
+			,m_alarmStopDate.GetMonth()
+			,m_alarmStopDate.GetDay()
+			,m_alarmStopTime.GetHour()
+			,m_alarmStopTime.GetMinute()
+			,m_alarmStopTime.GetSecond());
+		m_impl.GetAlarmInfo("CD508893472E", tempStartTime.GetTime(), tempEndTime.GetTime());
+	}
+}
+
+void CClientDemoDlg::OnBnClickedBtnStopalarminfo()
+{
+	// TODO: Add your control notification handler code here
+	m_impl.StopAlarmInfo("CD508893472E");
+}
+
+
+void CClientDemoDlg::OnBnClickedBtnGetsyserror()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CClientDemoDlg::OnBnClickedBtnGetLog()
+{
+	// TODO: Add your control notification handler code here
+	if (m_bLogin)
+	{
+		m_impl.GetLogInfo("CD508893472E", -1, -1);
+	}
+}
+
+void CClientDemoDlg::OnClose()
+{
+	// TODO: Add your message handler code here and/or call default
+	//if (m_bLogin)
+	//{
+	//	m_impl.Logout("admin", "admin");
+	//}
+	CDialogEx::OnClose();
 }

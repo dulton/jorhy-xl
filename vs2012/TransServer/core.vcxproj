@@ -18,19 +18,16 @@
     <ClInclude Include="..\..\src\core\j_type.h" />
     <ClInclude Include="..\..\src\core\x_asio_win.h" />
     <ClInclude Include="..\..\src\core\x_errtype.h" />
-    <ClInclude Include="..\..\src\core\x_loadso.h" />
     <ClInclude Include="..\..\src\core\x_lock.h" />
     <ClInclude Include="..\..\src\core\x_log.h" />
     <ClInclude Include="..\..\src\core\x_ringbuffer.h" />
     <ClInclude Include="..\..\src\core\x_socket.h" />
-    <ClInclude Include="..\..\src\core\x_string.h" />
     <ClInclude Include="..\..\src\core\x_thread.h" />
     <ClInclude Include="..\..\src\core\x_time.h" />
     <ClInclude Include="..\..\src\core\x_timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\core\x_asio_win.cpp" />
-    <ClCompile Include="..\..\src\core\x_loadso.cpp" />
     <ClCompile Include="..\..\src\core\x_lock.cpp" />
     <ClCompile Include="..\..\src\core\x_log.cpp" />
     <ClCompile Include="..\..\src\core\x_ringbuffer.cpp" />

@@ -9,10 +9,17 @@ public:
 	~CClientDemoImpl();
 
 public:
-	void Login(const char *pUser, const char *pPasswd);
+	void Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd);
 	void Logout(const char *pUser, const char *pPasswd);
 	void RealPlay(const char *pDevId, char chId, HWND hWnd);
 	void RealStop(const char *pDevId, char chId);
+	void VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t start, __time64_t end);
+	void VodStop(const char *pDevId, char chId);
+	void SetTime(__time64_t sysTime);
+	void GetDevInfo(const char *pDevId);
+	void GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd);
+	void GetAlarmInfo(const char *pDevId, time_t tmStart, time_t tmEnd);
+	void StopAlarmInfo(const char *pDevId);
 
 private:
 	static DWORD WINAPI ReciveProc(LPVOID lParam)
@@ -34,4 +41,5 @@ private:
 	HANDLE m_recvThread;
 	CListBox *m_listBox;
 	Codec m_codec;
+	Codec m_vodCodec;
 };

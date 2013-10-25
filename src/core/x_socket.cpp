@@ -8,8 +8,6 @@ CTCPSocket::CTCPSocket()
 {
 	m_handle.sock = j_invalid_socket_val;
 #ifdef WIN32
-	WSADATA wsaData; 
-	WSAStartup(MAKEWORD(2,2), &wsaData);
 	m_handle.sock = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 #else
 	m_handle.sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -29,8 +27,6 @@ CTCPSocket::CTCPSocket(j_socket_t socket)
 CTCPSocket::CTCPSocket(int nPort, int nListenNum)
 {
 #ifdef WIN32
-	WSADATA wsaData; 
-	WSAStartup(MAKEWORD(2,2), &wsaData);
 	m_handle.sock = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 #else
 	signal(SIGPIPE, SIG_IGN);
@@ -39,15 +35,13 @@ CTCPSocket::CTCPSocket(int nPort, int nListenNum)
 
 	m_bNeedClose = true;
 	Listen(nPort, nListenNum, false);
-	//J_OS::LOGINFO("CTCPSocket::CTCPSocket created and listen, handle = %d", m_handle);
+	//J_OS::LOGINFO("CTCPSocket::CTCPSocket created and listen, handle = %d", m_handle.sock);
 }
 
 CTCPSocket::CTCPSocket(const char *pAddr, int nPort)
 {
 	m_handle.sock = j_invalid_socket_val;
 #ifdef WIN32
-	WSADATA wsaData; 
-	WSAStartup(MAKEWORD(2,2), &wsaData);
 	m_handle.sock = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 #else
 	signal(SIGPIPE, SIG_IGN);
@@ -64,11 +58,8 @@ CTCPSocket::~CTCPSocket()
 	if (m_bNeedClose && m_handle.sock != j_invalid_socket_val)
 		j_close_socket(m_handle.sock);
 
-	//J_OS::LOGINFO("CTCPSocket::~CTCPSocket destroyed, handle = %d", m_handle);
+	J_OS::LOGINFO("CTCPSocket::~CTCPSocket destroyed, handle = %d", m_handle);
 	m_handle.sock = j_invalid_socket_val;
-#ifdef WIN32
-	WSACleanup();
-#endif
 }
 
 int CTCPSocket::Listen(j_uint16_t nPort, j_int32_t nListenNum, j_boolean_t bBlock)
