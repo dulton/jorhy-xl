@@ -103,20 +103,26 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\client_demo\ClientDemo.h" />
-    <ClInclude Include="..\..\src\client_demo\ClientDemoDlg.h" />
-    <ClInclude Include="..\..\src\client_demo\ClientDemoImpl.h" />
+    <ClInclude Include="..\..\src\client_demo\Client.h" />
+    <ClInclude Include="..\..\src\client_demo\VideoDlg.h" />
+    <ClInclude Include="..\..\src\client_demo\ClientImpl.h" />
+    <ClInclude Include="..\..\src\client_demo\ClientDlg.h" />
     <ClInclude Include="..\..\src\client_demo\codec.h" />
+    <ClInclude Include="..\..\src\client_demo\ConfigDlg.h" />
+    <ClInclude Include="..\..\src\client_demo\LoginDlg.h" />
     <ClInclude Include="..\..\src\client_demo\Resource.h" />
     <ClInclude Include="..\..\src\client_demo\stdafx.h" />
     <ClInclude Include="..\..\src\client_demo\targetver.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\client_demo\ClientDemo.cpp" />
-    <ClCompile Include="..\..\src\client_demo\ClientDemoDlg.cpp" />
-    <ClCompile Include="..\..\src\client_demo\ClientDemoImpl.cpp" />
+    <ClCompile Include="..\..\src\client_demo\Client.cpp" />
+    <ClCompile Include="..\..\src\client_demo\VideoDlg.cpp" />
+    <ClCompile Include="..\..\src\client_demo\ClientImpl.cpp" />
+    <ClCompile Include="..\..\src\client_demo\ClientDlg.cpp" />
     <ClCompile Include="..\..\src\client_demo\codec.cpp" />
+    <ClCompile Include="..\..\src\client_demo\ConfigDlg.cpp" />
+    <ClCompile Include="..\..\src\client_demo\LoginDlg.cpp" />
     <ClCompile Include="..\..\src\client_demo\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
