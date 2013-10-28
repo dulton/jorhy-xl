@@ -44,6 +44,8 @@ public:
 	j_result_t GetDvrTotleInfo(DVRTotleInfo &dvrTotleInfo);
 	j_result_t GetUserTotleInfo(UserTotleInfo &userTotleInfo);
 	j_result_t GetDvrList(int nType, long lDepartmentId, DvrInfoQueue &dvrInfoQueue);
+	j_result_t GetUserList(int nType, UserInfoQueue &userInfoQueue);
+	j_result_t GetDepartmentList(DepartmentInfoQueue &dvrInfoQueue);
 
 private:  
 	_ConnectionPtr m_pConn;		/// 连接对象  

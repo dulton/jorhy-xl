@@ -25,6 +25,7 @@ BEGIN_MESSAGE_MAP(CConfigDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_UserTotleInfo, &CConfigDlg::OnBnClickedBtnUsertotleinfo)
 	ON_BN_CLICKED(IDC_BTNGetDvrList, &CConfigDlg::OnBnClickedBtngetdvrlist)
 	ON_BN_CLICKED(IDC_BTN_GetUserList, &CConfigDlg::OnBnClickedBtnGetuserlist)
+	ON_BN_CLICKED(IDC_BTN_GetDepartmentInfo, &CConfigDlg::OnBnClickedBtnGetdepartmentinfo)
 END_MESSAGE_MAP()
 
 
@@ -126,4 +127,11 @@ void CConfigDlg::OnBnClickedBtnGetuserlist()
 {
 	// TODO: Add your control notification handler code here
 	m_impl.GetUserList(0);
+}
+
+
+void CConfigDlg::OnBnClickedBtnGetdepartmentinfo()
+{
+	// TODO: Add your control notification handler code here
+	m_impl.GetDepartmentList();
 }

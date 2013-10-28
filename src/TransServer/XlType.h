@@ -120,12 +120,19 @@ typedef struct _tagUserInfo
 	long lDepartmentID;  			///< 所属单位ID
 	int nState;  							///< 状态
 } UserInfo,  *LPUserInfo;
+typedef std::queue<UserInfo> UserInfoQueue;
 
 /// 用户ID
 typedef struct _tagUserId
 {
 	long lUserID;   						///< 用户ID
 } UserId, *LPUserId;
+
+/// 用户类型
+typedef struct _tagUserType
+{
+	int nType;   							///< 用户查询类型
+} UserType, *LPUserType;
 
 /// 单位信息
 typedef struct _tagDepartmentInfo
@@ -136,6 +143,7 @@ typedef struct _tagDepartmentInfo
 	int  OrderIndex;  				///< 单位顺序
 	int  nState;  						///< 状态
 } DepartmentInfo,  *LPDepartmentInfo;
+typedef std::queue<DepartmentInfo> DepartmentInfoQueue;
 
 /// 单位ID
 typedef struct _tagDepartmentId

@@ -28,6 +28,7 @@ public:
 	void GetUserTotleInfo();
 	void GetDvrList(int nType, long lDepartmentId);
 	void GetUserList(int nType);
+	void GetDepartmentList();
 
 public:
 	void SetVideoListBox(CListBox *pListBox) { m_videoListBox = pListBox; }

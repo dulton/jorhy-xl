@@ -310,3 +310,60 @@ j_result_t CSqlServerAccess::GetDvrList(int nType, long lDepartmentId, DvrInfoQu
 
 	return J_OK;
 }
+
+j_result_t CSqlServerAccess::GetUserList(int nType, UserInfoQueue &userInfoQueue)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM UserInfo;");
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		UserInfo userInfo;
+		while (!m_pRec->EndOfFile)
+		{
+			memset (&userInfo, 0, sizeof(UserInfo));
+			userInfo.lUserID = m_pRec->GetCollect("UserID").llVal;
+			strcpy(userInfo.szName, (char*)_bstr_t(m_pRec->GetCollect("Name")));
+			strcpy(userInfo.szAccountName, (char*)_bstr_t(m_pRec->GetCollect("AccountName")));
+			strcpy(userInfo.szPassword, (char*)_bstr_t(m_pRec->GetCollect("Password")));
+			userInfo.lDepartmentID = m_pRec->GetCollect("DepartmentID").llVal;
+			userInfo.nState = m_pRec->GetCollect("State").intVal;
+			userInfoQueue.push(userInfo);
+			m_pRec->MoveNext();
+		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::GetDepartmentList(DepartmentInfoQueue &departmentInfoQueue)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM Department;");
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		DepartmentInfo departmentInfo;
+		while (!m_pRec->EndOfFile)
+		{
+			memset (&departmentInfo, 0, sizeof(DepartmentInfo));
+			departmentInfo.lDepartmentID = m_pRec->GetCollect("DepartmentID").llVal;
+			strcpy(departmentInfo.szName, (char*)_bstr_t(m_pRec->GetCollect("Name")));
+			departmentInfo.ParentID = m_pRec->GetCollect("ParentID").llVal;
+			departmentInfo.OrderIndex = m_pRec->GetCollect("OrderIndex").intVal;
+			departmentInfo.nState = m_pRec->GetCollect("State").intVal;
+			departmentInfoQueue.push(departmentInfo);
+			m_pRec->MoveNext();
+		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}

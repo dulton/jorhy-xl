@@ -49,12 +49,16 @@ private:
 	j_result_t MakeLogData(J_AsioDataBase *pAsioData);
 	j_result_t MakeAlarmData(J_AsioDataBase *pAsioData);
 	j_result_t MakeDvrListData(J_AsioDataBase *pAsioData);
+	j_result_t MakeUserListData(J_AsioDataBase *pAsioData);
+	j_result_t MakeDepartmentListData(J_AsioDataBase *pAsioData);
 	/// 分析数据接口
 	j_result_t ProcessRequest(J_AsioDataBase *pAsioData);
 	j_result_t ProcessData(J_AsioDataBase *pAsioData);
 	j_result_t ProcessLog(J_AsioDataBase *pAsioData);
 	j_result_t ProcessAlarm(J_AsioDataBase *pAsioData);
 	j_result_t ProcessDvrList(J_AsioDataBase *pAsioData);
+	j_result_t ProcessUserList(J_AsioDataBase *pAsioData);
+	j_result_t ProcessDepartmentList(J_AsioDataBase *pAsioData);
 	/// 设备相关接口
 	j_result_t StartView(j_string_t strHostId, j_int32_t nChanId, J_AsioDataBase *pAsioData);
 	j_result_t StopView(j_string_t strHostId, j_int32_t nChanId, J_AsioDataBase *pAsioData);
@@ -76,6 +80,8 @@ private:
 	j_result_t OnGetTotleDvrInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnGetTotleUserInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnGetDvrList(J_AsioDataBase *pAsioData);
+	j_result_t OnGetUserList(J_AsioDataBase *pAsioData);
+	j_result_t OnGetDepartmentList(J_AsioDataBase *pAsioData);
 private:
 	//J_OS::CTCPSocket m_socket;						//客户端连接
 	j_char_t *m_readBuff;								//命令请求缓存区
@@ -84,14 +90,20 @@ private:
 	j_char_t *m_alarmBuff;								//报警发送缓存区
 	j_char_t *m_logBuff;									//日志发送缓存区 
 	j_char_t *m_dvrBuff;									//设备信息发送缓存区
+	j_char_t *m_userBuff;									//用户信息发送缓存区
+	j_char_t *m_departmentBuff;								//单位信息发送缓存区
 	LogInfoQueue m_logInfoQueue;				//历史日志缓存队列
 	AlarmInfoQueue m_alarmInfoQueue;		//历史报警缓存队列
 	DvrInfoQueue m_dvrInfoQueue;				//设备信息缓存队列
+	UserInfoQueue m_userInfoQueue;				//用户信息缓存队列
+	DepartmentInfoQueue m_departmentInfoQueue;	//单位信息缓存队列
 	j_int32_t m_ioCmdState;							//命令请求状态
 	j_int32_t m_ioDataState;							//视频发送状态
 	j_int32_t m_ioAlarmState;							//报警发送状态
 	j_int32_t m_ioLogState;								//日志发送状态
 	j_int32_t m_ioDvrListState;						//设备信息发送状态
+	j_int32_t m_ioUserListState;						//用户信息发送状态
+	j_int32_t m_ioDepartmentListState;					//单位信息发送状态
 	CRingBuffer m_ringBuffer;						//视频流队列
 	J_StreamHeader m_streamHeader;			//视频队列头信息
 	CRingBuffer m_alarmBuffer;						//报警流队列

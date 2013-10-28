@@ -32,4 +32,5 @@ public:
 	afx_msg void OnBnClickedBtnUsertotleinfo();
 	afx_msg void OnBnClickedBtngetdvrlist();
 	afx_msg void OnBnClickedBtnGetuserlist();
+	afx_msg void OnBnClickedBtnGetdepartmentinfo();
 };

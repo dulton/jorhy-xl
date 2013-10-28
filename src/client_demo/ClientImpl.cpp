@@ -257,6 +257,16 @@ void CClientImpl::GetUserList(int nType)
 	send(m_sock, (char *)&userListBody, sizeof(UserListBody), 0);
 }
 
+void CClientImpl::GetDepartmentList()
+{
+	struct DepartmentListBody {
+		CmdHeader head;
+		CmdTail tail;
+	} departmentListBody;
+	MakeCommand(xl_get_department_list, NULL, 0, (char *)&departmentListBody);
+	send(m_sock, (char *)&departmentListBody, sizeof(DepartmentListBody), 0);
+}
+
 int CClientImpl::MakeCommand(char bCmd, char *pData, int nLen, char *pBody)
 {
 	//Ìî³äÍ·ÐÅÏ¢
@@ -337,6 +347,7 @@ void CClientImpl::OnRecive()
 			ProcessVideoData(pHeader, pRecvBuff);
 			break;
 		case xl_get_totle_dvr_info: case xl_get_totle_user_info: case xl_get_dvr_list: case xl_get_user_list:
+		case xl_get_department_list:
 			ProcessConfigData(pHeader, pRecvBuff);
 			break;
 		default:
@@ -439,6 +450,15 @@ void CClientImpl::ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff)
 			wsprintf(userInfo, L"lUserID=%d szName=%S szAccountName=%S\n", pResp->lUserID, pResp->szName, pResp->szAccountName);
 			ShowConfigInfo(userInfo);
 		}
+		break;
+	case xl_get_department_list:
+		{
+			DepartmentInfo *pResp = (DepartmentInfo *)(pRecvBuff + sizeof(CmdHeader));
+			wchar_t userInfo[256] = {0};
+			wsprintf(userInfo, L"lDepartmentID=%d szName=%S \n", pResp->lDepartmentID, pResp->szName);
+			ShowConfigInfo(userInfo);
+		}
+		break;
 	}
 }
 
