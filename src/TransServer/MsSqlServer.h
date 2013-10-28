@@ -41,6 +41,9 @@ public:
 	j_result_t InsertLogInfo(const char *pHostId, int nState, time_t tmTimeStamp);
 	j_result_t GetLogInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, LogInfoQueue &logInfoQueue);
 	j_result_t GetAlarmInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, AlarmInfoQueue &alarmInfoQueue);
+	j_result_t GetDvrTotleInfo(DVRTotleInfo &dvrTotleInfo);
+	j_result_t GetUserTotleInfo(UserTotleInfo &userTotleInfo);
+	j_result_t GetDvrList(int nType, long lDepartmentId, DvrInfoQueue &dvrInfoQueue);
 
 private:  
 	_ConnectionPtr m_pConn;		/// 连接对象  

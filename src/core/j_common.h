@@ -172,6 +172,7 @@ struct J_AsioDataBase
 		j_read_write_e,
 		j_read_write_log_e,
 		j_read_write_alarm_e,
+		j_read_write_dvrlist_e,
 	};
 
 	/// 执行的异步IO调用类型
@@ -181,6 +182,7 @@ struct J_AsioDataBase
 		j_data_e,
 		j_alarm_e,
 		j_log_e,
+		j_dvr_list_e,
 	};
 
 	struct J_IoAccept

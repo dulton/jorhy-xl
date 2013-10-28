@@ -39,17 +39,23 @@ public:
 	j_result_t Broken();
 
 private:
+	/// 公用接口
 	j_result_t MakeRequest(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
 	j_result_t MakeResponse(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
 	j_uint32_t CheckNum(j_char_t *pData, j_int32_t nLen);
+	/// 生成数据接口
 	j_result_t MakeNetData(J_AsioDataBase *pAsioData, j_char_t *pDataBuff, j_int32_t nLen);
 	j_result_t MakeTransData(J_AsioDataBase *pAsioData);
 	j_result_t MakeLogData(J_AsioDataBase *pAsioData);
 	j_result_t MakeAlarmData(J_AsioDataBase *pAsioData);
+	j_result_t MakeDvrListData(J_AsioDataBase *pAsioData);
+	/// 分析数据接口
 	j_result_t ProcessRequest(J_AsioDataBase *pAsioData);
 	j_result_t ProcessData(J_AsioDataBase *pAsioData);
 	j_result_t ProcessLog(J_AsioDataBase *pAsioData);
 	j_result_t ProcessAlarm(J_AsioDataBase *pAsioData);
+	j_result_t ProcessDvrList(J_AsioDataBase *pAsioData);
+	/// 设备相关接口
 	j_result_t StartView(j_string_t strHostId, j_int32_t nChanId, J_AsioDataBase *pAsioData);
 	j_result_t StopView(j_string_t strHostId, j_int32_t nChanId, J_AsioDataBase *pAsioData);
 	j_result_t StartAlarm(j_string_t strHostId, j_time_t tmStart, j_time_t tmEnd);
@@ -66,7 +72,10 @@ private:
 	j_result_t OnGetLogInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnStartAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
-
+	/// 配置管理相关接口
+	j_result_t OnGetTotleDvrInfo(J_AsioDataBase *pAsioData);
+	j_result_t OnGetTotleUserInfo(J_AsioDataBase *pAsioData);
+	j_result_t OnGetDvrList(J_AsioDataBase *pAsioData);
 private:
 	//J_OS::CTCPSocket m_socket;						//客户端连接
 	j_char_t *m_readBuff;								//命令请求缓存区
@@ -74,12 +83,15 @@ private:
 	j_char_t *m_dataBuff;								//视频发送缓存区
 	j_char_t *m_alarmBuff;								//报警发送缓存区
 	j_char_t *m_logBuff;									//日志发送缓存区 
+	j_char_t *m_dvrBuff;									//设备信息发送缓存区
 	LogInfoQueue m_logInfoQueue;				//历史日志缓存队列
 	AlarmInfoQueue m_alarmInfoQueue;		//历史报警缓存队列
+	DvrInfoQueue m_dvrInfoQueue;				//设备信息缓存队列
 	j_int32_t m_ioCmdState;							//命令请求状态
 	j_int32_t m_ioDataState;							//视频发送状态
 	j_int32_t m_ioAlarmState;							//报警发送状态
 	j_int32_t m_ioLogState;								//日志发送状态
+	j_int32_t m_ioDvrListState;						//设备信息发送状态
 	CRingBuffer m_ringBuffer;						//视频流队列
 	J_StreamHeader m_streamHeader;			//视频队列头信息
 	CRingBuffer m_alarmBuffer;						//报警流队列

@@ -19,12 +19,17 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-
 // Implementation
 protected:
 	HICON m_hIcon;
+	CListBox m_infoList;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedBtnDvrtotleinfo();
+	afx_msg void OnBnClickedBtnUsertotleinfo();
+	afx_msg void OnBnClickedBtngetdvrlist();
+	afx_msg void OnBnClickedBtnGetuserlist();
 };

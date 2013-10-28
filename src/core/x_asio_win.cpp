@@ -124,7 +124,8 @@ void CXAsio::OnWork()
 			}
 			else
 			{
-				ProcessIoEvent(pPerIoData->ioHandle, J_AsioDataBase::j_disconnect_e);
+				if (pPerIoData != NULL)
+					ProcessIoEvent(pPerIoData->ioHandle, J_AsioDataBase::j_disconnect_e);
 				J_OS::LOGINFO("CXAsio::OnWork GetQueuedCompletionStatus failed with error %d %d", dwError, pPerIoData);
 			}
 			continue;

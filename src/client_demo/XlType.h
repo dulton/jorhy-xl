@@ -35,11 +35,112 @@ enum CmdType
 	xl_errcode_download,		///< 系统异常下载
 	xl_login,							///< 登录
 	xl_logout,							///< 注销
+
+	xl_get_totle_dvr_info = 0x52,			///< 获取DVR总数信息
+	xl_get_dvr_list,								///< 获取DVR信息列表
+	xl_get_dvr_info,								///< 获取DVR信息
+	xl_modify_dvr_info,						///< 修改DVR信息
+	xl_delete_dvr,								///< 删除DVR	
+	xl_get_totle_user_info,					///< 获取用户总数信息
+	xl_get_user_list,								///< 获取用户信息列表
+	xl_get_user_info,							///< 获取用户信息
+	xl_modify_user_info,						///< 修改用户信息
+	xl_delete_user,								///< 删除用户
+	xl_get_department_list,					///< 获取单位信息列表
+	xl_get_department_info,				///< 获取单位信息
+	xl_modify_department_info,			///< 修改单位信息
+	xl_delete_departmen,					///< 删除单位
 };
 
 #pragma pack(push)
 #pragma pack(1)
 
+////////////////////////////////////////////////////////////////////////
+/////                                   客户端                                      /////
+////////////////////////////////////////////////////////////////////////
+/// DVR总数信息
+typedef struct _tagDvrTotleInfo
+{
+	unsigned int uiTotal;   				///< DVR的总数
+	unsigned int uiUnRegister; 		///< 未确认DVR数量
+	unsigned int uiOnline;				///< 在线DVR总数
+	unsigned int uiStock;   				///< 已确认但未分配给单位的DVR数量
+} DVRTotleInfo,  *LPDVRTotleInfo;
+
+/// DVR列表信息请求
+typedef struct _tagDvrListReq
+{
+	int	nType;  				///< 请求类型
+	long lDepartmentID;  	///< 所属单位ID
+} DvrListReq, *LPDvrListReq;
+
+/// DVR信息
+typedef struct _tagDvrInfo
+{
+	char szEquipmentID[32];  		///< 设备ID
+	char szVehicleNO[32];			///< 车号
+	char szPhone[11];		///< 电话号码
+	int nTotalChannels;				///< 通道数量
+	char szReserve[32];  				///< 预留
+	long lDepartmentID;  			///< 所属单位ID
+	int nOnline;							///< 在离线状态
+	int nState;  							///< 状态
+} DVRInfo,  *LPDVRInfo;
+
+/// DVR设备ID
+typedef struct _tagDvrId
+{
+	char szEquipmentID[32];  		///< 设备ID 
+} DVRId, *LPDvrId;
+
+/// User总数信息
+typedef struct _tagUserTotleInfo
+ {
+	unsigned int uiTotal;   					///< 用户的总数
+	unsigned int uiOnline;					///< 在线用户总数
+ } UserTotleInfo,  *LPUserTotleInfo;
+
+/// User信息
+typedef struct _tagUserInfo
+{
+	long lUserID;   						///< 用户ID
+	char	szName[50];					///< 用户姓名
+	char szAccountName[16];		///< 账户名
+	char szPassword[16];  			///< 密码
+	long lDepartmentID;  			///< 所属单位ID
+	int nState;  							///< 状态
+} UserInfo,  *LPUserInfo;
+
+/// 用户ID
+typedef struct _tagUserId
+{
+	long lUserID;   						///< 用户ID
+} UserId, *LPUserId;
+
+/// 用户类型
+typedef struct _tagUserType
+{
+	int nType;   							///< 用户查询类型
+} UserType, *LPUserType;
+
+/// 单位信息
+typedef struct _tagDepartmentInfo
+{
+	long  lDepartmentID;  		///< 单位ID
+	char  szName[50];				///< 单位名称
+	long  ParentID;					///< 父级单位
+	int  OrderIndex;  				///< 单位顺序
+	int  nState;  						///< 状态
+} DepartmentInfo,  *LPDepartmentInfo;
+
+/// 单位ID
+typedef struct _tagDepartmentId
+{
+	long  lDepartmentID;  		///< 单位ID
+} DepartmentId, *LPDepartmentId;
+////////////////////////////////////////////////////////////////////////
+/////                                   设备端                                      /////
+////////////////////////////////////////////////////////////////////////
 ///设备信息
 typedef struct _devInfo
 {

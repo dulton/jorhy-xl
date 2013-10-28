@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "ConfigDlg.h"
+#include "ClientImpl.h"
+
+extern CClientImpl m_impl;
 
 // CClientDlg dialog
-
 CConfigDlg::CConfigDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CConfigDlg::IDD, pParent)
 {
@@ -12,12 +14,17 @@ CConfigDlg::CConfigDlg(CWnd* pParent /*=NULL*/)
 void CConfigDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_Config, m_infoList);
 }
 
 BEGIN_MESSAGE_MAP(CConfigDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_BTN_DvrTotleInfo, &CConfigDlg::OnBnClickedBtnDvrtotleinfo)
+	ON_BN_CLICKED(IDC_BTN_UserTotleInfo, &CConfigDlg::OnBnClickedBtnUsertotleinfo)
+	ON_BN_CLICKED(IDC_BTNGetDvrList, &CConfigDlg::OnBnClickedBtngetdvrlist)
+	ON_BN_CLICKED(IDC_BTN_GetUserList, &CConfigDlg::OnBnClickedBtnGetuserlist)
 END_MESSAGE_MAP()
 
 
@@ -53,6 +60,7 @@ BOOL CConfigDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	m_impl.SetConfigListBox(&m_infoList);
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -90,4 +98,32 @@ void CConfigDlg::OnPaint()
 HCURSOR CConfigDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
+}
+
+
+void CConfigDlg::OnBnClickedBtnDvrtotleinfo()
+{
+	// TODO: Add your control notification handler code here
+	m_impl.GetDvrTotleInfo();
+}
+
+
+void CConfigDlg::OnBnClickedBtnUsertotleinfo()
+{
+	// TODO: Add your control notification handler code here
+	m_impl.GetUserTotleInfo();
+}
+
+
+void CConfigDlg::OnBnClickedBtngetdvrlist()
+{
+	// TODO: Add your control notification handler code here
+	m_impl.GetDvrList(1, 1);
+}
+
+
+void CConfigDlg::OnBnClickedBtnGetuserlist()
+{
+	// TODO: Add your control notification handler code here
+	m_impl.GetUserList(0);
 }

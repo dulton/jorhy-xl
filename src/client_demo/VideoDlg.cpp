@@ -16,7 +16,6 @@ extern CClientImpl m_impl;
 // CClientDemoDlg dialog
 CVideoDlg::CVideoDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CVideoDlg::IDD, pParent)
-	//, m_impl(&m_infoList)
 	, m_sysDate(COleDateTime::GetCurrentTime())
 	, m_sysTime(COleDateTime::GetCurrentTime())
 	, m_alarmStartDate(COleDateTime::GetCurrentTime())

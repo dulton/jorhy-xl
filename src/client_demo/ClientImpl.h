@@ -1,6 +1,7 @@
 #pragma once
 #include "windows.h"
 #include "codec.h"
+#include "XlType.h"
 
 class CClientImpl
 {
@@ -9,6 +10,7 @@ public:
 	~CClientImpl();
 
 public:
+	///视频界面
 	void Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd);
 	void Logout(const char *pUser, const char *pPasswd);
 	void RealPlay(const char *pDevId, char chId, HWND hWnd);
@@ -21,8 +23,15 @@ public:
 	void GetAlarmInfo(const char *pDevId, time_t tmStart, time_t tmEnd);
 	void StopAlarmInfo(const char *pDevId);
 
+	///配置界面
+	void GetDvrTotleInfo();
+	void GetUserTotleInfo();
+	void GetDvrList(int nType, long lDepartmentId);
+	void GetUserList(int nType);
+
 public:
 	void SetVideoListBox(CListBox *pListBox) { m_videoListBox = pListBox; }
+	void SetConfigListBox(CListBox *pListBox) { m_configListBox = pListBox; }
 
 private:
 	static DWORD WINAPI ReciveProc(LPVOID lParam)
@@ -36,7 +45,8 @@ private:
 	void ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff);
 	int MakeCommand(char bCmd, char *pData, int nLen, char *pBody);
 	int CheckNum(char *pData, int nLen);
-	void ShowInfo(const wchar_t *format, ...);
+	void ShowVideoInfo(const wchar_t *format, ...);
+	void ShowConfigInfo(const wchar_t *format, ...);
 
 private:
 	wchar_t m_dataBuff[8092];
@@ -45,6 +55,7 @@ private:
 	BOOL m_bRun;
 	HANDLE m_recvThread;
 	CListBox *m_videoListBox;
+	CListBox *m_configListBox;
 	Codec m_codec;
 	Codec m_vodCodec;
 };

@@ -24,6 +24,7 @@
 #define XL_DATA_BUFFER_SIZE (1024 * 1024)
 #define XL_ALARM_BUFFER_SIZE (2 * 1024)
 #define XL_LOG_BUFFER_SIZE (1024)
+#define XL_DVR_BUFFER_SIZE (1024)
 CXlClient::CXlClient(j_socket_t nSock)
 // : m_socket(nSock)
 {
@@ -32,10 +33,12 @@ CXlClient::CXlClient(j_socket_t nSock)
 	m_dataBuff = new char[XL_DATA_BUFFER_SIZE];	
 	m_alarmBuff = new char[XL_ALARM_BUFFER_SIZE];	
 	m_logBuff = new char[XL_LOG_BUFFER_SIZE];	
+	m_dvrBuff = new char[XL_DVR_BUFFER_SIZE];
 	m_ioCmdState = xl_init_state;
 	m_ioDataState = xl_init_state;
 	m_ioAlarmState = xl_init_state;
 	m_ioLogState = xl_init_state;
+	m_ioDvrListState = xl_init_state;
 	m_nRefCnt = 0;
 	m_nAlarmRefCnt = 0;
 }
@@ -47,6 +50,7 @@ CXlClient::~CXlClient()
 	delete m_dataBuff;
 	delete m_alarmBuff;
 	delete m_logBuff;
+	delete m_dvrBuff;
 }
 
 j_result_t CXlClient::ParserRequest(J_AsioDataBase *pAsioData)
@@ -67,6 +71,10 @@ j_result_t CXlClient::ParserRequest(J_AsioDataBase *pAsioData)
 	else if (pAsioData->ioType == J_AsioDataBase::j_alarm_e)
 	{
 		nResult = ProcessAlarm(pAsioData);
+	}
+	else if (pAsioData->ioType == J_AsioDataBase::j_dvr_list_e)
+	{
+		nResult = ProcessDvrList(pAsioData);
 	}
 
 	return nResult;
@@ -157,19 +165,6 @@ j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
 	pAsioData->ioWrite.finishedLen = 0;
 	pAsioData->ioWrite.whole = true;
 	pAsioData->ioWrite.shared = true;
-	//j_result_t nResult = J_OK;
-	//do 
-	//{
-	//	nResult = m_ringBuffer.PopBuffer(m_dataBuff, m_streamHeader);
-	//}while (nResult != J_OK);
-	//if (nResult == J_OK)
-	//{
-	//	pAsioData->ioWrite.buf = m_dataBuff;
-	//	pAsioData->ioWrite.bufLen = m_streamHeader.dataLen;
-	//	pAsioData->ioWrite.finishedLen = 0;
-	//	pAsioData->ioWrite.whole = true;
-	//	pAsioData->ioWrite.shared = true;
-	//}
 
 	return J_OK;
 }
@@ -220,6 +215,28 @@ j_result_t CXlClient::MakeAlarmData(J_AsioDataBase *pAsioData)
 		pAsioData->ioWrite.shared = true;
 	}
 	return J_OK;
+}
+
+j_result_t CXlClient::MakeDvrListData(J_AsioDataBase *pAsioData)
+{
+	if (m_dvrInfoQueue.size() > 0)
+	{
+		DVRInfo dvrInfo = m_dvrInfoQueue.front();
+		m_dvrInfoQueue.pop();
+		MakeResponse(xl_get_dvr_list, (char *)&dvrInfo, sizeof(DVRInfo), m_dvrBuff);
+		pAsioData->ioWrite.buf = m_dvrBuff;
+		pAsioData->ioWrite.bufLen = sizeof(CmdHeader) + sizeof(DVRInfo) + sizeof(CmdTail);
+		pAsioData->ioWrite.finishedLen = 0;
+		pAsioData->ioWrite.whole = true;
+		pAsioData->ioWrite.shared = true;
+	}
+	else
+	{
+		m_ioDvrListState = xl_init_state;
+		pAsioData->ioCall = J_AsioDataBase::j_keep_e;
+	}
+
+	return  J_OK;
 }
 
 j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)	
@@ -287,6 +304,18 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 		case xl_stop_real_alarm:
 			OnStopAlarm(pAsioData);
 			m_ioCmdState = xl_write_body_state;
+			break;
+		case xl_get_totle_dvr_info:
+			OnGetTotleDvrInfo(pAsioData);
+			m_ioCmdState = xl_write_body_state;
+			break;
+		case xl_get_totle_user_info:
+			OnGetTotleUserInfo(pAsioData);
+			m_ioCmdState = xl_write_body_state;
+			break;
+		case xl_get_dvr_list:
+			OnGetDvrList(pAsioData);
+			m_ioCmdState = xl_read_head_state;
 			break;
 		default:
 			break;
@@ -377,6 +406,28 @@ j_result_t CXlClient::ProcessAlarm(J_AsioDataBase *pAsioData)
 	else
 	{
 		pAsioData->ioCall = J_AsioDataBase::j_keep_e;
+	}
+
+	return nResult;
+}
+
+j_result_t CXlClient::ProcessDvrList(J_AsioDataBase *pAsioData)
+{
+	j_result_t nResult = J_OK;
+	if (m_ioDvrListState == xl_init_state)
+	{
+		pAsioData->ioType = J_AsioDataBase::j_dvr_list_e;
+		//pAsioData->hEvent = WSACreateEvent();
+
+		pAsioData->ioCall = J_AsioDataBase::j_write_e;
+		m_ioDvrListState = xl_write_body_state;
+		nResult = MakeDvrListData(pAsioData);
+	}
+	else
+	{
+		pAsioData->ioCall = J_AsioDataBase::j_write_e;
+		m_ioDvrListState = xl_write_body_state;
+		nResult =MakeDvrListData(pAsioData);
 	}
 
 	return nResult;
@@ -725,6 +776,47 @@ j_result_t CXlClient::OnStopAlarm(J_AsioDataBase *pAsioData)
 
 	StopAlarm(pReps->hostId);
 	m_ioAlarmState = xl_init_state;
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnGetTotleDvrInfo(J_AsioDataBase *pAsioData)
+{
+	DVRTotleInfo dvrTotleInfoResp = {0};
+	JoDataBaseObj->GetDvrTotleInfo(dvrTotleInfoResp);
+
+	int nBodyLen = sizeof(CmdHeader) + sizeof(DVRTotleInfo) + sizeof(CmdTail);
+	MakeResponse(xl_get_totle_dvr_info, (j_char_t *)&dvrTotleInfoResp, sizeof(DVRTotleInfo), m_writeBuff);
+	pAsioData->ioCall = J_AsioDataBase::j_write_e;
+	MakeNetData(pAsioData, m_writeBuff, nBodyLen);
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnGetTotleUserInfo(J_AsioDataBase *pAsioData)
+{
+	UserTotleInfo userTotleInfoResp = {0};
+	JoDataBaseObj->GetUserTotleInfo(userTotleInfoResp);
+
+	int nBodyLen = sizeof(CmdHeader) + sizeof(UserTotleInfo) + sizeof(CmdTail);
+	MakeResponse(xl_get_totle_user_info, (j_char_t *)&userTotleInfoResp, sizeof(UserTotleInfo), m_writeBuff);
+	pAsioData->ioCall = J_AsioDataBase::j_write_e;
+	MakeNetData(pAsioData, m_writeBuff, nBodyLen);
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnGetDvrList(J_AsioDataBase *pAsioData)
+{
+	DvrListReq *pResp = (DvrListReq *)(m_readBuff + sizeof(CmdHeader));
+	J_OS::LOGINFO("nType = %d, lDepartMentId = %d", pResp->nType, pResp->lDepartmentID);
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+	MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	if (m_ioDvrListState == xl_init_state)
+	{
+		JoDataBaseObj->GetDvrList(pResp->nType, pResp->lDepartmentID, m_dvrInfoQueue);
+		pAsioData->ioCall = J_AsioDataBase::j_read_write_dvrlist_e;
+	}
 
 	return J_OK;
 }
