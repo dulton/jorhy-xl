@@ -87,7 +87,7 @@ j_result_t CSqlServerAccess::CheckUser(const char *pUserName, const char *pPassw
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::UpdateDevInfo(const DevInfo &devInfo)
+j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo)
 {
 	try 
 	{
@@ -104,7 +104,7 @@ j_result_t CSqlServerAccess::UpdateDevInfo(const DevInfo &devInfo)
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetDevInfo(DevInfo &devInfo)
+j_result_t CSqlServerAccess::GetDevInfo(DevHostInfo &devInfo)
 {
 	try 
 	{
@@ -125,7 +125,7 @@ j_result_t CSqlServerAccess::GetDevInfo(DevInfo &devInfo)
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::InsertAlarmInfo(const char *pHostId, const AlarmInfo& alarmInfo)
+j_result_t CSqlServerAccess::InsertAlarmInfo(const char *pHostId, const DevAlarmInfo& alarmInfo)
 {
 	try 
 	{
@@ -181,34 +181,34 @@ j_result_t CSqlServerAccess::InsertLogInfo(const char *pHostId, int nState, time
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetLogInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, LogInfoQueue &logInfoQueue)
+j_result_t CSqlServerAccess::GetLogInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, DevLogInfoQueue &logInfoQueue)
 {
-	try
-	{
-		char strCmd[512] = {0};
-		if (tmStart == -1 && tmEnd == -1)
-			sprintf(strCmd, "SELECT * FROM EquipmentLog WHERE EquipmentID='%s';", pHostId);
-		else
-			sprintf(strCmd, "SELECT * FROM EquipmentLog WHERE EquipmentID='%s' AND TimeStamp BETWEEN %I64d AND %I64d;", pHostId, tmStart, tmEnd);
-		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
-		GetLogInfoResp logInfo;
-		while (!m_pRec->EndOfFile)
-		{
-			logInfo.bStatus = m_pRec->GetCollect("State").intVal;
-			logInfo.tmTime = m_pRec->GetCollect("TimeStamp").llVal;
-			logInfoQueue.push(logInfo);
-			m_pRec->MoveNext();
-		}
-	}
-	catch (...)
-	{
-		return J_DB_ERROR;
-	}
+	//try
+	//{
+	//	char strCmd[512] = {0};
+	//	if (tmStart == -1 && tmEnd == -1)
+	//		sprintf(strCmd, "SELECT * FROM EquipmentLog WHERE EquipmentID='%s';", pHostId);
+	//	else
+	//		sprintf(strCmd, "SELECT * FROM EquipmentLog WHERE EquipmentID='%s' AND TimeStamp BETWEEN %I64d AND %I64d;", pHostId, tmStart, tmEnd);
+	//	m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	//	LogInfo logInfo;
+	//	while (!m_pRec->EndOfFile)
+	//	{
+	//		logInfo.bStatus = m_pRec->GetCollect("State").intVal;
+	//		logInfo.tmTime = m_pRec->GetCollect("TimeStamp").llVal;
+	//		logInfoQueue.push(logInfo);
+	//		m_pRec->MoveNext();
+	//	}
+	//}
+	//catch (...)
+	//{
+	//	return J_DB_ERROR;
+	//}
 
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetAlarmInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, AlarmInfoQueue &alarmInfoQueue)
+j_result_t CSqlServerAccess::GetAlarmInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, CliAlarmInfoQueue &alarmInfoQueue)
 {
 	try
 	{
@@ -220,9 +220,10 @@ j_result_t CSqlServerAccess::GetAlarmInfoList(const char *pHostId, time_t tmStar
 		else
 			sprintf(strCmd, "SELECT * FROM Alarm WHERE EquipmentID='%s' AND TimeStamp BETWEEN %I64d AND %I64d;", pHostId, tmStart, tmEnd);
 		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
-		AlarmInfo alarmInfo;
+		CliAlarmInfo alarmInfo;
 		while (!m_pRec->EndOfFile)
 		{
+			strcpy((char *)alarmInfo.pHostId, pHostId);
 			alarmInfo.bAlarm = m_pRec->GetCollect("Alarm").intVal;
 			alarmInfo.gps.dLatitude = m_pRec->GetCollect("GPS_Latitude").dblVal;
 			alarmInfo.gps.dLongitude = m_pRec->GetCollect("GPS_Longitude").dblVal;
@@ -241,7 +242,7 @@ j_result_t CSqlServerAccess::GetAlarmInfoList(const char *pHostId, time_t tmStar
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetDvrTotleInfo(DVRTotleInfo &dvrTotleInfo)
+j_result_t CSqlServerAccess::GetDvrTotleInfo(CliHostTotleInfo &dvrTotleInfo)
 {
 	try 
 	{
@@ -261,7 +262,7 @@ j_result_t CSqlServerAccess::GetDvrTotleInfo(DVRTotleInfo &dvrTotleInfo)
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetUserTotleInfo(UserTotleInfo &userTotleInfo)
+j_result_t CSqlServerAccess::GetUserTotleInfo(CliUserTotleInfo &userTotleInfo)
 {
 	try 
 	{
@@ -281,17 +282,17 @@ j_result_t CSqlServerAccess::GetUserTotleInfo(UserTotleInfo &userTotleInfo)
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetDvrList(int nType, long lDepartmentId, DvrInfoQueue &dvrInfoQueue)
+j_result_t CSqlServerAccess::GetDvrList(int nType, long lDepartmentId, CliHostInfoQueue &dvrInfoQueue)
 {
 	try
 	{
 		char strCmd[512] = {0};
 		sprintf(strCmd, "SELECT * FROM Equipment WHERE DepartmentID=%d;", lDepartmentId);
 		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
-		DVRInfo dvrInfo;
+		CliHostInfo dvrInfo;
 		while (!m_pRec->EndOfFile)
 		{
-			memset (&dvrInfo, 0, sizeof(DVRInfo));
+			memset (&dvrInfo, 0, sizeof(CliHostInfo));
 			strcpy(dvrInfo.szEquipmentID, (char*)_bstr_t(m_pRec->GetCollect("EquipmentID")));
 			strcpy(dvrInfo.szVehicleNO, (char*)_bstr_t(m_pRec->GetCollect("VehicleNO")));
 			strcpy(dvrInfo.szPhone, (char*)_bstr_t(m_pRec->GetCollect("PhoneNum")));
@@ -311,17 +312,17 @@ j_result_t CSqlServerAccess::GetDvrList(int nType, long lDepartmentId, DvrInfoQu
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetUserList(int nType, UserInfoQueue &userInfoQueue)
+j_result_t CSqlServerAccess::GetUserList(int nType, CliUserInfoQueue &userInfoQueue)
 {
 	try
 	{
 		char strCmd[512] = {0};
 		sprintf(strCmd, "SELECT * FROM UserInfo;");
 		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
-		UserInfo userInfo;
+		CliUserInfo userInfo;
 		while (!m_pRec->EndOfFile)
 		{
-			memset (&userInfo, 0, sizeof(UserInfo));
+			memset (&userInfo, 0, sizeof(CliUserInfo));
 			userInfo.lUserID = m_pRec->GetCollect("UserID").llVal;
 			strcpy(userInfo.szName, (char*)_bstr_t(m_pRec->GetCollect("Name")));
 			strcpy(userInfo.szAccountName, (char*)_bstr_t(m_pRec->GetCollect("AccountName")));
@@ -340,17 +341,17 @@ j_result_t CSqlServerAccess::GetUserList(int nType, UserInfoQueue &userInfoQueue
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::GetDepartmentList(DepartmentInfoQueue &departmentInfoQueue)
+j_result_t CSqlServerAccess::GetDepartmentList(CliDepartmentInfoQueue &departmentInfoQueue)
 {
 	try
 	{
 		char strCmd[512] = {0};
 		sprintf(strCmd, "SELECT * FROM Department;");
 		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
-		DepartmentInfo departmentInfo;
+		CliDepartmentInfo departmentInfo;
 		while (!m_pRec->EndOfFile)
 		{
-			memset (&departmentInfo, 0, sizeof(DepartmentInfo));
+			memset (&departmentInfo, 0, sizeof(CliDepartmentInfo));
 			departmentInfo.lDepartmentID = m_pRec->GetCollect("DepartmentID").llVal;
 			strcpy(departmentInfo.szName, (char*)_bstr_t(m_pRec->GetCollect("Name")));
 			departmentInfo.ParentID = m_pRec->GetCollect("ParentID").llVal;
@@ -359,6 +360,231 @@ j_result_t CSqlServerAccess::GetDepartmentList(DepartmentInfoQueue &departmentIn
 			departmentInfoQueue.push(departmentInfo);
 			m_pRec->MoveNext();
 		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::GetDvrInfo(const CliHostId &dvrId, CliHostInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM Equipment WHERE EquipmentID='%s';", dvrId.szEquipmentID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (!m_pRec->EndOfFile)
+		{
+			strcpy(info.szEquipmentID, (char*)_bstr_t(m_pRec->GetCollect("EquipmentID")));
+			strcpy(info.szVehicleNO, (char*)_bstr_t(m_pRec->GetCollect("VehicleNO")));
+			strcpy(info.szPhone, (char*)_bstr_t(m_pRec->GetCollect("PhoneNum")));
+			info.nTotalChannels = m_pRec->GetCollect("TotalChannels").intVal;
+			info.lDepartmentID = m_pRec->GetCollect("DepartmentID").llVal;
+			info.nOnline = m_pRec->GetCollect("Online").intVal;
+			info.nState = m_pRec->GetCollect("State").intVal;
+		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::GetUserInfo(const CliUserId &userId, CliUserInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM UserInfo WHERE UserID=%d;", userId.lUserID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (!m_pRec->EndOfFile)
+		{
+			info.lUserID = m_pRec->GetCollect("UserID").llVal;
+			strcpy(info.szName, (char*)_bstr_t(m_pRec->GetCollect("Name")));
+			strcpy(info.szAccountName, (char*)_bstr_t(m_pRec->GetCollect("AccountName")));
+			strcpy(info.szPassword, (char*)_bstr_t(m_pRec->GetCollect("Password")));
+			info.lDepartmentID = m_pRec->GetCollect("DepartmentID").llVal;
+			info.nState = m_pRec->GetCollect("State").intVal;
+		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::GetDepartmentInfo(const CliDepartmentId &departmengId, CliDepartmentInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM Department WHERE DepartmentID=%d;", departmengId.lDepartmentID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (!m_pRec->EndOfFile)
+		{
+			info.lDepartmentID = m_pRec->GetCollect("DepartmentID").llVal;
+			strcpy(info.szName, (char*)_bstr_t(m_pRec->GetCollect("Name")));
+			info.ParentID = m_pRec->GetCollect("ParentID").llVal;
+			info.OrderIndex = m_pRec->GetCollect("OrderIndex").intVal;
+			info.nState = m_pRec->GetCollect("State").intVal;
+		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::AddDvrInfo(const CliHostInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "INSERT INTO Equipment (EquipmentID,VehicleNO,PhoneNum,TotalChannels,DepartmentID,Online,State) VALUES ('%s','%s','%s',%d,%d,%d,%d);", 
+			info.szEquipmentID, info.szVehicleNO, info.szPhone, info.nTotalChannels, info.lDepartmentID, info.nOnline, info.nState);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::AddUserInfo(const CliUserInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "INSERT INTO UserInfo (UserID,Name,AccountName,Password,DepartmentID,State) VALUES (%d,'%s','%s','%s',%d,%d);", 
+			info.lUserID, info.szName, info.szAccountName, info.szPassword, info.lDepartmentID, info.nState);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::AddDepartmentInfo(const CliDepartmentInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "INSERT INTO Department (DepartmentID,Name,ParentID,OrderIndex,State) VALUES (%d,'%s',%d,%d,%d);", 
+			info.lDepartmentID, info.szName, info.ParentID, info.OrderIndex, info.nState);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::ModDvrInfo(const CliHostInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "UPDATE Equipment SET VehicleNO='%s',PhoneNum='%s',TotalChannels=%d,DepartmentID=%d,Online=%d,State=%d WHERE EquipmentID='%s';", 
+			info.szVehicleNO, info.szPhone, info.nTotalChannels, info.lDepartmentID, info.nOnline, info.nState, info.szEquipmentID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::ModUserInfo(const CliUserInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "UPDATE UserInfo SET Name='%s',AccountName='%s',Password='%s',DepartmentID=%d,State=%d WHERE UserID=%d;", 
+			info.szName, info.szAccountName, info.szPassword, info.lDepartmentID, info.nState, info.lUserID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::ModDepartmentInfo(const CliDepartmentInfo &info)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "UPDATE Department SET Name='%s',ParentID=%d,OrderIndex=%d,State=%d WHERE DepartmentID=%d;", 
+			info.szName, info.ParentID, info.OrderIndex, info.nState, info.lDepartmentID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::DelDvrInfo(const CliHostId &dvrId)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "DELETE Equipment WHERE EquipmentID='%s';", dvrId.szEquipmentID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::DelUserInfo(const CliUserId &userId)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "DELETE UserInfo WHERE UserID=%d;", userId.lUserID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::DelDepartmentInfo(const CliDepartmentId &departmengId)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "DELETE Department WHERE DepartmentID=%d;", departmengId.lDepartmentID);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 	}
 	catch (...)
 	{

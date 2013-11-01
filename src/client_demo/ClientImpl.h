@@ -1,7 +1,8 @@
 #pragma once
 #include "windows.h"
 #include "codec.h"
-#include "XlType.h"
+#include "XlClientType.h"
+#include "ConfigDlg.h"
 
 class CClientImpl
 {
@@ -11,8 +12,10 @@ public:
 
 public:
 	/// ”∆µΩÁ√Ê
-	void Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd);
+	void Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd, int nFlag);
 	void Logout(const char *pUser, const char *pPasswd);
+	void StartAlarm(const char *pEquipmentId);
+	void StopAlarm(const char *pEquipmentId);
 	void RealPlay(const char *pDevId, char chId, HWND hWnd);
 	void RealStop(const char *pDevId, char chId);
 	void VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t start, __time64_t end);
@@ -27,12 +30,25 @@ public:
 	void GetDvrTotleInfo();
 	void GetUserTotleInfo();
 	void GetDvrList(int nType, long lDepartmentId);
-	void GetUserList(int nType);
+	void GetUserList(int nType, long lDepartmentId);
 	void GetDepartmentList();
+	void AddDvrInfo(const DVRInfo &dvrInfo);
+	void GetDvrInfo(const DVRInfo &dvrInfo);
+	void ModifyDvrInfo(const DVRInfo &dvrInfo);
+	void DeleteDvrInfo(const DVRInfo &dvrInfo);
+	void AddUserInfo(const UserInfo &userInfo);
+	void GetUserInfo(const UserInfo &userInfo);
+	void ModifyUserInfo(const UserInfo &userInfo);
+	void DeleteUserInfo(const UserInfo &userInfo);
+	void AddDepartmentInfo(const DepartmentInfo &departmentInfo);
+	void GetDepartmentInfo(const DepartmentInfo &departmentInfo);
+	void ModifyDepartmentInfo(const DepartmentInfo &departmentInfo);
+	void DeleteDepartmentInfo(const DepartmentInfo &departmentInfo);
 
 public:
 	void SetVideoListBox(CListBox *pListBox) { m_videoListBox = pListBox; }
 	void SetConfigListBox(CListBox *pListBox) { m_configListBox = pListBox; }
+	void SetConfigDlg(CConfigDlg *pConfigDlg) { m_configDlg = pConfigDlg; }
 
 private:
 	static DWORD WINAPI ReciveProc(LPVOID lParam)
@@ -57,6 +73,7 @@ private:
 	HANDLE m_recvThread;
 	CListBox *m_videoListBox;
 	CListBox *m_configListBox;
+	CConfigDlg *m_configDlg;
 	Codec m_codec;
 	Codec m_vodCodec;
 };

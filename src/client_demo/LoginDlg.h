@@ -13,7 +13,7 @@ public:
 	//virtual ~CLogin();
 
 // Dialog Data
-	enum { IDD = IDD_ABOUTBOX };
+	enum { IDD = IDD_LOGINF };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support

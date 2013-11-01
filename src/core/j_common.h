@@ -183,6 +183,7 @@ struct J_AsioDataBase
 		j_command_e = 1,
 		j_data_e,
 		j_alarm_e,
+		j_alarm_history_e,
 		j_log_e,
 		j_dvr_list_e,
 		j_user_list_e,

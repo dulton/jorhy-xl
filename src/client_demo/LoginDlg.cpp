@@ -119,7 +119,11 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	UpdateData(TRUE);
 	DWORD dwAddr = 0; 
 	m_ipAddr.GetAddress(dwAddr);
-	m_impl.Login(dwAddr, _wtoi(m_strPort.GetCueBanner().GetString()), (LPSTR)(LPCTSTR)m_strUser, (LPSTR)(LPCTSTR)m_strPasswd);
+	char userName[32] = {0};
+	sprintf_s(userName, "%S", (LPSTR)(LPCTSTR)m_strUser);
+	char passWord[32] = {0};
+	sprintf_s(passWord, "%S", (LPSTR)(LPCTSTR)m_strPasswd);
+	m_impl.Login(dwAddr, _wtoi(m_strPort.GetCueBanner().GetString()), userName, passWord, 0);
 	m_bLogin = TRUE;
 	CDialog::OnOK();
 }

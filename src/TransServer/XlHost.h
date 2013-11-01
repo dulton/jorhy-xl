@@ -44,8 +44,10 @@ private:
 	j_result_t MakeRequest(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
 	j_uint32_t CheckNum(j_char_t *pData, j_int32_t nLen);
 	j_result_t MakeNetData(J_AsioDataBase *pAsioData, j_char_t *pDataBuff, j_int32_t nLen);
+
 	j_result_t ProcessClientCmd(J_AsioDataBase *pAsioData);
 	j_result_t ProcessDeviceCmd(J_AsioDataBase *pAsioData);
+
 	j_result_t OnRegister(J_AsioDataBase *pAsioData);
 	j_result_t OnHeartBeat(J_AsioDataBase *pAsioData);
 	j_result_t OnAlarmInfo(J_AsioDataBase *pAsioData);
@@ -57,10 +59,10 @@ private:
 	j_result_t OnGetDevInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnGetLogInfo(J_AsioDataBase *pAsioData);
 	//////////////////////////////////////////////////////////////////////////////////////
-	j_result_t OnRealPlay(j_char_t *pData, j_int32_t nLen);
-	j_result_t OnRealStop(j_char_t *pData, j_int32_t nLen);
-	j_result_t OnVodPlay(j_char_t *pData, j_int32_t nLen);
-	j_result_t OnVodStop(j_char_t *pData, j_int32_t nLen);
+	j_result_t OnRealPlay(j_int32_t nChannel);
+	j_result_t OnRealStop(j_int32_t nChannel);
+	j_result_t OnVodPlay(GUID sessionId, j_int32_t nChannel, j_time_t startTime, j_time_t endTime);
+	j_result_t OnVodStop(GUID sessionId, j_int32_t nChannel);
 
 private:
 	int AddRingBuffer(CRingBuffer *pRingBuffer)

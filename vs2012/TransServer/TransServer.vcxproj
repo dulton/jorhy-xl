@@ -86,6 +86,8 @@
     <ClCompile Include="..\..\src\TransServer\TransServer.cpp" />
     <ClCompile Include="..\..\src\TransServer\XlChannel.cpp" />
     <ClCompile Include="..\..\src\TransServer\XlClient.cpp" />
+    <ClCompile Include="..\..\src\TransServer\XlConfig.cpp" />
+    <ClCompile Include="..\..\src\TransServer\XlHelper.cpp" />
     <ClCompile Include="..\..\src\TransServer\XlHost.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -96,8 +98,11 @@
     <ClInclude Include="..\..\src\TransServer\TcpServer4Device.h" />
     <ClInclude Include="..\..\src\TransServer\XlChannel.h" />
     <ClInclude Include="..\..\src\TransServer\XlClient.h" />
+    <ClInclude Include="..\..\src\TransServer\XlConfig.h" />
+    <ClInclude Include="..\..\src\TransServer\XlCType.h" />
+    <ClInclude Include="..\..\src\TransServer\XlHelper.h" />
     <ClInclude Include="..\..\src\TransServer\XlHost.h" />
-    <ClInclude Include="..\..\src\TransServer\XlType.h" />
+    <ClInclude Include="..\..\src\TransServer\XlDType.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

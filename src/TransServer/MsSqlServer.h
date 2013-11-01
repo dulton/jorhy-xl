@@ -16,7 +16,8 @@
 #ifndef __SQLSERVERACCESS_H_
 #define __SQLSERVERACCESS_H_
 #include "j_includes.h"
-#include "XlType.h"
+#include "XlDType.h"
+#include "XlCType.h"
 
 #import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" no_namespace rename("EOF", "EndOfFile")
 /// 本类的功能:  SqlServer数据库操作类
@@ -34,18 +35,30 @@ public:
 
 public:
 	j_result_t CheckUser(const char *pUserName, const char *pPasswd);
-	j_result_t UpdateDevInfo(const DevInfo &devInfo);
-	j_result_t GetDevInfo(DevInfo &devInfo);
-	j_result_t InsertAlarmInfo(const char *pHostId, const AlarmInfo& alarmInfo);
+	j_result_t UpdateDevInfo(const DevHostInfo &devInfo);
+	j_result_t GetDevInfo(DevHostInfo &devInfo);
+	j_result_t InsertAlarmInfo(const char *pHostId, const DevAlarmInfo& alarmInfo);
 	time_t GetDevLogLastTime(const char *pHostId);
 	j_result_t InsertLogInfo(const char *pHostId, int nState, time_t tmTimeStamp);
-	j_result_t GetLogInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, LogInfoQueue &logInfoQueue);
-	j_result_t GetAlarmInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, AlarmInfoQueue &alarmInfoQueue);
-	j_result_t GetDvrTotleInfo(DVRTotleInfo &dvrTotleInfo);
-	j_result_t GetUserTotleInfo(UserTotleInfo &userTotleInfo);
-	j_result_t GetDvrList(int nType, long lDepartmentId, DvrInfoQueue &dvrInfoQueue);
-	j_result_t GetUserList(int nType, UserInfoQueue &userInfoQueue);
-	j_result_t GetDepartmentList(DepartmentInfoQueue &dvrInfoQueue);
+	j_result_t GetLogInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, DevLogInfoQueue &logInfoQueue);
+	j_result_t GetAlarmInfoList(const char *pHostId, time_t tmStart, time_t tmEnd, CliAlarmInfoQueue &alarmInfoQueue);
+	j_result_t GetDvrTotleInfo(CliHostTotleInfo &dvrTotleInfo);
+	j_result_t GetUserTotleInfo(CliUserTotleInfo &userTotleInfo);
+	j_result_t GetDvrList(int nType, long lDepartmentId, CliHostInfoQueue &dvrInfoQueue);
+	j_result_t GetUserList(int nType, CliUserInfoQueue &userInfoQueue);
+	j_result_t GetDepartmentList(CliDepartmentInfoQueue &dvrInfoQueue);
+	j_result_t GetDvrInfo(const CliHostId &dvrId, CliHostInfo &info);
+	j_result_t GetUserInfo(const CliUserId &userId, CliUserInfo &info);
+	j_result_t GetDepartmentInfo(const CliDepartmentId &departmengId, CliDepartmentInfo &info);
+	j_result_t AddDvrInfo(const CliHostInfo &info);
+	j_result_t AddUserInfo(const CliUserInfo &info);
+	j_result_t AddDepartmentInfo(const CliDepartmentInfo &info);
+	j_result_t ModDvrInfo(const CliHostInfo &info);
+	j_result_t ModUserInfo(const CliUserInfo &info);
+	j_result_t ModDepartmentInfo(const CliDepartmentInfo &info);
+	j_result_t DelDvrInfo(const CliHostId &dvrId);
+	j_result_t DelUserInfo(const CliUserId &userId);
+	j_result_t DelDepartmentInfo(const CliDepartmentId &departmengId);
 
 private:  
 	_ConnectionPtr m_pConn;		/// 连接对象  

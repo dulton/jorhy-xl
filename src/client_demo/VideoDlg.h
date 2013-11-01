@@ -17,7 +17,7 @@ public:
 	CVideoDlg(CWnd* pParent = NULL);	// standard constructor
 
 // Dialog Data
-	enum { IDD = IDD_CLIENTDEMO_DIALOG };
+	enum { IDD = IDD_VIDEO };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -70,6 +70,9 @@ public:
 	CStatic m_VodWnd3;
 	CStatic m_VodWnd4;
 	CStatic m_VodWnd5;
+	CStatic m_VodWnd6;
+	CStatic m_VodWnd7;
+	CStatic m_VodWnd8;
 	CComboBox m_VodChannel;
 	CTime m_dateStart;
 	CTime m_dateStop;
@@ -81,7 +84,4 @@ public:
 	CTime m_alarmStartTime;
 	CTime m_alarmStopDate;
 	CTime m_alarmStopTime;
-	CStatic m_VodWnd6;
-	CStatic m_VodWnd7;
-	CStatic m_VodWnd8;
 };

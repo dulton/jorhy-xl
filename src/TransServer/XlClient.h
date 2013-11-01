@@ -18,7 +18,9 @@
 
 #include "j_includes.h"
 #include "x_socket.h"
-#include "XlType.h"
+#include "XlDType.h"
+#include "XlCType.h"
+#include "XlConfig.h"
 /// 本类的功能:  客户端业务处理类
 class CXlClient : public J_Client
 {
@@ -28,6 +30,13 @@ class CXlClient : public J_Client
 		j_string_t strHost;
 	};
 	typedef std::vector<VideoInfo> VideoInfoVec;
+	struct VodInfo
+	{
+		GUID sessionId;
+		j_int32_t nChanId;
+		j_string_t strHost;
+	};
+	typedef std::vector<VodInfo> VodInfoVec;
 	typedef std::vector<j_string_t> AlarmInfoVec;
 public:
 	CXlClient(j_socket_t nSock);
@@ -39,80 +48,57 @@ public:
 	j_result_t Broken();
 
 private:
-	/// 公用接口
-	j_result_t MakeRequest(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
-	j_result_t MakeResponse(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
-	j_uint32_t CheckNum(j_char_t *pData, j_int32_t nLen);
 	/// 生成数据接口
-	j_result_t MakeNetData(J_AsioDataBase *pAsioData, j_char_t *pDataBuff, j_int32_t nLen);
 	j_result_t MakeTransData(J_AsioDataBase *pAsioData);
-	j_result_t MakeLogData(J_AsioDataBase *pAsioData);
 	j_result_t MakeAlarmData(J_AsioDataBase *pAsioData);
-	j_result_t MakeDvrListData(J_AsioDataBase *pAsioData);
-	j_result_t MakeUserListData(J_AsioDataBase *pAsioData);
-	j_result_t MakeDepartmentListData(J_AsioDataBase *pAsioData);
 	/// 分析数据接口
 	j_result_t ProcessRequest(J_AsioDataBase *pAsioData);
 	j_result_t ProcessData(J_AsioDataBase *pAsioData);
-	j_result_t ProcessLog(J_AsioDataBase *pAsioData);
 	j_result_t ProcessAlarm(J_AsioDataBase *pAsioData);
-	j_result_t ProcessDvrList(J_AsioDataBase *pAsioData);
-	j_result_t ProcessUserList(J_AsioDataBase *pAsioData);
-	j_result_t ProcessDepartmentList(J_AsioDataBase *pAsioData);
+	j_result_t ProcessConfig(J_AsioDataBase *pAsioData);
+
 	/// 设备相关接口
-	j_result_t StartView(j_string_t strHostId, j_int32_t nChanId, J_AsioDataBase *pAsioData);
-	j_result_t StopView(j_string_t strHostId, j_int32_t nChanId, J_AsioDataBase *pAsioData);
-	j_result_t StartAlarm(j_string_t strHostId, j_time_t tmStart, j_time_t tmEnd);
+	j_result_t StartView(const CliRealPlay &realPlay, J_AsioDataBase *pAsioData);
+	j_result_t StopView(const CliRealPlay &realPlay, J_AsioDataBase *pAsioData);
+	j_result_t StartVod(const CliStartVod &startVod, J_AsioDataBase *pAsioData);
+	j_result_t StopVod(const CliStopVod &stopVod, J_AsioDataBase *pAsioData);
+	j_result_t StartAlarm(j_string_t strHostId);
 	j_result_t StopAlarm(j_string_t strHostId);
 	j_result_t StopAll();
+	/// 请求处理函数
 	j_result_t OnLogin(J_AsioDataBase *pAsioData);
 	j_result_t OnLogout(J_AsioDataBase *pAsioData);
+	j_result_t OnHeartBeat(J_AsioDataBase *pAsioData);
 	j_result_t OnRealPlay(J_AsioDataBase *pAsioData);
 	j_result_t OnRealStop(J_AsioDataBase *pAsioData);
 	j_result_t OnVodPlay(J_AsioDataBase *pAsioData);
 	j_result_t OnVodStop(J_AsioDataBase *pAsioData);
 	j_result_t OnSetTime(J_AsioDataBase *pAsioData);
-	j_result_t OnGetDevInfo(J_AsioDataBase *pAsioData);
-	j_result_t OnGetLogInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnStartAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
-	/// 配置管理相关接口
-	j_result_t OnGetTotleDvrInfo(J_AsioDataBase *pAsioData);
-	j_result_t OnGetTotleUserInfo(J_AsioDataBase *pAsioData);
-	j_result_t OnGetDvrList(J_AsioDataBase *pAsioData);
-	j_result_t OnGetUserList(J_AsioDataBase *pAsioData);
-	j_result_t OnGetDepartmentList(J_AsioDataBase *pAsioData);
+
 private:
 	//J_OS::CTCPSocket m_socket;						//客户端连接
 	j_char_t *m_readBuff;								//命令请求缓存区
 	j_char_t *m_writeBuff;								//命令发送缓存区
 	j_char_t *m_dataBuff;								//视频发送缓存区
 	j_char_t *m_alarmBuff;								//报警发送缓存区
-	j_char_t *m_logBuff;									//日志发送缓存区 
-	j_char_t *m_dvrBuff;									//设备信息发送缓存区
-	j_char_t *m_userBuff;									//用户信息发送缓存区
-	j_char_t *m_departmentBuff;								//单位信息发送缓存区
-	LogInfoQueue m_logInfoQueue;				//历史日志缓存队列
-	AlarmInfoQueue m_alarmInfoQueue;		//历史报警缓存队列
-	DvrInfoQueue m_dvrInfoQueue;				//设备信息缓存队列
-	UserInfoQueue m_userInfoQueue;				//用户信息缓存队列
-	DepartmentInfoQueue m_departmentInfoQueue;	//单位信息缓存队列
+
 	j_int32_t m_ioCmdState;							//命令请求状态
 	j_int32_t m_ioDataState;							//视频发送状态
 	j_int32_t m_ioAlarmState;							//报警发送状态
-	j_int32_t m_ioLogState;								//日志发送状态
-	j_int32_t m_ioDvrListState;						//设备信息发送状态
-	j_int32_t m_ioUserListState;						//用户信息发送状态
-	j_int32_t m_ioDepartmentListState;					//单位信息发送状态
 	CRingBuffer m_ringBuffer;						//视频流队列
 	J_StreamHeader m_streamHeader;			//视频队列头信息
 	CRingBuffer m_alarmBuffer;						//报警流队列
 	J_StreamHeader m_alarmHeader;				//报警队列头信息
 	j_long_t m_nRefCnt;									//视频流引用计数
 	j_long_t m_nAlarmRefCnt;							//报警流引用计数
-	J_OS::CTLock m_vecLocker;						//视频访问锁
-	VideoInfoVec m_videoInfoVec;					//视频访问信息
+	J_OS::CTLock m_vecLocker;						//实时视频访问锁
+	VideoInfoVec m_videoInfoVec;					//实时视频访问信息
+	J_OS::CTLock m_vodLocker;						//历史视频访问锁
+	VodInfoVec m_vodInfoVec;					//历史视频访问信息
 	J_OS::CTLock m_vecAlarmLocker;				//报警访问锁
 	AlarmInfoVec m_alarmInfoVec;					//报警访问信息
+	CXlConfig m_config;
 };
 #endif // ~__CLIENT_H_

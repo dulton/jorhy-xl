@@ -19,7 +19,7 @@
 #include "x_timer.h"
 #include "x_lock.h"
 
-/// 设备信心
+/// 设备信息
 struct HostInfo
 {
 	J_Host *pHost;				///< 设备对象

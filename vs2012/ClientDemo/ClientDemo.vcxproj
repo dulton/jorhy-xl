@@ -113,6 +113,7 @@
     <ClInclude Include="..\..\src\client_demo\Resource.h" />
     <ClInclude Include="..\..\src\client_demo\stdafx.h" />
     <ClInclude Include="..\..\src\client_demo\targetver.h" />
+    <ClInclude Include="..\..\src\client_demo\XlClientType.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

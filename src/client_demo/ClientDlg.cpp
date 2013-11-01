@@ -58,8 +58,8 @@ BOOL CClientDlg::OnInitDialog()
 	m_tabCtrl.InsertItem(0, L"视频界面");      //添加参数一选项卡 
 	m_tabCtrl.InsertItem(1, L"配置界面");      //添加参数二选项卡
 
-	m_videoDlg.Create(IDD_CLIENTDEMO_DIALOG, GetDlgItem(IDC_TAB1));
-	m_configDlg.Create(IDD_DIALOG_CONFIG, GetDlgItem(IDC_TAB1));
+	m_videoDlg.Create(IDD_VIDEO, GetDlgItem(IDC_TAB1));
+	m_configDlg.Create(IDD_CONFIG, GetDlgItem(IDC_TAB1));
 	//获得IDC_TABTEST客户区大小
     CRect rs;
     m_tabCtrl.GetClientRect(&rs);

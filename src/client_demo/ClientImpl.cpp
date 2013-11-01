@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "XlType.h"
+#include "XlClientType.h"
 #include "ClientImpl.h"
+#include "ConfigDlg.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@ CClientImpl::CClientImpl()
 	m_recvThread = INVALID_HANDLE_VALUE;
 	m_videoListBox = NULL;
 	m_configListBox = NULL;
+	m_configDlg = NULL;
 
 	WSADATA wsaData; 
 	WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -23,7 +25,7 @@ CClientImpl::~CClientImpl()
 	WSACleanup();
 }
 
-void CClientImpl::Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd)
+void CClientImpl::Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd, int nFlag)
 {
 	if (!m_bLogin)
 	{
@@ -46,9 +48,10 @@ void CClientImpl::Login(DWORD dwAddr, int nPort, const char *pUser, const char *
 			CmdTail tail;
 		} loginBody;
 		memset(&loginBody, 0, sizeof(LoginBody)) ;
-		memcpy(loginBody.data.user, pUser, strlen(pUser));
-		memcpy(loginBody.data.passWord, pPasswd, strlen(pPasswd));
-		MakeCommand(xl_login, (char *)&loginBody.data, sizeof(LoginReq), (char *)&loginBody);
+		memcpy(loginBody.data.szAccountName, pUser, strlen(pUser));
+		memcpy(loginBody.data.szPassword, pPasswd, strlen(pPasswd));
+		loginBody.data.nForced = nFlag;
+		MakeCommand(xlc_login, (char *)&loginBody.data, sizeof(LoginReq), (char *)&loginBody);
 		send(m_sock, (char *)&loginBody, sizeof(LoginBody), 0);
 
 		m_bRun = TRUE;
@@ -60,13 +63,10 @@ void CClientImpl::Logout(const char *pUser, const char *pPasswd)
 {
 	struct LogoutBody {
 		CmdHeader head;
-		LoginReq data;
 		CmdTail tail;
 	} logoutBody;
 	memset(&logoutBody, 0, sizeof(LogoutBody)) ;
-	memcpy(logoutBody.data.user, pUser, strlen(pUser));
-	memcpy(logoutBody.data.passWord, pPasswd, strlen(pPasswd));
-	MakeCommand(xl_logout, (char *)&logoutBody.data, sizeof(LogoutReq), (char *)&logoutBody);
+	MakeCommand(xlc_logout, NULL, 0, (char *)&logoutBody);
 	send(m_sock, (char *)&logoutBody, sizeof(LogoutBody), 0);
 
 	CloseHandle(m_recvThread);
@@ -74,35 +74,43 @@ void CClientImpl::Logout(const char *pUser, const char *pPasswd)
 	m_bLogin = FALSE;
 }
 
+void CClientImpl::StartAlarm(const char *pEquipmentId)
+{
+	RealAlarmBody startAlarmBody;
+	memset(&startAlarmBody, 0, sizeof(RealAlarmBody)) ;
+	MakeCommand(xlc_start_real_alarm_info, (char *)pEquipmentId, sizeof(DVRId), (char *)&startAlarmBody);
+	send(m_sock, (char *)&startAlarmBody, sizeof(RealAlarmBody), 0);
+}
+
+void CClientImpl::StopAlarm(const char *pEquipmentId)
+{
+	RealAlarmBody stoptAlarmBody;
+	memset(&stoptAlarmBody, 0, sizeof(RealAlarmBody)) ;
+	MakeCommand(xlc_stop_real_alarm_info, (char *)pEquipmentId, sizeof(DVRId), (char *)&stoptAlarmBody);
+	send(m_sock, (char *)&stoptAlarmBody, sizeof(RealAlarmBody), 0);
+}
+
 void CClientImpl::RealPlay(const char *pDevId, char chId, HWND hWnd)
 {
-	struct RealPlayBody {
-		CmdHeader head;
-		RealPlayReq data;
-		CmdTail tail;
-	} realPlayBody;
-	memset(&realPlayBody, 0, sizeof(RealPlayBody));
+	RealViewBody realPlayBody;
+	memset(&realPlayBody, 0, sizeof(RealViewBody));
 	memcpy(realPlayBody.data.hostId, pDevId, strlen(pDevId));
 	realPlayBody.data.channel = chId;
 
-	MakeCommand(xl_real_play, (char *)&realPlayBody.data, sizeof(RealPlayReq), (char *)&realPlayBody);
-	send(m_sock, (char *)&realPlayBody, sizeof(RealPlayBody), 0);
+	MakeCommand(xlc_start_real_view, (char *)&realPlayBody.data, sizeof(RealViewReq), (char *)&realPlayBody);
+	send(m_sock, (char *)&realPlayBody, sizeof(RealViewBody), 0);
 	m_codec.StartRMDisplay(hWnd, chId );
 }
 
 void CClientImpl::RealStop(const char *pDevId, char chId)
 {
-	struct RealStopBody {
-		CmdHeader head;
-		RealStopReq data;
-		CmdTail tail;
-	} realStopBody;
-	memset(&realStopBody, 0, sizeof(RealStopBody));
+	RealViewBody realStopBody;
+	memset(&realStopBody, 0, sizeof(RealViewBody));
 	memcpy(realStopBody.data.hostId, pDevId, strlen(pDevId));
 	realStopBody.data.channel = chId;
 
-	MakeCommand(xl_real_stop, (char *)&realStopBody.data, sizeof(RealStopReq), (char *)&realStopBody);
-	send(m_sock, (char *)&realStopBody, sizeof(RealStopBody), 0);
+	MakeCommand(xlc_stop_real_view, (char *)&realStopBody.data, sizeof(RealViewReq), (char *)&realStopBody);
+	send(m_sock, (char *)&realStopBody, sizeof(RealViewBody), 0);
 	m_codec.StopRMDisplay(chId);
 }
 
@@ -119,7 +127,7 @@ void CClientImpl::VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t s
 	vodPlayBody.data.tmStartTime = start;
 	vodPlayBody.data.tmEndTime = end;
 
-	MakeCommand(xl_vod_play, (char *)&vodPlayBody.data, sizeof(VodPlayReq), (char *)&vodPlayBody);
+	MakeCommand(xlc_start_vod_view, (char *)&vodPlayBody.data, sizeof(VodPlayReq), (char *)&vodPlayBody);
 	send(m_sock, (char *)&vodPlayBody, sizeof(VodPlayBody), 0);
 	m_vodCodec.StartPlayback(hWnd, chId );
 }
@@ -135,34 +143,34 @@ void CClientImpl::VodStop(const char *pDevId, char chId)
 	memcpy(vodStopBody.data.hostId, pDevId, strlen(pDevId));
 	vodStopBody.data.channel = chId;
 
-	MakeCommand(xl_vod_stop, (char *)&vodStopBody.data, sizeof(VodStopReq), (char *)&vodStopBody);
+	MakeCommand(xlc_stop_vod_view, (char *)&vodStopBody.data, sizeof(VodStopReq), (char *)&vodStopBody);
 	send(m_sock, (char *)&vodStopBody, sizeof(VodStopBody), 0);
 	m_vodCodec.StopPlayback(chId);
 }
 
 void CClientImpl::SetTime(__time64_t sysTime)
 {
-	struct SysTimeBody {
-		CmdHeader head;
-		SetTimeReq data;
-		CmdTail tail;
-	} sysTimeBody;
-	sysTimeBody.data.systime = sysTime;
-	MakeCommand(xl_set_time, (char *)&sysTimeBody.data, sizeof(SetTimeReq), (char *)&sysTimeBody);
-	send(m_sock, (char *)&sysTimeBody, sizeof(SysTimeBody), 0);
+	//struct SysTimeBody {
+	//	CmdHeader head;
+	//	SetTimeReq data;
+	//	CmdTail tail;
+	//} sysTimeBody;
+	//sysTimeBody.data.systime = sysTime;
+	//MakeCommand(xl_set_time, (char *)&sysTimeBody.data, sizeof(SetTimeReq), (char *)&sysTimeBody);
+	//send(m_sock, (char *)&sysTimeBody, sizeof(SysTimeBody), 0);
 }
 
 void CClientImpl::GetDevInfo(const char *pDevId)
 {
-	struct DevInfoBody {
-		CmdHeader head;
-		HostInfoReq data;
-		CmdTail tail;
-	} devInfoBody;
-	memset(&devInfoBody, 0, sizeof(DevInfoBody));
-	memcpy(devInfoBody.data.hostId, pDevId, strlen(pDevId));
-	MakeCommand(xl_get_devinfo, (char *)&devInfoBody.data, sizeof(HostInfoReq), (char *)&devInfoBody);
-	send(m_sock, (char *)&devInfoBody, sizeof(DevInfoBody), 0);
+	//struct DevInfoBody {
+	//	CmdHeader head;
+	//	HostInfoReq data;
+	//	CmdTail tail;
+	//} devInfoBody;
+	//memset(&devInfoBody, 0, sizeof(DevInfoBody));
+	//memcpy(devInfoBody.data.hostId, pDevId, strlen(pDevId));
+	//MakeCommand(xl_get_devinfo, (char *)&devInfoBody.data, sizeof(HostInfoReq), (char *)&devInfoBody);
+	//send(m_sock, (char *)&devInfoBody, sizeof(DevInfoBody), 0);
 }
 
 void CClientImpl::GetAlarmInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
@@ -173,10 +181,8 @@ void CClientImpl::GetAlarmInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
 		CmdTail tail;
 	} alarmInfoBody;
 	memset(&alarmInfoBody, 0, sizeof(AlarmInfoBody));
-	alarmInfoBody.data.tmStart = tmStart;
-	alarmInfoBody.data.tmEnd = tmEnd;
 	memcpy(alarmInfoBody.data.hostId, pDevId, strlen(pDevId));
-	MakeCommand(xl_start_real_alarm, (char *)&alarmInfoBody.data, sizeof(AlarmInfoReq), (char *)&alarmInfoBody);
+	MakeCommand(xlc_start_real_alarm_info, (char *)&alarmInfoBody.data, sizeof(AlarmInfoReq), (char *)&alarmInfoBody);
 	send(m_sock, (char *)&alarmInfoBody, sizeof(AlarmInfoBody), 0);
 }
 
@@ -184,28 +190,28 @@ void CClientImpl::StopAlarmInfo(const char *pDevId)
 {
 	struct AlarmStopBody {
 		CmdHeader head;
-		AlarmStopReq data;
+		AlarmInfoReq data;
 		CmdTail tail;
 	} alarmStopBody;
 	memset(&alarmStopBody, 0, sizeof(AlarmStopBody));
 	memcpy(alarmStopBody.data.hostId, pDevId, strlen(pDevId));
-	MakeCommand(xl_stop_real_alarm, (char *)&alarmStopBody.data, sizeof(AlarmStopReq), (char *)&alarmStopBody);
+	MakeCommand(xlc_stop_real_alarm_info, (char *)&alarmStopBody.data, sizeof(AlarmInfoReq), (char *)&alarmStopBody);
 	send(m_sock, (char *)&alarmStopBody, sizeof(AlarmStopBody), 0);
 }
 
 void CClientImpl::GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
 {
-	struct LogInfoBody {
-		CmdHeader head;
-		GetLogInfoReq data;
-		CmdTail tail;
-	} logInfoBody;
-	memset(&logInfoBody, 0, sizeof(LogInfoBody));
-	memcpy(logInfoBody.data.hostId, pDevId, strlen(pDevId));
-	logInfoBody.data.tmStart = tmStart;
-	logInfoBody.data.tmEnd = tmEnd;
-	MakeCommand(xl_get_loginfo, (char *)&logInfoBody.data, sizeof(GetLogInfoReq), (char *)&logInfoBody);
-	send(m_sock, (char *)&logInfoBody, sizeof(LogInfoBody), 0);
+	//struct LogInfoBody {
+	//	CmdHeader head;
+	//	GetLogInfoReq data;
+	//	CmdTail tail;
+	//} logInfoBody;
+	//memset(&logInfoBody, 0, sizeof(LogInfoBody));
+	//memcpy(logInfoBody.data.hostId, pDevId, strlen(pDevId));
+	//logInfoBody.data.tmStart = tmStart;
+	//logInfoBody.data.tmEnd = tmEnd;
+	//MakeCommand(xl_get_loginfo, (char *)&logInfoBody.data, sizeof(GetLogInfoReq), (char *)&logInfoBody);
+	//send(m_sock, (char *)&logInfoBody, sizeof(LogInfoBody), 0);
 }
 
 void CClientImpl::GetDvrTotleInfo()
@@ -215,7 +221,7 @@ void CClientImpl::GetDvrTotleInfo()
 		CmdTail tail;
 	} dvrTotleInfoBody;
 	memset(&dvrTotleInfoBody, 0, sizeof(DvrTotleInfoBody));
-	MakeCommand(xl_get_totle_dvr_info, NULL, 0, (char *)&dvrTotleInfoBody);
+	MakeCommand(xlc_get_dvr_summary, NULL, 0, (char *)&dvrTotleInfoBody);
 	send(m_sock, (char *)&dvrTotleInfoBody, sizeof(DvrTotleInfoBody), 0);
 }
 
@@ -226,7 +232,7 @@ void CClientImpl::GetUserTotleInfo()
 		CmdTail tail;
 	} userTotleInfoBody;
 	memset(&userTotleInfoBody, 0, sizeof(UserTotleInfoBody));
-	MakeCommand(xl_get_totle_user_info, NULL, 0, (char *)&userTotleInfoBody);
+	MakeCommand(xlc_get_user_summary, NULL, 0, (char *)&userTotleInfoBody);
 	send(m_sock, (char *)&userTotleInfoBody, sizeof(UserTotleInfoBody), 0);
 }
 
@@ -240,11 +246,11 @@ void CClientImpl::GetDvrList(int nType, long lDepartmentId)
 	memset(&dvrListBody, 0, sizeof(DvrListReq));
 	dvrListBody.data.nType = nType;
 	dvrListBody.data.lDepartmentID = lDepartmentId;
-	MakeCommand(xl_get_dvr_list, (char *)&dvrListBody.data, sizeof(DvrListReq), (char *)&dvrListBody);
+	MakeCommand(xlc_get_dvr_list, (char *)&dvrListBody.data, sizeof(DvrListReq), (char *)&dvrListBody);
 	send(m_sock, (char *)&dvrListBody, sizeof(DvrListBody), 0);
 }
 
-void CClientImpl::GetUserList(int nType)
+void CClientImpl::GetUserList(int nType, long lDepartmentId)
 {
 	struct UserListBody {
 		CmdHeader head;
@@ -253,7 +259,8 @@ void CClientImpl::GetUserList(int nType)
 	} userListBody;
 	memset(&userListBody, 0, sizeof(UserListBody));
 	userListBody.data.nType = nType;
-	MakeCommand(xl_get_user_list, (char *)&userListBody.data, sizeof(UserType), (char *)&userListBody);
+	userListBody.data.lDepartmentID = lDepartmentId;
+	MakeCommand(xlc_get_user_list, (char *)&userListBody.data, sizeof(UserType), (char *)&userListBody);
 	send(m_sock, (char *)&userListBody, sizeof(UserListBody), 0);
 }
 
@@ -263,8 +270,140 @@ void CClientImpl::GetDepartmentList()
 		CmdHeader head;
 		CmdTail tail;
 	} departmentListBody;
-	MakeCommand(xl_get_department_list, NULL, 0, (char *)&departmentListBody);
+	MakeCommand(xlc_get_department_list, NULL, 0, (char *)&departmentListBody);
 	send(m_sock, (char *)&departmentListBody, sizeof(DepartmentListBody), 0);
+}
+
+void CClientImpl::AddDvrInfo(const DVRInfo &dvrInfo)
+{
+	struct AddDvrBody {
+		CmdHeader head;
+		DVRInfo data;
+		CmdTail tail;
+	} addDvrBody;
+	MakeCommand(xlc_add_dvr_info, (char *)&dvrInfo, sizeof(DVRInfo), (char *)&addDvrBody);
+	send(m_sock, (char *)&addDvrBody, sizeof(AddDvrBody), 0);
+}
+
+void CClientImpl::GetDvrInfo(const DVRInfo &dvrInfo)
+{
+	struct GetDvrBody {
+		CmdHeader head;
+		DVRId data;
+		CmdTail tail;
+	} getDvrBody;
+	MakeCommand(xlc_get_dvr_info, (char *)&dvrInfo.szEquipmentID, sizeof(DVRId), (char *)&getDvrBody);
+	send(m_sock, (char *)&getDvrBody, sizeof(GetDvrBody), 0);
+}
+
+void CClientImpl::ModifyDvrInfo(const DVRInfo &dvrInfo)
+{
+	struct ModifyDvrBody {
+		CmdHeader head;
+		DVRInfo data;
+		CmdTail tail;
+	} modifyDvrBody;
+	MakeCommand(xlc_mod_dvr_info, (char *)&dvrInfo, sizeof(DVRInfo), (char *)&modifyDvrBody);
+	send(m_sock, (char *)&modifyDvrBody, sizeof(ModifyDvrBody), 0);
+}
+
+void CClientImpl::DeleteDvrInfo(const DVRInfo &dvrInfo)
+{
+	struct DeleteDvrBody {
+		CmdHeader head;
+		DVRId data;
+		CmdTail tail;
+	} deleteDvrBody;
+	MakeCommand(xlc_del_dvr_info, (char *)&dvrInfo.szEquipmentID, sizeof(DVRId), (char *)&deleteDvrBody);
+	send(m_sock, (char *)&deleteDvrBody, sizeof(DeleteDvrBody), 0);
+}
+
+void CClientImpl::AddUserInfo(const UserInfo &userInfo)
+{
+	struct AddUserBody {
+		CmdHeader head;
+		UserInfo data;
+		CmdTail tail;
+	} addUserBody;
+	MakeCommand(xlc_add_user_info, (char *)&userInfo, sizeof(UserInfo), (char *)&addUserBody);
+	send(m_sock, (char *)&addUserBody, sizeof(AddUserBody), 0);
+}
+
+void CClientImpl::GetUserInfo(const UserInfo &userInfo)
+{
+	struct GetUserBody {
+		CmdHeader head;
+		UserId data;
+		CmdTail tail;
+	} getUserBody;
+	MakeCommand(xlc_get_user_info, (char *)&userInfo.lUserID, sizeof(UserId), (char *)&getUserBody);
+	send(m_sock, (char *)&getUserBody, sizeof(GetUserBody), 0);
+}
+
+void CClientImpl::ModifyUserInfo(const UserInfo &userInfo)
+{
+	struct ModifyUserBody {
+		CmdHeader head;
+		UserInfo data;
+		CmdTail tail;
+	} modifyUserBody;
+	MakeCommand(xlc_mod_user_info, (char *)&userInfo, sizeof(UserInfo), (char *)&modifyUserBody);
+	send(m_sock, (char *)&modifyUserBody, sizeof(ModifyUserBody), 0);
+}
+
+void CClientImpl::DeleteUserInfo(const UserInfo &userInfo)
+{
+	struct DeleteUserBody {
+		CmdHeader head;
+		UserId data;
+		CmdTail tail;
+	} deleteUserBody;
+	MakeCommand(xlc_del_user_info, (char *)&userInfo.lUserID, sizeof(UserId), (char *)&deleteUserBody);
+	send(m_sock, (char *)&deleteUserBody, sizeof(DeleteUserBody), 0);
+}
+
+void CClientImpl::AddDepartmentInfo(const DepartmentInfo &departmentInfo)
+{
+	struct AddDepartmentBody {
+		CmdHeader head;
+		DepartmentInfo data;
+		CmdTail tail;
+	} addDepartmentBody;
+	MakeCommand(xlc_add_department_info, (char *)&departmentInfo, sizeof(DepartmentInfo), (char *)&addDepartmentBody);
+	send(m_sock, (char *)&addDepartmentBody, sizeof(AddDepartmentBody), 0);
+}
+
+void CClientImpl::GetDepartmentInfo(const DepartmentInfo &departmentInfo)
+{
+	struct GetDepartmentBody {
+		CmdHeader head;
+		DepartmentId data;
+		CmdTail tail;
+	} getDepartmentBody;
+	MakeCommand(xlc_get_department_info, (char *)&departmentInfo.lDepartmentID, sizeof(DepartmentId), (char *)&getDepartmentBody);
+	send(m_sock, (char *)&getDepartmentBody, sizeof(GetDepartmentBody), 0);
+}
+
+void CClientImpl::ModifyDepartmentInfo(const DepartmentInfo &departmentInfo)
+{
+	struct ModifyDepartmentBody {
+		CmdHeader head;
+		DepartmentInfo data;
+		CmdTail tail;
+	} modifyDepartmentBody;
+	MakeCommand(xlc_mod_department_info, (char *)&departmentInfo, sizeof(DepartmentInfo), (char *)&modifyDepartmentBody);
+	send(m_sock, (char *)&modifyDepartmentBody, sizeof(ModifyDepartmentBody), 0);
+}
+
+void CClientImpl::DeleteDepartmentInfo(const DepartmentInfo &departmentInfo)
+{
+	struct DeleteDepartmentBody {
+		CmdHeader head;
+		DepartmentId data;
+		CmdTail tail;
+	} deleteDepartmentBody;
+	MakeCommand(xlc_del_department_info, (char *)&departmentInfo.lDepartmentID, sizeof(DepartmentId), (char *)&deleteDepartmentBody);
+	send(m_sock, (char *)&deleteDepartmentBody, sizeof(DeleteDepartmentBody), 0);
 }
 
 int CClientImpl::MakeCommand(char bCmd, char *pData, int nLen, char *pBody)
@@ -341,13 +480,16 @@ void CClientImpl::OnRecive()
 		ASSERT(retValue == pHeader->length + sizeof(CmdTail) + sizeof(CmdHeader));
 		switch (pHeader->cmd & 0xFF)
 		{
-		case xl_real_play: case xl_real_stop: case xl_vod_play: case xl_vod_stop:
-		case xl_start_real_alarm: case xl_stop_real_alarm: case xl_set_time: case xl_get_loginfo:
-		case xl_get_alraminfo: case xl_get_devinfo: case xl_login: case xl_logout:
+		case xlc_start_real_view: case xlc_stop_real_view: case xlc_start_vod_view: case xlc_stop_vod_view:
+		case xlc_start_real_alarm_info: case xlc_stop_real_alarm_info: /*case xl_set_time: case xl_get_loginfo:*/
+		case xlc_get_alarm_info: /*case xl_get_devinfo: */case xlc_login: case xlc_logout: case 5: case 7: case 9:
 			ProcessVideoData(pHeader, pRecvBuff);
 			break;
-		case xl_get_totle_dvr_info: case xl_get_totle_user_info: case xl_get_dvr_list: case xl_get_user_list:
-		case xl_get_department_list:
+		case xlc_get_dvr_summary: case xlc_get_user_summary: case xlc_get_dvr_list: case xlc_get_user_list:
+		case xlc_get_department_list: case xlc_get_dvr_info: case xlc_get_user_info: case xlc_get_department_info:
+		case xlc_add_dvr_info: case xlc_add_user_info: case xlc_add_department_info:
+		case xlc_mod_dvr_info: case xlc_mod_user_info: case xlc_mod_department_info:
+		case xlc_del_dvr_info: case xlc_del_user_info: case xlc_del_department_info:
 			ProcessConfigData(pHeader, pRecvBuff);
 			break;
 		default:
@@ -359,15 +501,16 @@ void CClientImpl::OnRecive()
 
 void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 {
-	if((pHeader->cmd & 0xFF) == xl_real_play)
+	//ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
+	if((pHeader->cmd & 0xFF) == 7/*xlc_start_real_view*/)
 	{
-		RealPlayReq *pReps = (RealPlayReq *)(pRecvBuff + sizeof(CmdHeader));
+		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
 		m_codec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
 	}
-	else if ((pHeader->cmd & 0xFF) == xl_vod_play)
+	else if ((pHeader->cmd & 0xFF) == 9/*xlc_start_vod_view*/)
 	{
-		RealPlayReq *pReps = (RealPlayReq *)(pRecvBuff + sizeof(CmdHeader));
+		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
 		m_vodCodec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
 	}
@@ -376,11 +519,11 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 		ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 		switch (pHeader->cmd)
 		{
-		case xl_logout:
+		case xlc_logout:
 			m_bRun = FALSE;
 			closesocket(m_sock);
 			break;
-		case xl_set_time:
+		/*case xl_set_time:
 			break;
 		case xl_get_devinfo:
 			{
@@ -398,13 +541,13 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 				wsprintf(logInfo, L"state=%I64d, time_stamp=%d\n", pReps->bStatus & 0xFF, pReps->tmTime);
 				ShowVideoInfo(logInfo);
 			}
-			break;
-		case xl_get_alraminfo:
+			break;*/
+		case 5/*xlc_get_alarm_info*/:
 			{
 				AlarmInfoResp *pReps = (AlarmInfoResp *)(pRecvBuff + sizeof(CmdHeader));
 				CString alarmInfo;
-				alarmInfo.Format(L"Alarm=%I64d, Latitude=%f, Longitude=%f, GPSSpeed=%f, Speed=%f, TimeStamp=%I64d\n", 
-					pReps->bAlarm & 0xFF, pReps->gps.dLatitude, pReps->gps.dLongitude, pReps->gps.dGPSSpeed, pReps->speed, pReps->tmTimeStamp);
+				alarmInfo.Format(L"HostId=%S, Alarm=%I64d, Latitude=%f, Longitude=%f, GPSSpeed=%f, Speed=%f, TimeStamp=%I64d\n", 
+					pReps->hostId, pReps->bAlarm & 0xFF, pReps->gps.dLatitude, pReps->gps.dLongitude, pReps->gps.dGPSSpeed, pReps->speed, pReps->tmTimeStamp);
 				m_videoListBox->InsertString(0, alarmInfo);
 			}
 			break;
@@ -416,10 +559,10 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 
 void CClientImpl::ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff)
 {
-	ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
+	ShowConfigInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 	switch (pHeader->cmd)
 	{
-	case xl_get_totle_dvr_info:
+	case xlc_get_dvr_summary:
 		{
 			DVRTotleInfo *pResp = (DVRTotleInfo *)(pRecvBuff + sizeof(CmdHeader));
 			wchar_t totleDvrInfo[256] = {0};
@@ -427,7 +570,7 @@ void CClientImpl::ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff)
 			ShowConfigInfo(totleDvrInfo);
 		}
 		break;
-	case xl_get_totle_user_info:
+	case xlc_get_user_summary:
 		{
 			UserTotleInfo *pResp = (UserTotleInfo *)(pRecvBuff + sizeof(CmdHeader));
 			wchar_t totleUserInfo[256] = {0};
@@ -435,7 +578,7 @@ void CClientImpl::ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff)
 			ShowConfigInfo(totleUserInfo);
 		}
 		break;
-	case xl_get_dvr_list:
+	case xlc_get_dvr_list:
 		{
 			DVRInfo *pResp = (DVRInfo *)(pRecvBuff + sizeof(CmdHeader));
 			wchar_t dvrInfo[256] = {0};
@@ -443,7 +586,7 @@ void CClientImpl::ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff)
 			ShowConfigInfo(dvrInfo);
 		}
 		break;
-	case xl_get_user_list:
+	case xlc_get_user_list:
 		{
 			UserInfo *pResp = (UserInfo *)(pRecvBuff + sizeof(CmdHeader));
 			wchar_t userInfo[256] = {0};
@@ -451,12 +594,42 @@ void CClientImpl::ProcessConfigData(CmdHeader *pHeader,  char *pRecvBuff)
 			ShowConfigInfo(userInfo);
 		}
 		break;
-	case xl_get_department_list:
+	case xlc_get_department_list:
 		{
 			DepartmentInfo *pResp = (DepartmentInfo *)(pRecvBuff + sizeof(CmdHeader));
 			wchar_t userInfo[256] = {0};
 			wsprintf(userInfo, L"lDepartmentID=%d szName=%S \n", pResp->lDepartmentID, pResp->szName);
 			ShowConfigInfo(userInfo);
+		}
+		break;
+	case xlc_get_dvr_info:
+		{
+			DVRInfo *pResp = (DVRInfo *)(pRecvBuff + sizeof(CmdHeader)); 
+			if (m_configDlg != NULL)
+				m_configDlg->SetDvrInfo(*pResp);
+		}
+		break;
+	case xlc_get_user_info:
+		{
+			UserInfo *pResp = (UserInfo *)(pRecvBuff + sizeof(CmdHeader)); 
+			if (m_configDlg != NULL)
+				m_configDlg->SetUserInfo(*pResp);
+		}
+		break;
+	case xlc_get_department_info:
+		{
+			DepartmentInfo *pResp = (DepartmentInfo *)(pRecvBuff + sizeof(CmdHeader)); 
+			if (m_configDlg != NULL)
+				m_configDlg->SetDepartmentInfo(*pResp);
+		}
+		break;
+	case xlc_add_dvr_info: case xlc_add_user_info: case xlc_add_department_info:
+	case xlc_mod_dvr_info: case xlc_mod_user_info: case xlc_mod_department_info:
+	case xlc_del_dvr_info: case xlc_del_user_info: case xlc_del_department_info:
+		{
+			wchar_t info[256] = {0};
+			wsprintf(info, L"return_code=%c\n", *(pRecvBuff + sizeof(CmdHeader)) & 0xFF);
+			ShowConfigInfo(info);
 		}
 		break;
 	}

@@ -17,7 +17,7 @@ public:
 	CClientDlg(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
-	enum { IDD = IDD_DIALOG_MAIN };
+	enum { IDD = IDD_CLIENT };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
