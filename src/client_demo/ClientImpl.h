@@ -18,8 +18,8 @@ public:
 	void StopAlarm(const char *pEquipmentId);
 	void RealPlay(const char *pDevId, char chId, HWND hWnd);
 	void RealStop(const char *pDevId, char chId);
-	void VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t start, __time64_t end);
-	void VodStop(const char *pDevId, char chId);
+	void VodPlay(const char *pDevId, char chId, GUID sessionId, HWND hWnd, __time64_t start, __time64_t end);
+	void VodStop(const char *pDevId, char chId, GUID sessionId);
 	void SetTime(__time64_t sysTime);
 	void GetDevInfo(const char *pDevId);
 	void GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd);

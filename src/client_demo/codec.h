@@ -1,7 +1,9 @@
 #pragma once
 
-#pragma comment(lib, "AMESDK.lib")
 #include "AMESDK.H"
+#include "wincrypt.h"
+
+#pragma comment(lib, "AMESDK.lib")
 
 class Codec
 {

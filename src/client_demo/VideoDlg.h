@@ -8,6 +8,7 @@
 #include "afxdtctl.h"
 #include "atlcomtime.h"
 #include "afxcmn.h"
+#include "map"
 
 // CClientDemoDlg dialog
 class CVideoDlg : public CDialogEx
@@ -35,6 +36,7 @@ protected:
 	BOOL m_bPlay_6;
 	BOOL m_bPlay_7;
 	BOOL m_bPlay_8;
+	std::map<int, GUID> m_vodMap;
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();

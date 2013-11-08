@@ -41,10 +41,6 @@ public:
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 
 private:
-	j_result_t MakeRequest(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
-	j_uint32_t CheckNum(j_char_t *pData, j_int32_t nLen);
-	j_result_t MakeNetData(J_AsioDataBase *pAsioData, j_char_t *pDataBuff, j_int32_t nLen);
-
 	j_result_t ProcessClientCmd(J_AsioDataBase *pAsioData);
 	j_result_t ProcessDeviceCmd(J_AsioDataBase *pAsioData);
 

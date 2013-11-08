@@ -46,6 +46,7 @@ public:
 	///J_Client
 	j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	j_result_t Broken();
+	j_int32_t GetState();
 
 private:
 	/// 生成数据接口
@@ -65,6 +66,9 @@ private:
 	j_result_t StartAlarm(j_string_t strHostId);
 	j_result_t StopAlarm(j_string_t strHostId);
 	j_result_t StopAll();
+	j_result_t StopAllReal();
+	j_result_t StopAllVod();
+	j_result_t StopAllAlarm();
 	/// 请求处理函数
 	j_result_t OnLogin(J_AsioDataBase *pAsioData);
 	j_result_t OnLogout(J_AsioDataBase *pAsioData);
@@ -99,6 +103,8 @@ private:
 	VodInfoVec m_vodInfoVec;					//历史视频访问信息
 	J_OS::CTLock m_vecAlarmLocker;				//报警访问锁
 	AlarmInfoVec m_alarmInfoVec;					//报警访问信息
+	j_int32_t m_state;										//客户端状态
+	j_int32_t m_lastBreatTime;
 	CXlConfig m_config;
 };
 #endif // ~__CLIENT_H_

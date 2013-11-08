@@ -21,6 +21,16 @@
 enum CmdType
 {
 	xlc_message = 0x51,				///< 消息
+	xlc_login,								///< 用户登录
+	xlc_logout,							///< 注销登录
+	xlc_start_real_alarm_info,		///< 开启获取实时报警信息
+	xlc_stop_real_alarm_info,		///< 停止获取实时报警信息
+	xlc_start_real_view,				///< 开启实时视频浏览
+	xlc_stop_real_view,				///< 停止实时视频浏览
+	xlc_start_vod_view,				///< 开始录像回放（下载）
+	xlc_stop_vod_view,				///< 停止录像回放（下载）
+	xlc_heart_beat,						///< 客户端在线心跳
+	///////////////////////////////////////////////////////////////////
 	xlc_get_dvr_summary,			///< 获取DVR总数信息
 	xlc_get_dvr_list,						///< 获取DVR开关机日志
 	xlc_get_dvr_info,					///< 获取单个DVR信息
@@ -38,19 +48,9 @@ enum CmdType
 	xlc_add_department_info,		///< 增加单位的信息
 	xlc_mod_department_info,	///< 修改单位的信息
 	xlc_del_department_info,		///< 删除单位
-	///////////////////////////////////////////////////////////////////
-	xlc_login = 0x81,					///< 用户登录
-	xlc_logout,							///< 注销登录
 	xlc_get_dvr_state,					///< 获取DVR在离线信息	
-	xlc_start_real_alarm_info,		///< 开启获取实时报警信息
-	xlc_stop_real_alarm_info,		///< 停止获取实时报警信息
-	xlc_start_real_view,				///< 开启实时视频浏览
-	xlc_stop_real_view,				///< 停止实时视频浏览
-	xlc_start_vod_view,				///< 开始录像回放（下载）
-	xlc_stop_vod_view,				///< 停止录像回放（下载）
 	xlc_get_alarm_info,				///< 开始报警记录下载
 	xlc_xxxxxxxxxxxxxx,				///< 停止报警记录下载
-	xlc_heart_beat,						///< 客户端在线心跳
 };
 
 #pragma pack(push)

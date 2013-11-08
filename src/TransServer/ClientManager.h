@@ -17,6 +17,7 @@
 #define __CLIENT_MANAGER_H_
 #include "j_includes.h"
 #include "x_lock.h"
+#include "x_timer.h"
 
 /// 本类的功能:  管理客户端信息
 /// 本类是个管理模块
@@ -44,8 +45,16 @@ public:
 	void ReleaseClientObj(j_socket_t nSock);
 
 private:
+	static void OnTimer(void *pUser)
+	{
+		(static_cast<CClientManager *>(pUser))->CheckClient();
+	}
+	void CheckClient();
+
+private:
 	J_OS::CTLock m_locker;
 	ClientMap m_clientMap;
+	J_OS::CTimer m_timer;
 };
 
 JO_DECLARE_SINGLETON(ClientManager)

@@ -22,6 +22,7 @@ CVideoDlg::CVideoDlg(CWnd* pParent /*=NULL*/)
 	, m_alarmStopDate(COleDateTime::GetCurrentTime())
 	, m_alarmStopTime(COleDateTime::GetCurrentTime())
 {
+	int x = sizeof(AlarmInfoResp);
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -301,7 +302,7 @@ void CVideoDlg::OnBnClickedBtn8()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_8)
 	{
-		m_impl.RealPlay("CD508893472E", 7, m_video_7.m_hWnd);
+		m_impl.RealPlay("CD508893472Es", 7, m_video_7.m_hWnd);
 		m_bPlay_8 = TRUE;
 	}
 	else
@@ -352,7 +353,10 @@ void CVideoDlg::OnBnClickedBtnVodStart()
 	default:
 		break;
 	}
-	m_impl.VodPlay("CD508893472E", nChannel, hwnd, tempStartTime.GetTime(), tempEndTime.GetTime());
+	GUID sessionId;
+	CoCreateGuid(&sessionId);
+	m_vodMap[nChannel] = sessionId;
+	m_impl.VodPlay("CD508893472E", nChannel, sessionId, hwnd, tempStartTime.GetTime(), tempEndTime.GetTime());
 }
 
 
@@ -360,7 +364,10 @@ void CVideoDlg::OnBnClickedBtnVodStop()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
-	m_impl.VodStop("CD508893472E", m_VodChannel.GetCurSel());
+	int nChannel = m_VodChannel.GetCurSel();
+	std::map<int, GUID>::iterator it = m_vodMap.find(nChannel);
+	if (it != m_vodMap.end())
+		m_impl.VodStop("CD508893472E", nChannel, it->second);
 }
 
 void CVideoDlg::OnBnClickedBtnSettime()
@@ -421,5 +428,5 @@ void CVideoDlg::OnBnClickedBtnGetsyserror()
 void CVideoDlg::OnBnClickedBtnGetLog()
 {
 	// TODO: Add your control notification handler code here
-	m_impl.GetLogInfo("CD508893472E", -1, -1);
+	m_impl.GetLogInfo("XLL325487EDC", -1, -1);
 }

@@ -38,6 +38,7 @@ CXlClient::CXlClient(j_socket_t nSock)
 	m_ioAlarmState = xl_init_state;
 	m_nRefCnt = 0;
 	m_nAlarmRefCnt = 0;
+	m_lastBreatTime = time(0);
 
 	m_config.Init(m_readBuff, m_writeBuff);
 }
@@ -79,6 +80,14 @@ j_result_t CXlClient::Broken()
 {
 	StopAll();
 	return J_OK;
+}
+
+j_int32_t CXlClient::GetState()
+{
+	if (time(0) - m_lastBreatTime > 120)
+		return -1;
+
+	return 0;
 }
 
 j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
@@ -440,6 +449,17 @@ j_result_t CXlClient::StopAlarm(j_string_t strHostId)
 
 j_result_t CXlClient::StopAll()
 {
+	StopAllReal();
+	StopAllVod();
+	StopAllAlarm();
+	m_nAlarmRefCnt = 0;
+	m_nRefCnt = 0;
+
+	return J_OK;
+}
+
+j_result_t CXlClient::StopAllReal()
+{
 	J_Host *pHost = NULL;
 	J_AsioDataBase asioData;
 	struct RealPlayBody {
@@ -458,7 +478,7 @@ j_result_t CXlClient::StopAll()
 			memset(&realPlayBody, 0, sizeof(RealPlayBody));
 			memcpy(realPlayBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
 			realPlayBody.data.channel = it->nChanId;
-			CXlHelper::MakeRequest(xld_real_stop, (char *)&realPlayBody.data, sizeof(DevRealPlay), (char *)&realPlayBody);
+			CXlHelper::MakeRequest(xlc_stop_real_view, (char *)&realPlayBody.data, sizeof(DevRealPlay), (char *)&realPlayBody);
 
 			asioData.ioType = J_AsioDataBase::j_command_e;
 			asioData.ioRead.buf = (j_char_t *)&realPlayBody;
@@ -474,23 +494,31 @@ j_result_t CXlClient::StopAll()
 	m_videoInfoVec.clear();
 	TUnlock(m_vecLocker);
 
+	return J_OK;
+}
+
+j_result_t CXlClient::StopAllVod()
+{
+	J_Host *pHost = NULL;
+	J_AsioDataBase asioData;
+
 	struct VodStopBody {
 		CmdHeader head;
 		DevStopVod data;
 		CmdTail tail;
 	} vodStopBody;
 	TLock(m_vodLocker);
-	VodInfoVec::iterator it2 = m_vodInfoVec.begin();
-	for (; it2!=m_vodInfoVec.end(); ++it)
+	VodInfoVec::iterator it = m_vodInfoVec.begin();
+	for (; it!=m_vodInfoVec.end(); ++it)
 	{
-		pHost = JoDeviceManager->GetDeviceObj(it2->strHost.c_str());
+		pHost = JoDeviceManager->GetDeviceObj(it->strHost.c_str());
 		if (pHost != NULL)
 		{
 			memset(&vodStopBody, 0, sizeof(VodStopBody));
-			memcpy(vodStopBody.data.hostId, it2->strHost.c_str(), strlen(it->strHost.c_str()));
-			vodStopBody.data.sessionId = it2->sessionId;
-			vodStopBody.data.channel = it2->nChanId;
-			CXlHelper::MakeRequest(xld_vod_stop, (char *)&vodStopBody.data, sizeof(DevStopVod), (char *)&vodStopBody);
+			memcpy(vodStopBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
+			vodStopBody.data.sessionId = it->sessionId;
+			vodStopBody.data.channel = it->nChanId;
+			CXlHelper::MakeRequest(xlc_stop_vod_view, (char *)&vodStopBody.data, sizeof(DevStopVod), (char *)&vodStopBody);
 
 			asioData.ioType = J_AsioDataBase::j_command_e;
 			asioData.ioRead.buf = (j_char_t *)&vodStopBody;
@@ -498,7 +526,7 @@ j_result_t CXlClient::StopAll()
 			pHost->ParserRequest(&asioData);
 
 			J_Channel *pChannel = NULL;
-			pHost->MakeChannel(it2->nChanId, pChannel);
+			pHost->MakeChannel(it->nChanId, pChannel);
 			if (pChannel != NULL)
 				pChannel->CloseStream(&m_ringBuffer);
 		}
@@ -506,11 +534,18 @@ j_result_t CXlClient::StopAll()
 	m_videoInfoVec.clear();
 	TUnlock(m_vecLocker);
 
+	return J_OK;
+}
+
+j_result_t CXlClient::StopAllAlarm()
+{
+	J_Host *pHost = NULL;
+	J_AsioDataBase asioData;
 	TLock(m_vecAlarmLocker);
-	AlarmInfoVec::iterator itAlarm = m_alarmInfoVec.begin();
-	for (; itAlarm!=m_alarmInfoVec.end(); ++itAlarm)
+	AlarmInfoVec::iterator it = m_alarmInfoVec.begin();
+	for (; it!=m_alarmInfoVec.end(); ++it)
 	{
-		pHost = JoDeviceManager->GetDeviceObj(itAlarm->c_str());
+		pHost = JoDeviceManager->GetDeviceObj(it->c_str());
 		if (pHost != NULL)
 		{
 			pHost->EnableAlarm(&m_alarmBuffer, false);
@@ -519,18 +554,15 @@ j_result_t CXlClient::StopAll()
 	m_alarmInfoVec.clear();
 	TUnlock(m_vecAlarmLocker);
 
-	m_nAlarmRefCnt = 0;
-	m_nRefCnt = 0;
-
 	return J_OK;
 }
 
 j_result_t CXlClient::OnLogin(J_AsioDataBase *pAsioData)
 {
-	int nBodyLen = sizeof(CmdHeader) + sizeof(CliUserRetValue) + sizeof(CmdTail);
-	CliUserRetValue data = {0};
-	data.nRetVal = 0x00;
-	CXlHelper::MakeResponse(xlc_login, (j_char_t *)&data, sizeof(CliUserRetValue), m_writeBuff);
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
+	CliRetValue2 data = {0};
+	data.nRetVal = 0x01;
+	CXlHelper::MakeResponse(xlc_login, (j_char_t *)&data, sizeof(CliRetValue2), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 
@@ -539,10 +571,10 @@ j_result_t CXlClient::OnLogin(J_AsioDataBase *pAsioData)
 
 j_result_t CXlClient::OnLogout(J_AsioDataBase *pAsioData)
 {
-	int nBodyLen = sizeof(CmdHeader) + sizeof(CliUserRetValue) + sizeof(CmdTail);
-	CliUserRetValue data = {0};
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
+	CliRetValue2 data = {0};
 	data.nRetVal = 0x00;
-	CXlHelper::MakeResponse(xlc_logout, (j_char_t *)&data, sizeof(CliUserRetValue), m_writeBuff);
+	CXlHelper::MakeResponse(xlc_logout, (j_char_t *)&data, sizeof(CliRetValue2), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 
@@ -551,6 +583,10 @@ j_result_t CXlClient::OnLogout(J_AsioDataBase *pAsioData)
 
 j_result_t CXlClient::OnHeartBeat(J_AsioDataBase *pAsioData)
 {
+	m_lastBreatTime = time(0);
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+
 	return J_OK;
 }
 
@@ -574,11 +610,12 @@ j_result_t CXlClient::OnRealStop(J_AsioDataBase *pAsioData)
 	J_OS::LOGINFO("hostId = %s, channel = %d", pReps->hostId, pReps->channel & 0xFF);
 	StopView(*pReps, pAsioData);
 
-	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue) + sizeof(CmdTail);
-	CliRetValue data = {0};
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRealViewRetValue) + sizeof(CmdTail);
+	CliRealViewRetValue data = {0};
 	strcpy(data.pHostId, pReps->hostId);
+	data.nChannelId = pReps->channel;
 	data.nRetVal = 0x00;
-	CXlHelper::MakeResponse(xlc_stop_real_view, (j_char_t *)&data, sizeof(CliRetValue), m_writeBuff);
+	CXlHelper::MakeResponse(xlc_stop_real_view, (j_char_t *)&data, sizeof(CliRealViewRetValue), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 	if (m_nRefCnt > 0)
@@ -607,11 +644,13 @@ j_result_t CXlClient::OnVodStop(J_AsioDataBase *pAsioData)
 	J_OS::LOGINFO("hostId = %s, channel = %d", pReps->hostId, pReps->channel & 0xFF);
 	StopVod(*pReps, pAsioData);
 
-	int nBodyLen = sizeof(CmdHeader) + sizeof(CliStopVod) + sizeof(CmdTail);
-	CliRetValue data = {0};
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliVodStopRetValue) + sizeof(CmdTail);
+	CliVodStopRetValue data = {0};
+	data.sessionId = pReps->sessionId;
 	strcpy(data.pHostId, pReps->hostId);
+	data.nChannelId = pReps->channel;
 	data.nRetVal = 0x00;
-	CXlHelper::MakeResponse(xlc_stop_vod_view, (j_char_t *)&data, sizeof(CliRetValue), m_writeBuff);
+	CXlHelper::MakeResponse(xlc_stop_vod_view, (j_char_t *)&data, sizeof(CliVodStopRetValue), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 	if (m_nRefCnt > 0)

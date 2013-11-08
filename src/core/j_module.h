@@ -97,6 +97,9 @@ struct J_Client : virtual public J_Obj
 	/// 用户断线
 	/// @return				参见j_errtype.h 
 	virtual j_result_t Broken() = 0;
+	/// 获取状态
+	/// @return				客户端状态 
+	virtual j_int32_t GetState() = 0;
 };
 
 #endif //~__J_VIDEOADAPTER_H_

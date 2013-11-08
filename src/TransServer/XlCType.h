@@ -27,38 +27,38 @@ enum CliCmdState
 enum CliCmdType
 {
 	xlc_message = 0x51,				///< 消息
-	xlc_get_dvr_summary,			///< 获取DVR总数信息
-	xlc_get_dvr_list,						///< 获取DVR开关机日志
-	xlc_get_dvr_info,					///< 获取单个DVR信息
-	xlc_add_dvr_info,					///< 增加DVR （不使用，但预留接口）
-	xlc_mod_dvr_info,					///< 修改DVR的信息
-	xlc_del_dvr_info,					///< 删除DVR
-	xlc_get_user_summary,			///< 获取用户总数信息
-	xlc_get_user_list,					///< 获取用户信息列表
-	xlc_get_user_info,					///< 获取单个用户信息
-	xlc_add_user_info,					///< 增加用户的信息
-	xlc_mod_user_info,				///< 修改用户的信息
-	xlc_del_user_info,					///< 删除用户
-	xlc_get_department_list,		///< 获取单位信息列表
-	xlc_get_department_info,		///< 获取单个单位信息
-	xlc_add_department_info,		///< 增加单位的信息
-	xlc_mod_department_info,	///< 修改单位的信息
-	xlc_del_department_info,		///< 删除单位
-	///////////////////////////////////////////////////////////////////
-	xlc_login = 0x81,					///< 用户登录
+	xlc_login,								///< 用户登录
 	xlc_logout,							///< 注销登录
-	xlc_get_dvr_state,					///< 获取DVR在离线信息	
 	xlc_start_real_alarm_info,		///< 开启获取实时报警信息
 	xlc_stop_real_alarm_info,		///< 停止获取实时报警信息
 	xlc_start_real_view,				///< 开启实时视频浏览
 	xlc_stop_real_view,				///< 停止实时视频浏览
 	xlc_start_vod_view,				///< 开始录像回放（下载）
 	xlc_stop_vod_view,				///< 停止录像回放（下载）
-	xlc_get_alarm_info,				///< 开始报警记录下载
-	xlc_xxxxxxxxxxxxxx,				///< 停止报警记录下载
 	xlc_heart_beat,						///< 客户端在线心跳
+	///////////////////////////////////////////////////////////////////
+	xlc_get_dvr_summary = 0x81,	///< 获取DVR总数信息
+	xlc_get_dvr_list,							///< 获取DVR开关机日志
+	xlc_get_dvr_info,						///< 获取单个DVR信息
+	xlc_add_dvr_info,						///< 增加DVR （不使用，但预留接口）
+	xlc_mod_dvr_info,						///< 修改DVR的信息
+	xlc_del_dvr_info,						///< 删除DVR
+	xlc_get_user_summary,				///< 获取用户总数信息
+	xlc_get_user_list,						///< 获取用户信息列表
+	xlc_get_user_info,						///< 获取单个用户信息
+	xlc_add_user_info,						///< 增加用户的信息
+	xlc_mod_user_info,					///< 修改用户的信息
+	xlc_del_user_info,						///< 删除用户
+	xlc_get_department_list,			///< 获取单位信息列表
+	xlc_get_department_info,			///< 获取单个单位信息
+	xlc_add_department_info,			///< 增加单位的信息
+	xlc_mod_department_info,		///< 修改单位的信息
+	xlc_del_department_info,			///< 删除单位
+	xlc_get_alarm_info,
 };
 
+#pragma pack(push)
+#pragma pack(1)
 ////////////////////////////////////////////////////////////////////////
 /////                                   客户端                                      /////
 ////////////////////////////////////////////////////////////////////////
@@ -69,18 +69,6 @@ typedef struct _tagCliUserLogin
 	char passWord[16];  		///< 密码
 	int  nForced;					///<1 强制登录；0 非强制登录
 } CliUserLogin,  *LPCliUserLogin;
-
-/// 用户回复
-typedef struct _tagCliUserRetValue
-{
-	int nRetVal;					///< 1 登录成功
-										///< 2 用户名错误
-										///< 3 密码错误
-										///< 4 用户服务器用户满
-										///< 5 客户端版本过低或过高
-										///< 6 用户已在其他位置进行登录
-										///< 7 登录失败
-} CliUserRetValue, *LPCliUserRetValue;
 
 ///设备信息
 typedef struct _tagCliDevInfo
@@ -94,7 +82,7 @@ typedef struct _tagCliDevInfo
 /// 报警信息
 typedef struct _tagCliAlarmInfo
 {
-	char *pHostId[32];							///< 设备ID
+	char pHostId[32];							///< 设备ID
 	__int64 bAlarm;								///< 报警信息
 	struct  
 	{
@@ -110,7 +98,7 @@ typedef std::queue<CliAlarmInfo> CliAlarmInfoQueue;
 /// 日志信息  
 typedef struct _tagCliLogInfo
 {
-	char *pHostId[32];			///< 设备ID
+	char pHostId[32];			///< 设备ID
 	__int64 bStatus;			///< 设备状态,0-开机,1-关机
 	time_t tmTime;				///< 开关机时间
 } CliLogInfo, *LPCliLogInfo;
@@ -120,7 +108,7 @@ typedef std::queue<CliLogInfo> CliLogInfoQueue;
 typedef struct _tagCliRetValue
 {
 	char  pHostId[32];		///< 设备ID
-	int nRetVal;						///< 回复码 0-成功,1-失败
+	int nRetVal;				///< 回复码 0-成功,1-失败
 } CliRetValue, *LPCliRetValue;
 
 /// 配置操作回复命令码
@@ -128,6 +116,23 @@ typedef struct _tagCliRetValue2
 {
 	int nRetVal;						///< 回复码 0-成功,1-失败
 } CliRetValue2, *LPCliRetValue2;
+
+/// 实时播放停止回复
+typedef struct _tagCliRealViewRetValue
+{
+	char  pHostId[32];		///< 设备ID
+	int nChannelId;			///< 通道号 
+	int nRetVal;				///< 回复码 0-成功,1-失败
+} CliRealViewRetValue, *LPCliRealViewRetValue;
+
+/// 历史播放停止回复
+typedef struct _tagCliVodStopRetValue
+{
+	GUID sessionId;		///< 回话ID
+	char  pHostId[32];		///< 设备ID
+	int nChannelId;			///< 通道号 
+	int nRetVal;				///< 回复码 0-成功,1-失败
+} CliVodStopRetValue, *LPCliVodStopRetValue;
 
 /// 设备ID
 typedef struct _tagCliEquipmentId
@@ -138,14 +143,14 @@ typedef struct _tagCliEquipmentId
 /// 时间设置 
 typedef struct _tagCliSetTime
 {
-	char *pHostId[32];			///< 设备ID
+	char pHostId[32];			///< 设备ID
 	time_t systime;				///< 当前系统时间
 } CliSetTime, *LPCliSetTime;
 
 /// 获取日志信息
 typedef struct _tagCliGetLogInfo
 {
-	char *pHostId[32];	///< 设备ID
+	char pHostId[32];	///< 设备ID
 	time_t tmStart;		///< 开始时间
 	time_t tmEnd;		///< 结束时间
 } CliGetLogInfo, *LPCliGetLogInfo;
@@ -168,7 +173,7 @@ typedef struct _tagCliStartVod
 {
 	GUID sessionId;					///< 回话ID
 	char hostId[32];						///< 设备ID
-	__int64 channel;					///< 通道号	
+	int		channel;					///< 通道号	
 	time_t tmStartTime;				///< 开始时间
 	time_t tmEndTime;				///< 结束时间
 } CliStartVod, *LPCliStartVod;
@@ -178,7 +183,7 @@ typedef struct _tagCliStopVod
 {
 	GUID sessionId;					///< 回话ID
 	char hostId[32];						///< 设备ID
-	__int64 channel;					///< 通道号	
+	int channel;							///< 通道号	
 } CliStopVod, *LPCliStopVod;
 
 /// 设备相关
@@ -273,4 +278,7 @@ typedef struct _tagCliConfigRetVal
 {
 	int nRetVal;
 } CliConfigRetVal, *LPCliConfigRetVal;
+
+#pragma pack(pop)
+
 #endif // !__XLCTYPE_H_

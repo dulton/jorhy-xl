@@ -21,12 +21,12 @@ JO_IMPLEMENT_SINGLETON(ClientManager)
 
 CClientManager::CClientManager()
 {
-
+	m_timer.Create(1000, CClientManager::OnTimer, this);
 }
 
 CClientManager::~CClientManager()
 {
-
+	m_timer.Destroy();
 }
 
 J_Client *CClientManager::CreateClientObj(j_socket_t nSock)
@@ -76,6 +76,21 @@ void CClientManager::ReleaseClientObj(j_socket_t nSock)
 		pClient->Broken();
 		delete pClient;
 		m_clientMap.erase(it);
+	}
+	TUnlock(m_locker);
+}
+
+void CClientManager::CheckClient()
+{
+	TLock(m_locker);
+	ClientMap::iterator it = m_clientMap.begin();
+	for (; it!=m_clientMap.end(); ++it)
+	{
+		J_Client *pClient = it->second;
+		if (pClient->GetState() != 0)
+		{
+			///处理客户端状态
+		}
 	}
 	TUnlock(m_locker);
 }

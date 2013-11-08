@@ -19,29 +19,66 @@
 
 #pragma comment(lib, "Debug\\core.lib")
 
-CTcpServer4Device g_deviceServer;
-CTcpServer4Client g_clientServer;
-
 int main(int argc, char **argv)
 {
-	///初始化数据库
-	if (JoDataBaseObj->Connect("127.0.0.1", 1433, "sa", "123456") != J_OK)
+	///帮助函数
+	if (argc == 2 && strcmp(argv[1], "--help") == 0)
 	{
-		J_OS::LOGINFO("数据库连接失败, IP地址:127.0.0.1,端口:1433,用户名:sa,密码:123456");
+		printf("--devport 	DVR连接端口	(默认8501)\n");
+		printf("--cliport 	客户端连接端口	(默认8502)\n");
+		printf("--dbaddr	数据库IP地址	(默认\"127.0.0.1\")\n");
+		printf("--dbport  	数据库端口	(默认1433)\n");
+		printf("--dbuser  	数据库登录名	(默认\"sa\")\n");
+		printf("--dbpassword	数据库登录密码	(默认\"123456\")\n");
+		return 0;
+	}
+
+	///初始化相关参数
+	char strDbAddr[16] = {0};
+	char strDbUser[32] = {0};
+	char strDbPassWord[32] = {0};
+	int nDbPort = 1433;
+	int nDevPort = 8503;
+	int nCliPort = 8502;
+	strcpy(strDbAddr, "127.0.0.1");
+	strcpy(strDbUser, "sa");
+	strcpy(strDbPassWord, "123456");
+	for (int i=1; i<argc; i+=2)
+	{
+		if (strcmp(argv[i], "--devport") == 0)
+			nDevPort = atoi(argv[i + 1]);
+		if (strcmp(argv[i], "--cliport") == 0)
+			nCliPort = atoi(argv[i + 1]);
+		if (strcmp(argv[i], "--dbaddr") == 0)
+			strcpy(strDbAddr, argv[i + 1]);
+		if (strcmp(argv[i], "--dbport") == 0)
+			nDbPort = atoi(argv[i + 1]);
+		if (strcmp(argv[i], "--dbuser") == 0)
+			strcpy(strDbUser, argv[i + 1]);
+		if (strcmp(argv[i], "--dbpassword") == 0)
+			strcpy(strDbPassWord, argv[i + 1]);
+	}
+
+	///初始化数据库
+	if (JoDataBaseObj->Connect(strDbAddr, nDbPort, strDbUser, strDbPassWord) != J_OK)
+	{
+		J_OS::LOGINFO("数据库连接失败, IP地址:%s,端口:%d,用户名:%s,密码:%s", strDbAddr, nDbPort, strDbUser, strDbPassWord);
 		return -1;
 	}
 
+	CTcpServer4Device g_deviceServer;
+	CTcpServer4Client g_clientServer;
 	///启动设备监听服务
-	if (g_deviceServer.StartService(8503) != J_OK)
+	if (g_deviceServer.StartService(nDevPort) != J_OK)
 	{
-		J_OS::LOGINFO("启动设备监听服务失败, 端口:8501");
+		J_OS::LOGINFO("启动设备监听服务失败, 端口:%d", nDevPort);
 		return -1;
 	}
 
 	///启动客户监听服务
-	if (g_clientServer.StartService(8502) != J_OK)
+	if (g_clientServer.StartService(nCliPort) != J_OK)
 	{
-		J_OS::LOGINFO("启动客户监听服务失败, 端口:8502");
+		J_OS::LOGINFO("启动客户监听服务失败, 端口:%d", nCliPort);
 		return -1;
 	}
 

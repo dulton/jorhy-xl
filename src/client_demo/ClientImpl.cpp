@@ -114,7 +114,7 @@ void CClientImpl::RealStop(const char *pDevId, char chId)
 	m_codec.StopRMDisplay(chId);
 }
 
-void CClientImpl::VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t start, __time64_t end)
+void CClientImpl::VodPlay(const char *pDevId, char chId, GUID sessionId, HWND hWnd, __time64_t start, __time64_t end)
 {
 	struct VodPlayBody {
 		CmdHeader head;
@@ -123,6 +123,7 @@ void CClientImpl::VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t s
 	} vodPlayBody;
 	memset(&vodPlayBody, 0, sizeof(VodPlayBody));
 	memcpy(vodPlayBody.data.hostId, pDevId, strlen(pDevId));
+	vodPlayBody.data.sessionID = sessionId;
 	vodPlayBody.data.channel = chId;
 	vodPlayBody.data.tmStartTime = start;
 	vodPlayBody.data.tmEndTime = end;
@@ -132,7 +133,7 @@ void CClientImpl::VodPlay(const char *pDevId, char chId, HWND hWnd, __time64_t s
 	m_vodCodec.StartPlayback(hWnd, chId );
 }
 
-void CClientImpl::VodStop(const char *pDevId, char chId)
+void CClientImpl::VodStop(const char *pDevId, char chId, GUID sessionId)
 {
 	struct VodStopBody {
 		CmdHeader head;
@@ -142,6 +143,7 @@ void CClientImpl::VodStop(const char *pDevId, char chId)
 	memset(&vodStopBody, 0, sizeof(VodStopBody));
 	memcpy(vodStopBody.data.hostId, pDevId, strlen(pDevId));
 	vodStopBody.data.channel = chId;
+	vodStopBody.data.sessionID = sessionId;
 
 	MakeCommand(xlc_stop_vod_view, (char *)&vodStopBody.data, sizeof(VodStopReq), (char *)&vodStopBody);
 	send(m_sock, (char *)&vodStopBody, sizeof(VodStopBody), 0);
@@ -502,13 +504,13 @@ void CClientImpl::OnRecive()
 void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 {
 	//ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
-	if((pHeader->cmd & 0xFF) == 7/*xlc_start_real_view*/)
+	if((pHeader->cmd & 0xFF) == xlc_start_real_view)
 	{
 		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
 		m_codec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
 	}
-	else if ((pHeader->cmd & 0xFF) == 9/*xlc_start_vod_view*/)
+	else if ((pHeader->cmd & 0xFF) == xlc_start_vod_view)
 	{
 		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -542,11 +544,11 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 				ShowVideoInfo(logInfo);
 			}
 			break;*/
-		case 5/*xlc_get_alarm_info*/:
+		case xlc_start_real_alarm_info:
 			{
 				AlarmInfoResp *pReps = (AlarmInfoResp *)(pRecvBuff + sizeof(CmdHeader));
 				CString alarmInfo;
-				alarmInfo.Format(L"HostId=%S, Alarm=%I64d, Latitude=%f, Longitude=%f, GPSSpeed=%f, Speed=%f, TimeStamp=%I64d\n", 
+				alarmInfo.Format(L"HostId=%S, %I64d, %f, %f, %f, %f, %I64d\n", 
 					pReps->hostId, pReps->bAlarm & 0xFF, pReps->gps.dLatitude, pReps->gps.dLongitude, pReps->gps.dGPSSpeed, pReps->speed, pReps->tmTimeStamp);
 				m_videoListBox->InsertString(0, alarmInfo);
 			}
