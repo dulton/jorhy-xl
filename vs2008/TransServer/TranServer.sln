@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "core.vcproj", "{9642A861-CB76-4164-87C2-13AB35193B96}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TransServer", "TransServer.vcproj", "{23105247-57F1-4602-B1CF-7C64CB5BE030}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9642A861-CB76-4164-87C2-13AB35193B96} = {9642A861-CB76-4164-87C2-13AB35193B96}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9642A861-CB76-4164-87C2-13AB35193B96}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9642A861-CB76-4164-87C2-13AB35193B96}.Debug|Win32.Build.0 = Debug|Win32
+		{9642A861-CB76-4164-87C2-13AB35193B96}.Release|Win32.ActiveCfg = Release|Win32
+		{9642A861-CB76-4164-87C2-13AB35193B96}.Release|Win32.Build.0 = Release|Win32
+		{23105247-57F1-4602-B1CF-7C64CB5BE030}.Debug|Win32.ActiveCfg = Debug|Win32
+		{23105247-57F1-4602-B1CF-7C64CB5BE030}.Debug|Win32.Build.0 = Debug|Win32
+		{23105247-57F1-4602-B1CF-7C64CB5BE030}.Release|Win32.ActiveCfg = Release|Win32
+		{23105247-57F1-4602-B1CF-7C64CB5BE030}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
