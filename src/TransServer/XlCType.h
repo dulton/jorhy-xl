@@ -83,7 +83,7 @@ typedef struct _tagCliDevInfo
 typedef struct _tagCliAlarmInfo
 {
 	char pHostId[32];							///< 设备ID
-	__int64 bAlarm;								///< 报警信息
+	int bAlarm;								///< 报警信息
 	struct  
 	{
 		double dLatitude;
@@ -99,7 +99,7 @@ typedef std::queue<CliAlarmInfo> CliAlarmInfoQueue;
 typedef struct _tagCliLogInfo
 {
 	char pHostId[32];			///< 设备ID
-	__int64 bStatus;			///< 设备状态,0-开机,1-关机
+	int bStatus;			///< 设备状态,0-开机,1-关机
 	time_t tmTime;				///< 开关机时间
 } CliLogInfo, *LPCliLogInfo;
 typedef std::queue<CliLogInfo> CliLogInfoQueue;

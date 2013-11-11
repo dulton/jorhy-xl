@@ -503,12 +503,12 @@ void CClientImpl::OnRecive()
 
 void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 {
-	//ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 	if((pHeader->cmd & 0xFF) == xlc_start_real_view)
 	{
 		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
 		m_codec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
+		ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 	}
 	else if ((pHeader->cmd & 0xFF) == xlc_start_vod_view)
 	{
@@ -548,7 +548,7 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 			{
 				AlarmInfoResp *pReps = (AlarmInfoResp *)(pRecvBuff + sizeof(CmdHeader));
 				CString alarmInfo;
-				alarmInfo.Format(L"HostId=%S, %I64d, %f, %f, %f, %f, %I64d\n", 
+				alarmInfo.Format(L"HostId=%S, %d, %f, %f, %f, %f, %I64d\n", 
 					pReps->hostId, pReps->bAlarm & 0xFF, pReps->gps.dLatitude, pReps->gps.dLongitude, pReps->gps.dGPSSpeed, pReps->speed, pReps->tmTimeStamp);
 				m_videoListBox->InsertString(0, alarmInfo);
 			}
