@@ -18,6 +18,7 @@
 #include "j_includes.h"
 /// 本类的功能:  流管理类
 class CXlChannel : public J_Channel
+						   , public J_Vod
 {
 public:
 	CXlChannel(J_Obj *pOwner, j_int32_t nChannel);
@@ -27,13 +28,17 @@ public:
 	///J_Channel
 	virtual j_result_t OpenStream(CRingBuffer *pRingBuffer);
 	virtual j_result_t CloseStream(CRingBuffer *pRingBuffer);
+	///J_Vod
+	virtual j_result_t OpenVod(const j_guid_t &sessionId, CRingBuffer *pRingBuffer);
+	virtual j_result_t CloseVod(const j_guid_t &sessionId, CRingBuffer *pRingBuffer);
 
 public:
 	/// 输入数据
+	/// @param[in]				nType 数据类型,0-实时视频,1-历史视频
 	/// @param[in]				pData 数据区
 	/// @param[in]				nLen 数据长度 
 	/// @return					参见j_errtype.h 
-	j_result_t InputData(const j_char_t *pData, j_int32_t nLen);
+	j_result_t InputData(const j_int32_t nType, const j_char_t *pData, j_int32_t nLen);
 
 private:
 	int AddRingBuffer(CRingBuffer *pRingBuffer)
@@ -65,6 +70,8 @@ private:
 	j_int32_t m_nChannelNum;
 	J_OS::TLocker_t m_vecLocker;
 	std::vector<CRingBuffer *> m_vecRingBuffer;
+	J_OS::TLocker_t m_mapLocker;
+	std::map<j_guid_t, CRingBuffer *> m_mapRingBuffer;
 };
 
 #endif //~__XLCHANNEL_H_

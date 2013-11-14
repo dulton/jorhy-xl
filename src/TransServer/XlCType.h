@@ -23,6 +23,12 @@ enum CliCmdState
 	xl_write_body_state,
 };
 
+/// 消息类型
+enum CliMegType
+{
+	xlc_force_login = 0x01,
+};
+
 /// 操作指令定义  
 enum CliCmdType
 {
@@ -62,6 +68,13 @@ enum CliCmdType
 ////////////////////////////////////////////////////////////////////////
 /////                                   客户端                                      /////
 ////////////////////////////////////////////////////////////////////////
+
+typedef struct _tagCliMessage
+{
+	unsigned int uiType;   	///< 消息类型
+	unsigned int uiNO;		///< 消息编号
+} CliMessage, *LPCliMessage;
+
 /// 用户登录
 typedef struct _tagCliUserLogin
 {

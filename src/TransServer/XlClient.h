@@ -44,6 +44,7 @@ public:
 
 public:
 	///J_Client
+	j_result_t SendMessage(j_string_t strHostId, j_int32_t nType);
 	j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	j_result_t Broken();
 	j_int32_t GetState();
@@ -82,7 +83,8 @@ private:
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
 
 private:
-	//J_OS::CTCPSocket m_socket;						//客户端连接
+	j_char_t m_userName[32];							//用户名
+	J_OS::CTCPSocket m_socket;					//客户端连接
 	j_char_t *m_readBuff;								//命令请求缓存区
 	j_char_t *m_writeBuff;								//命令发送缓存区
 	j_char_t *m_dataBuff;								//视频发送缓存区

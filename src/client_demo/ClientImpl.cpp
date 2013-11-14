@@ -525,6 +525,12 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 			m_bRun = FALSE;
 			closesocket(m_sock);
 			break;
+		case xlc_login:
+			{
+				LoginResp *pLoginInfo = (LoginResp *)(pRecvBuff + sizeof(CmdHeader));
+				ShowVideoInfo(L"ret=%d\n", pLoginInfo->ret);
+			}
+			break;
 		/*case xl_set_time:
 			break;
 		case xl_get_devinfo:

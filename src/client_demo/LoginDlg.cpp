@@ -123,9 +123,9 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	sprintf_s(userName, "%S", (LPSTR)(LPCTSTR)m_strUser);
 	char passWord[32] = {0};
 	sprintf_s(passWord, "%S", (LPSTR)(LPCTSTR)m_strPasswd);
-	m_impl.Login(dwAddr, _wtoi(m_strPort.GetCueBanner().GetString()), userName, passWord, 0);
+	m_impl.Login(dwAddr, _wtoi(m_strPort.GetCueBanner().GetString()), userName, passWord, 1);
 	m_bLogin = TRUE;
-	CDialog::OnOK();
+	//CDialog::OnOK();
 }
 
 
@@ -137,5 +137,5 @@ void CLoginDlg::OnBnClickedBtnLogout()
 		UpdateData(TRUE);
 		m_impl.Logout((LPSTR)(LPCTSTR)m_strUser, (LPSTR)(LPCTSTR)m_strPasswd);
 	}
-	CDialog::OnCancel();
+	//CDialog::OnCancel();
 }

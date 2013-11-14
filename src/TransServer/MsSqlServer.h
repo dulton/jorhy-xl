@@ -34,7 +34,8 @@ public:
 	virtual j_result_t Release();
 
 public:
-	j_result_t CheckUser(const char *pUserName, const char *pPasswd);
+	j_result_t Login(const char *pUserName, const char *pPasswd, int nForce, int &nRet);
+	j_result_t Logout(const char *pUserName);
 	j_result_t UpdateDevInfo(const DevHostInfo &devInfo);
 	j_result_t GetDevInfo(DevHostInfo &devInfo);
 	j_result_t InsertAlarmInfo(const char *pHostId, const DevAlarmInfo& alarmInfo);

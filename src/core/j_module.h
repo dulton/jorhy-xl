@@ -56,13 +56,27 @@ struct J_Channel : virtual public J_Obj
 	virtual j_result_t CloseStream(CRingBuffer *pRingBuffer) = 0;
 };
 
+struct J_Vod : virtual public J_Obj 
+{
+	///打开历史视频
+	///@param[in]		sessionId 回话ID
+	///@param[in]		pRingBuffer 流队列对象
+	///@return			参见x_errtype.h
+	virtual j_result_t OpenVod(const j_guid_t &sessionId, CRingBuffer *pRingBuffer) = 0;
+	///关闭历史视频
+	///@param[in]		sessionId 回话ID
+	///@param[in]		pRingBuffer 流队列对象
+	///@return			参见x_errtype.h
+	virtual j_result_t CloseVod(const j_guid_t &sessionId, CRingBuffer *pRingBuffer) = 0;
+};
+
 struct J_Host : virtual public J_Obj 
 {
 	///获取通道对象
 	///@param[in]		nChannelNum 通道号 
 	///@param[out]	pObj 通道对象
 	///@return			参见x_errtype.h
-	virtual j_result_t MakeChannel(const j_int32_t nChannelNum, J_Channel *&pObj) = 0;
+	virtual j_result_t MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj) = 0;
 	///判断设备是否就绪
 	///@return			true-就绪,false-未就绪
 	virtual j_boolean_t IsReady() = 0;
@@ -90,6 +104,10 @@ struct J_Host : virtual public J_Obj
 
 struct J_Client : virtual public J_Obj 
 {
+	/// 发送消息
+	/// @param[in]			strHostId 设备ID
+	/// @param[in]			nType 消息类型
+	virtual j_result_t SendMessage(j_string_t strHostId, j_int32_t nType) = 0;
 	/// 用户请求及回复
 	/// @param[in][out]	pAsioData异步数据	
 	/// @return				参见j_errtype.h 

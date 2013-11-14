@@ -18,7 +18,7 @@
 //#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll"no_namespace rename("EOF", "EndOfFile")
 JO_IMPLEMENT_SINGLETON(SqlServerAccess)
 
-CSqlServerAccess::CSqlServerAccess()
+	CSqlServerAccess::CSqlServerAccess()
 {
 	::CoInitialize(NULL); // 初始化OLE/COM库环境 ，为访问ADO接口做准备
 }
@@ -69,21 +69,64 @@ j_result_t CSqlServerAccess::Release()
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::CheckUser(const char *pUserName, const char *pPasswd)
+j_result_t CSqlServerAccess::Login(const char *pUserName, const char *pPasswd, int nForce, int &nRet)
 {
 	try 
 	{
 		char strCmd[128] = {0};
-		sprintf(strCmd, "SELECT * FROM UserInfo WHERE AccountName='%s' AND Password='%s';", pUserName, pPasswd);
+		sprintf(strCmd, "SELECT * FROM UserInfo WHERE AccountName='%s';", pUserName);
 		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 		if (m_pRec->EndOfFile)
+		{
+			nRet = 1;
 			return J_DB_ERROR;
+		}
+		else
+		{
+			if (strcmp(pPasswd, (char*)_bstr_t(m_pRec->GetCollect("Password"))) != 0)
+			{
+				nRet = 2;
+				return J_DB_ERROR;
+			}
+			else 	if (nForce)
+			{
+				sprintf(strCmd, "UPDATE UserInfo SET State=1 WHERE AccountName='%s';", pUserName);
+				m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+			}
+			else if (m_pRec->GetCollect("State").intVal == 1)
+			{
+				nRet = 6;
+				return J_DB_ERROR;
+			}
+			else
+			{
+				nRet = 0;
+				memset(strCmd, 0, sizeof(strCmd));
+				sprintf(strCmd, "UPDATE UserInfo SET State=1 WHERE AccountName='%s';", pUserName);
+				m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+			}
+		}
 	}
 	catch(...)
 	{
 		return J_DB_ERROR;
 	}
 
+	return J_OK;
+}
+
+j_result_t CSqlServerAccess::Logout(const char *pUserName)
+{
+	try 
+	{
+		char strCmd[128] = {0};
+		sprintf(strCmd, "UPDATE UserInfo SET State=0 WHERE AccountName='%s';", pUserName);
+		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch(...)
+	{
+		return J_DB_ERROR;
+	}
 	return J_OK;
 }
 

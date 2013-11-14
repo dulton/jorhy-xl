@@ -155,6 +155,39 @@ typedef struct j_socket
 } j_socket_t;
 #define j_invalid_socket j_socket_t
 
+typedef struct j_guid
+{
+	j_guid(GUID guid)
+	{
+		m_guid = guid;
+	}
+	/*GUID j_guid()
+	{
+		return m_guid;
+	}*/
+	bool operator<(const j_guid &other) const
+	{
+		bool b_ret = true;
+		if (m_guid.Data1 != other.m_guid.Data1)
+			b_ret = m_guid.Data1 < other.m_guid.Data1;
+		else if (m_guid.Data2 != other.m_guid.Data2)
+			b_ret = m_guid.Data2 < other.m_guid.Data2;
+		else if (m_guid.Data3 != other.m_guid.Data3)
+			b_ret = m_guid.Data3 < other.m_guid.Data3;
+		else if (m_guid.Data4[0] != other.m_guid.Data4[0])
+			b_ret = m_guid.Data4[0] < other.m_guid.Data4[0];
+		else if (m_guid.Data4[1] != other.m_guid.Data4[1])
+			b_ret = m_guid.Data4[1] < other.m_guid.Data4[1];
+		else if (m_guid.Data4[2] != other.m_guid.Data4[2])
+			b_ret = m_guid.Data4[2] < other.m_guid.Data4[2];
+		else if (m_guid.Data4[3] != other.m_guid.Data4[3])
+			b_ret = m_guid.Data4[3] < other.m_guid.Data4[3];
+
+		return b_ret;
+	}
+	GUID m_guid;
+} j_guid_t;
+
 struct J_AsioDataBase
 #ifdef WIN32
 : public OVERLAPPED

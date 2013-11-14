@@ -22,7 +22,7 @@ class CXlHost : public J_Host
 {
 	struct ChannelInfo
 	{
-		J_Channel *pChannel;
+		J_Obj *pChannel;
 		j_int32_t nRef;
 	};
 	typedef std::map<j_int32_t, ChannelInfo> ChannelMap;
@@ -32,7 +32,7 @@ public:
 
 public:
 	///J_Host
-	virtual j_result_t MakeChannel(const j_int32_t nChannelNum, J_Channel *&pObj);
+	virtual j_result_t MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj);
 	virtual j_boolean_t IsReady();
 	virtual j_result_t GetHostId(j_string_t &strDevId);
 	virtual j_result_t SetTime(j_time_t sysTime);

@@ -17,7 +17,7 @@
 #include "XlDType.h"
 #include "XlCType.h"
 #include "DeviceManager.h"
-#include "MsSqlServer.h"
+#include "ClientManager.h"
 #include "XlHelper.h"
 
 #pragma comment (lib, "Debug\\core.lib")
@@ -27,8 +27,10 @@
 #define XL_ALARM_BUFFER_SIZE (2 * 1024)
 
 CXlClient::CXlClient(j_socket_t nSock)
-// : m_socket(nSock)
+ : m_socket(nSock)
 {
+	memset(m_userName, 0, sizeof(m_userName));
+	strcpy(m_userName, "");
 	m_readBuff = new char[XL_CMD_BUFFER_SIZE];			
 	m_writeBuff = new char[XL_CMD_BUFFER_SIZE];		
 	m_dataBuff = new char[XL_DATA_BUFFER_SIZE];	
@@ -48,6 +50,24 @@ CXlClient::~CXlClient()
 	delete m_readBuff;
 	delete m_writeBuff;
 	delete m_dataBuff;
+	JoClientManager->Logout(m_userName);
+}
+
+j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType)
+{
+	struct MessageBody
+	{
+		CmdHeader header;
+		CliMessage data;
+		CmdTail tial;
+	} messageBody;
+	messageBody.data.uiType = nType;
+	messageBody.data.uiNO = 0;
+	CXlHelper::MakeResponse(xlc_message, (j_char_t *)&messageBody.data, sizeof(CliMessage), (j_char_t *)&messageBody);
+	m_socket.Write_n((j_char_t *)&messageBody, sizeof(CmdHeader) + sizeof(CliMessage) + sizeof(CmdTail));
+	J_OS::LOGINFO("CXlClient::SendMessage");
+
+	return J_OK;
 }
 
 j_result_t CXlClient::ParserRequest(J_AsioDataBase *pAsioData)
@@ -298,10 +318,14 @@ j_result_t CXlClient::StartView(const CliRealPlay &realPlay, J_AsioDataBase *pAs
 	J_Host *pHost = JoDeviceManager->GetDeviceObj(realPlay.hostId);
 	if (pHost != NULL)
 	{
-		J_Channel *pChannel = NULL;
-		pHost->MakeChannel(realPlay.channel, pChannel);
-		if (pChannel != NULL)
-			pChannel->OpenStream(&m_ringBuffer);
+		J_Obj *pObj = NULL;
+		pHost->MakeChannel(realPlay.channel, pObj);
+		if (pObj != NULL)
+		{
+			J_Channel *pChannel = dynamic_cast<J_Channel *>(pObj);
+			if (pChannel != NULL)
+				pChannel->OpenStream(&m_ringBuffer);
+		}
 
 		pAsioData->ioRead.buf = m_readBuff;
 		pAsioData->ioRead.bufLen = pAsioData->ioRead.finishedLen + sizeof(CmdHeader);
@@ -326,10 +350,14 @@ j_result_t CXlClient::StopView(const CliRealPlay &realPlay, J_AsioDataBase *pAsi
 		pAsioData->ioRead.bufLen = pAsioData->ioRead.finishedLen + sizeof(CmdHeader);
 		pHost->ParserRequest(pAsioData);
 
-		J_Channel *pChannel = NULL;
-		pHost->MakeChannel(realPlay.channel, pChannel);
-		if (pChannel != NULL)
-			pChannel->CloseStream(&m_ringBuffer);
+		J_Obj *pObj = NULL;
+		pHost->MakeChannel(realPlay.channel, pObj);
+		if (pObj != NULL)
+		{
+			J_Channel *pChannel = dynamic_cast<J_Channel *>(pObj);
+			if (pChannel != NULL)
+				pChannel->CloseStream(&m_ringBuffer);
+		}
 
 		TLock(m_vecLocker);
 		VideoInfoVec::iterator it = m_videoInfoVec.begin();
@@ -351,10 +379,14 @@ j_result_t CXlClient::StartVod(const CliStartVod &startVod, J_AsioDataBase *pAsi
 	J_Host *pHost = JoDeviceManager->GetDeviceObj(startVod.hostId);
 	if (pHost != NULL)
 	{
-		J_Channel *pChannel = NULL;
-		pHost->MakeChannel(startVod.channel, pChannel);
-		if (pChannel != NULL)
-			pChannel->OpenStream(&m_ringBuffer);
+		J_Obj *pObj = NULL;
+		pHost->MakeChannel(startVod.channel, pObj);
+		if (pObj != NULL)
+		{
+			J_Vod *pVod = dynamic_cast<J_Vod *>(pObj);
+			if (pVod != NULL)
+				pVod->OpenVod(startVod.sessionId, &m_ringBuffer);
+		}
 
 		pAsioData->ioRead.buf = m_readBuff;
 		pAsioData->ioRead.bufLen = pAsioData->ioRead.finishedLen + sizeof(CmdHeader);
@@ -380,10 +412,14 @@ j_result_t CXlClient::StopVod(const CliStopVod &stopVod, J_AsioDataBase *pAsioDa
 		pAsioData->ioRead.bufLen = pAsioData->ioRead.finishedLen + sizeof(CmdHeader);
 		pHost->ParserRequest(pAsioData);
 
-		J_Channel *pChannel = NULL;
-		pHost->MakeChannel(stopVod.channel, pChannel);
-		if (pChannel != NULL)
-			pChannel->CloseStream(&m_ringBuffer);
+		J_Obj *pObj = NULL;
+		pHost->MakeChannel(stopVod.channel, pObj);
+		if (pObj != NULL)
+		{
+			J_Vod *pVod = dynamic_cast<J_Vod *>(pObj);
+			if (pVod != NULL)
+				pVod->CloseVod(stopVod.sessionId, &m_ringBuffer);
+		}
 
 		TLock(m_vodLocker);
 		VodInfoVec::iterator it = m_vodInfoVec.begin();
@@ -485,10 +521,14 @@ j_result_t CXlClient::StopAllReal()
 			asioData.ioRead.bufLen = sizeof(CmdHeader) + sizeof(DevRealPlay) + sizeof(CmdTail);
 			pHost->ParserRequest(&asioData);
 
-			J_Channel *pChannel = NULL;
-			pHost->MakeChannel(it->nChanId, pChannel);
-			if (pChannel != NULL)
-				pChannel->CloseStream(&m_ringBuffer);
+			J_Obj *pObj = NULL;
+			pHost->MakeChannel(it->nChanId, pObj);
+			if (pObj != NULL)
+			{
+				J_Channel *pChannel = dynamic_cast<J_Channel *>(pObj);
+				if (pChannel != NULL)
+					pChannel->CloseStream(&m_ringBuffer);
+			}
 		}
 	}
 	m_videoInfoVec.clear();
@@ -525,10 +565,14 @@ j_result_t CXlClient::StopAllVod()
 			asioData.ioRead.bufLen = sizeof(CmdHeader) + sizeof(DevStopVod) + sizeof(CmdTail);
 			pHost->ParserRequest(&asioData);
 
-			J_Channel *pChannel = NULL;
-			pHost->MakeChannel(it->nChanId, pChannel);
-			if (pChannel != NULL)
-				pChannel->CloseStream(&m_ringBuffer);
+			J_Obj * pObj = NULL;
+			pHost->MakeChannel(it->nChanId, pObj);
+			if (pObj != NULL)
+			{
+				J_Vod *pVod = dynamic_cast<J_Vod *>(pObj);
+				if (pVod != NULL)
+					pVod->CloseVod(it->sessionId, &m_ringBuffer);
+			}
 		}
 	}
 	m_videoInfoVec.clear();
@@ -559,9 +603,13 @@ j_result_t CXlClient::StopAllAlarm()
 
 j_result_t CXlClient::OnLogin(J_AsioDataBase *pAsioData)
 {
+	CliUserLogin *pLoginInfo = (CliUserLogin *)(m_readBuff + sizeof(CmdHeader));
 	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
 	CliRetValue2 data = {0};
-	data.nRetVal = 0x01;
+	JoClientManager->Login(pLoginInfo->userName, pLoginInfo->passWord, pLoginInfo->nForced, data.nRetVal, this);
+	memset(m_userName, 0, sizeof(m_userName));
+	strcpy(m_userName, pLoginInfo->userName);
+	J_OS::LOGINFO("CXlClient::OnLogin Return = %d", data.nRetVal);
 	CXlHelper::MakeResponse(xlc_login, (j_char_t *)&data, sizeof(CliRetValue2), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
@@ -571,6 +619,7 @@ j_result_t CXlClient::OnLogin(J_AsioDataBase *pAsioData)
 
 j_result_t CXlClient::OnLogout(J_AsioDataBase *pAsioData)
 {
+	JoClientManager->Logout(m_userName);
 	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
 	CliRetValue2 data = {0};
 	data.nRetVal = 0x00;

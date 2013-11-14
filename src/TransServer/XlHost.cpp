@@ -37,9 +37,9 @@ CXlHost::~CXlHost()
 	delete m_readBuff;
 	delete m_writeBuff;
 }
-j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Channel *&pObj)
+j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 {
-	J_Channel *pChannel = NULL;
+	J_Obj *pChannel = NULL;
 	ChannelMap::iterator it = m_channelMap.find(nChannelNum);
 	if (it != m_channelMap.end())
 	{
@@ -328,7 +328,7 @@ j_result_t CXlHost::OnRealPlayData(J_AsioDataBase *pAsioData, j_int32_t nDadaLen
 		if (pXlChannel != NULL)
 		{
 			CXlHelper::MakeResponse(xlc_start_real_view, (j_char_t *)pResp, pHeader->length, m_readBuff);
-			pXlChannel->InputData(m_readBuff, nDadaLen);
+			pXlChannel->InputData(0, m_readBuff, nDadaLen);
 		}
 	}
 	TUnlock(m_channelLocker);
@@ -361,7 +361,7 @@ j_result_t CXlHost::OnVodPlayData(J_AsioDataBase *pAsioData,  j_int32_t nDadaLen
 		if (pXlChannel != NULL)
 		{
 			CXlHelper::MakeResponse(xlc_start_vod_view, (j_char_t *)pResp, pHeader->length, m_readBuff);
-			pXlChannel->InputData(m_readBuff, nDadaLen);
+			pXlChannel->InputData(1, m_readBuff, nDadaLen);
 		}
 	}
 	TUnlock(m_channelLocker);

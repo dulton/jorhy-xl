@@ -15,6 +15,7 @@
 ///////////////////////////////////////////////////////////////////////////  
 #include "ClientManager.h"
 #include "XlClient.h"
+#include "MsSqlServer.h"
 
 JO_IMPLEMENT_SINGLETON(ClientManager)
 #pragma comment(lib, "Debug\\core.lib")
@@ -27,6 +28,50 @@ CClientManager::CClientManager()
 CClientManager::~CClientManager()
 {
 	m_timer.Destroy();
+}
+
+j_result_t CClientManager::Login(const char *pUserName, const char *pPasswd, int nForce, int &nRet, J_Client *pClient)
+{
+	if (JoDataBaseObj->Login(pUserName, pPasswd, nForce, nRet) == J_OK)
+	{
+		TLock(m_lockerUser);
+		UserMap::iterator it = m_userMap.find(pUserName);
+		if (it != m_userMap.end() && nForce == 1)
+		{
+			it->second->SendMessage("", xlc_force_login);
+		}
+		m_userMap[pUserName] = pClient;
+
+		TUnlock(m_lockerUser);
+	}
+
+	return J_OK;
+}
+
+j_result_t CClientManager::Logout(const char *pUserName)
+{
+	TLock(m_lockerUser);
+	UserMap::iterator it = m_userMap.find(pUserName);
+	if (it != m_userMap.end())
+	{
+		JoDataBaseObj->Logout(pUserName);
+		m_userMap.erase(pUserName);
+	}
+	TUnlock(m_lockerUser);
+	
+	return J_OK;
+}
+
+j_result_t CClientManager::Notify(j_string_t strHostId, j_int32_t nType)
+{
+	TLock(m_locker);
+	ClientMap::iterator it = m_clientMap.begin();
+	for (; it!=m_clientMap.end(); ++it)
+	{
+		it->second->SendMessage(strHostId, nType);
+	}
+	TUnlock(m_locker);
+	return J_OK;
 }
 
 J_Client *CClientManager::CreateClientObj(j_socket_t nSock)

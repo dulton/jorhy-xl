@@ -24,12 +24,30 @@
 /// 管理客户端的登录、退出、请求数据等操作
 class CClientManager
 {
-	typedef std::map<j_socket_t, J_Client *>	ClientMap;
+	typedef std::map<j_socket_t, J_Client *> ClientMap;
+	typedef std::map<j_string_t, J_Client *> UserMap;
 public:
 	CClientManager();
 	~CClientManager();
 
 public:
+	/// 用户登录
+	/// @param[in]		pUserName 用户名 
+	/// @param[in]		pPasswd 密码
+	/// @param[in]		nForce 强制登录标志
+	/// @param[in]		nRett 返回值
+	/// @param[in]		pClient 客户端对象
+	/// @return			参见j_errtype.h 
+	j_result_t Login(const char *pUserName, const char *pPasswd, int nForce, int &nRet, J_Client *pClient);
+	/// 用户注销
+	/// @param[in]		pUserName 用户名 
+	/// @return			参见j_errtype.h 
+	j_result_t Logout(const char *pUserName);
+	/// 消息通知
+	/// @param[in]		strHostId 设备ID 
+	/// @param[in]		nType 消息类型
+	/// @return			参见j_errtype.h 
+	j_result_t Notify(j_string_t strHostId, j_int32_t nType);
 	/// 创建客户端对象
 	/// @param[in]		nSock 设备连接 
 	/// @param[out]   NULL-失败,否则为Client对象
@@ -54,6 +72,8 @@ private:
 private:
 	J_OS::CTLock m_locker;
 	ClientMap m_clientMap;
+	J_OS::CTLock m_lockerUser;
+	UserMap m_userMap;
 	J_OS::CTimer m_timer;
 };
 
