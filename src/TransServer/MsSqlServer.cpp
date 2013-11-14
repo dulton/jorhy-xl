@@ -14,6 +14,8 @@
 /// 修订说明：最初版本
 ///////////////////////////////////////////////////////////////////////////  
 #include "MsSqlServer.h"
+#include <iostream>
+using namespace std;
 
 //#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll"no_namespace rename("EOF", "EndOfFile")
 JO_IMPLEMENT_SINGLETON(SqlServerAccess)
@@ -31,20 +33,44 @@ CSqlServerAccess::~CSqlServerAccess()
 j_result_t CSqlServerAccess::Connect(const j_char_t *pAddr, j_int16_t nPort, const j_char_t *pUa, const j_char_t *pPwd)
 {
 	try 
-	{
-		m_pConn.CreateInstance("ADODB.Connection");
-		m_pRec.CreateInstance("ADODB.Recordset");
-		m_pCmd.CreateInstance("ADODB.Command");
-
+	{		
+		//HRESULT hr = m_pConn.CreateInstance("ADODB.Connection");
+		HRESULT hr = m_pConn.CreateInstance(__uuidof(Connection));
+		if (FAILED(hr))
+		{
+			_com_error e(hr);
+			J_OS::LOGINFO("CSqlServerAccess::Connect m_pConn.CreateInstance %s", e.ErrorMessage());
+			return J_DB_ERROR;
+		}
+		//hr = m_pRec.CreateInstance("ADODB.Recordset");
+		hr = m_pRec.CreateInstance(__uuidof(Recordset));
+		if (FAILED(hr))
+		{
+			_com_error e(hr);
+			J_OS::LOGINFO("CSqlServerAccess::Connect m_pRec.CreateInstance %s", e.ErrorMessage());
+			return J_DB_ERROR;
+		}
+		//hr = m_pCmd.CreateInstance("ADODB.Command");
+		hr = m_pCmd.CreateInstance(__uuidof(Command));
+		if (FAILED(hr))
+		{
+			_com_error e(hr);
+			J_OS::LOGINFO("CSqlServerAccess::Connect m_pCmd.CreateInstance %s", e.ErrorMessage());
+			return J_DB_ERROR;
+		}
 		j_char_t connString[256] = {0};
 		sprintf(connString, "Provider=SQLOLEDB;Server=%s,%d;Database=xl; uid=%s; pwd=%s;", pAddr, nPort, pUa, pPwd);
 		m_pConn->ConnectionString = connString;
 		m_pConn->ConnectionTimeout = 5;				//连接5秒超时
 		if (m_pConn->Open("", "", "", adConnectUnspecified) != S_OK)
+		{
+			J_OS::LOGINFO("CSqlServerAccess::Connect Open Error");
 			return J_DB_ERROR;
+		}
 	}
 	catch (...)
 	{
+		J_OS::LOGINFO("CSqlServerAccess::Connect Except");
 		return J_DB_ERROR;
 	}
 

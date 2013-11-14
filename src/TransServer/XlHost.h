@@ -54,6 +54,7 @@ private:
 	j_result_t OnSetSysTime(J_AsioDataBase *pAsioData);
 	j_result_t OnGetDevInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnGetLogInfo(J_AsioDataBase *pAsioData);
+	j_result_t OnDefault(J_AsioDataBase *pAsioData);
 	//////////////////////////////////////////////////////////////////////////////////////
 	j_result_t OnRealPlay(j_int32_t nChannel);
 	j_result_t OnRealStop(j_int32_t nChannel);

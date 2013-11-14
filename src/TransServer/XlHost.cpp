@@ -197,14 +197,15 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 	else if (m_ioState == xl_read_head_state)
 	{
 		pAsioData->ioCall = J_AsioDataBase::j_read_e;
-		CXlHelper::MakeNetData(pAsioData, m_readBuff + sizeof(CmdHeader), *((j_int32_t *)(m_readBuff + 4)) + sizeof(CmdTail));
+		CmdHeader *pHeader = (CmdHeader *)m_readBuff;
+		//J_OS::LOGINFO("dataLen = %d type = %d", pHeader->length, pHeader->cmd);
+		CXlHelper::MakeNetData(pAsioData, m_readBuff + sizeof(CmdHeader), pHeader->length + sizeof(CmdTail));
 
 		m_ioState = xl_read_data_state;
 	}
 	else if (m_ioState == xl_read_data_state)
 	{
 		CmdHeader *pHeader = (CmdHeader *)m_readBuff;
-		//J_OS::LOGINFO("CMD = %d", pHeader->cmd & 0xFF);
 		switch (pHeader->cmd)
 		{
 		case xld_register:
@@ -248,9 +249,11 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 			m_ioState = xl_read_head_state;
 			break;
 		default:
+			J_OS::LOGINFO("XlHost %d %X", pHeader->cmd, pHeader->flag & 0xFF);
+			OnDefault(pAsioData);
+			m_ioState = xl_read_head_state;
 			break;
 		}
-		//J_OS::LOGINFO("XlHost %d %X", pHeader->cmd, pHeader->flag & 0xFF);
 	}
 	else
 	{
@@ -285,8 +288,8 @@ j_result_t CXlHost::OnHeartBeat(J_AsioDataBase *pAsioData)
 j_result_t CXlHost::OnAlarmInfo(J_AsioDataBase *pAsioData)
 {
 	DevAlarmInfo *pAlarmInfo = (DevAlarmInfo *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("%I64d GPS(%f %f %f) %f %d", pAlarmInfo->bAlarm & 0xFF, pAlarmInfo->gps.dLatitude, pAlarmInfo->gps.dLongitude,
-		pAlarmInfo->gps.dGPSSpeed, pAlarmInfo->speed, pAlarmInfo->tmTimeStamp);
+	//J_OS::LOGINFO("%I64d GPS(%f %f %f) %f %d", pAlarmInfo->bAlarm & 0xFF, pAlarmInfo->gps.dLatitude, pAlarmInfo->gps.dLongitude,
+	//	pAlarmInfo->gps.dGPSSpeed, pAlarmInfo->speed, pAlarmInfo->tmTimeStamp);
 	if (m_bReady)
 	{
 		JoDataBaseObj->InsertAlarmInfo(m_hostId.c_str(), *pAlarmInfo);
@@ -413,6 +416,14 @@ j_result_t CXlHost::OnGetLogInfo(J_AsioDataBase *pAsioData)
 
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+	return J_OK;
+}
+
+j_result_t CXlHost::OnDefault(J_AsioDataBase *pAsioData)
+{
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+
 	return J_OK;
 }
 

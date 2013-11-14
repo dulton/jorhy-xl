@@ -57,7 +57,10 @@ j_uint32_t CXlHelper::CheckNum(j_char_t *pData, j_int32_t nLen)
 {
 	j_uint32_t nCheckNum = 0xFE;
 	for (int i=0; i<nLen; ++i)
+	{
 		nCheckNum += pData[i];
+		//nCheckNum %= 256;
+	}
 
 	return (nCheckNum % 256);
 }

@@ -231,7 +231,7 @@ typedef struct _alarmInfoReq
 typedef struct _alarmInfoResp
 {
 	char hostId[32];								///< 设备信息
-	__int64 bAlarm;								///< 报警信息
+	int bAlarm;								///< 报警信息
 	struct  
 	{
 		double dLatitude;

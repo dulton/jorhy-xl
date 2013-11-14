@@ -20,6 +20,7 @@
 #include "XlCType.h"
 
 #import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" no_namespace rename("EOF", "EndOfFile")
+//#import "msado15.dll" no_namespace rename("EOF", "EndOfFile")
 /// 本类的功能:  SqlServer数据库操作类
 /// 数据库的增删改查 
 class CSqlServerAccess : public J_DbAccess

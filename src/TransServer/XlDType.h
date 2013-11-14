@@ -21,10 +21,10 @@
 enum DvrCmdType
 {
 	xld_register = 0,					///< DVR主机注册
-	xld_set_time,							///< 服务器校时
+	xld_set_time,						///< 服务器校时
 	xld_get_loginfo,					///< 获取DVR开关机日志
 	xld_heartbeat = 4,					///< 心跳检测
-	xld_get_alraminfo,				///< 报警获取
+	xld_get_alraminfo,					///< 报警获取
 	xld_get_devinfo,					///< 设备信息获取
 	xld_real_play,						///< 开始实时视频播放
 	xld_real_stop,						///< 停止实时视频播放
@@ -32,7 +32,7 @@ enum DvrCmdType
 	xld_vod_stop,						///< 停止录像回放
 	xld_start_real_alarm,				///< 开始报警记录下载
 	xld_stop_real_alarm,				///< 停止报警记录下载
-	xld_errcode_download,			///< 系统异常下载
+	xld_errcode_download,				///< 系统异常下载
 };
 
 #pragma pack(push)
