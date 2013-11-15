@@ -39,6 +39,7 @@ public:
 	virtual j_result_t GetDeviceInfo();
 	virtual j_result_t EnableAlarm(CRingBuffer *pRingBuffer, j_boolean_t bEnable = true);
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData);
+	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen);
 
 private:
 	j_result_t ProcessClientCmd(J_AsioDataBase *pAsioData);

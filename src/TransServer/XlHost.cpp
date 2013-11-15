@@ -148,6 +148,17 @@ j_result_t CXlHost::ParserRequest(J_AsioDataBase *pAsioData)
 	return J_OK;
 }
 
+ j_result_t CXlHost::SendMessage(j_char_t *pData, j_int32_t nLen)
+ {
+	 j_int32_t nBodyLen = sizeof(CmdHeader) + nLen + sizeof(CmdTail);
+	 j_char_t *pBuffer = new j_char_t[nBodyLen];
+	 CXlHelper::MakeRequest(xld_send_message, pData, nLen, pBuffer);
+	 m_cmdSocket.Write_n(pBuffer, nBodyLen);
+	 delete pBuffer;
+
+	 return J_OK;
+ }
+
 j_result_t CXlHost::ProcessClientCmd(J_AsioDataBase *pAsioData)
 {
 	j_char_t *pDataBuff = pAsioData->ioRead.buf;

@@ -100,6 +100,11 @@ struct J_Host : virtual public J_Obj
 	///@param[in][out]	pAsioData异步数据	
 	///@return				参见x_errtype.h
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData) = 0;
+	///发送消息
+	///@param[in]			pData 数据
+	///@param[in]			nLen 数据长度
+	///@return				参见x_errtype.h
+	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen) = 0;
 };
 
 struct J_Client : virtual public J_Obj 

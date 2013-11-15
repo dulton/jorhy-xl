@@ -167,7 +167,7 @@ typedef struct j_guid
 	}*/
 	bool operator<(const j_guid &other) const
 	{
-		bool b_ret = true;
+		bool b_ret = false;
 		if (m_guid.Data1 != other.m_guid.Data1)
 			b_ret = m_guid.Data1 < other.m_guid.Data1;
 		else if (m_guid.Data2 != other.m_guid.Data2)

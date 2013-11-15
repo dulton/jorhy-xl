@@ -512,9 +512,11 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 	}
 	else if ((pHeader->cmd & 0xFF) == xlc_start_vod_view)
 	{
-		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
+		GUID *sessid = (GUID *)(pRecvBuff + sizeof(CmdHeader));
+		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader) + sizeof(GUID));
+		ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
-		m_vodCodec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
+		m_vodCodec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader) + sizeof(GUID), pHeader->length - sizeof(GUID));
 	}
 	else
 	{

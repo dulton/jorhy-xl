@@ -81,6 +81,7 @@ private:
 	j_result_t OnSetTime(J_AsioDataBase *pAsioData);
 	j_result_t OnStartAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
+	j_result_t OnSendMsg(J_AsioDataBase *pAsioData);
 
 private:
 	j_char_t m_userName[32];							//ÓÃ»§Ãû

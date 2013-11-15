@@ -193,6 +193,9 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 			OnStopAlarm(pAsioData);
 			m_ioCmdState = xl_write_body_state;
 			break;
+		case xlc_send_msg:
+			OnSendMsg(pAsioData);
+			m_ioCmdState = xl_write_body_state;
 		default:
 			ProcessConfig(pAsioData);
 			break;
@@ -755,6 +758,26 @@ j_result_t CXlClient::OnStopAlarm(J_AsioDataBase *pAsioData)
 
 	StopAlarm(pReps->hostId);
 	m_ioAlarmState = xl_init_state;
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnSendMsg(J_AsioDataBase *pAsioData)
+{
+	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
+	CliSendMsg *pReps = (CliSendMsg *)(m_readBuff + sizeof(CmdHeader));
+	J_OS::LOGINFO("CXlClient::OnSendMsg = %s", pReps->pData);
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReps->hostId);
+	if (pHost != NULL)
+		pHost->SendMessage(pReps->pData, pHeader->length - sizeof(DevEquipmentId));
+
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue) + sizeof(CmdTail);
+	CliRetValue data = {0};
+	strcpy(data.pHostId, pReps->hostId);
+	data.nRetVal = 0x00;
+	CXlHelper::MakeResponse(xlc_send_msg, (j_char_t *)&data, sizeof(CliRetValue), m_writeBuff);
+	pAsioData->ioCall = J_AsioDataBase::j_write_e;
+	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 
 	return J_OK;
 }
