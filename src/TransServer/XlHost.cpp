@@ -333,7 +333,7 @@ j_result_t CXlHost::OnRealPlayData(J_AsioDataBase *pAsioData, j_int32_t nDadaLen
 {
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
 	DevRealPlay *pResp = (DevRealPlay *)(m_readBuff + sizeof(CmdHeader));
-	//J_OS::LOGINFO("host hostId = %s, channel = %d", pReps->hostId, pReps->channel & 0xFF);
+	J_OS::LOGINFO("host hostId = %s, channel = %d", pResp->hostId, pResp->channel & 0xFF);
 	TLock(m_channelLocker);
 	ChannelMap::iterator it = m_channelMap.find(pResp->channel & 0xFF);
 	if (it != m_channelMap.end())
@@ -341,7 +341,7 @@ j_result_t CXlHost::OnRealPlayData(J_AsioDataBase *pAsioData, j_int32_t nDadaLen
 		CXlChannel *pXlChannel = dynamic_cast<CXlChannel *>(it->second.pChannel);
 		if (pXlChannel != NULL)
 		{
-			CXlHelper::MakeResponse(xlc_start_real_view, (j_char_t *)pResp, pHeader->length, m_readBuff);
+			CXlHelper::MakeResponse2(xlc_start_real_view, (j_char_t *)pResp, pHeader->length, m_readBuff);
 			pXlChannel->InputData(0, m_readBuff, nDadaLen);
 		}
 	}
@@ -365,8 +365,8 @@ j_result_t CXlHost::OnRealStopData(J_AsioDataBase *pAsioData)
 j_result_t CXlHost::OnVodPlayData(J_AsioDataBase *pAsioData,  j_int32_t nDadaLen)
 {
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
-	DevRealPlay *pResp = (DevRealPlay *)(m_readBuff + sizeof(CmdHeader));
-	//J_OS::LOGINFO("host hostId = %s, channel = %d", pReps->hostId, pReps->channel & 0xFF);
+	DevStartVod *pResp = (DevStartVod *)(m_readBuff + sizeof(CmdHeader));
+	//J_OS::LOGINFO("host hostId = %s, channel = %d", pResp->hostId, pResp->channel & 0xFF);
 	TLock(m_channelLocker);
 	ChannelMap::iterator it = m_channelMap.find(pResp->channel & 0xFF);
 	if (it != m_channelMap.end())
@@ -374,7 +374,7 @@ j_result_t CXlHost::OnVodPlayData(J_AsioDataBase *pAsioData,  j_int32_t nDadaLen
 		CXlChannel *pXlChannel = dynamic_cast<CXlChannel *>(it->second.pChannel);
 		if (pXlChannel != NULL)
 		{
-			CXlHelper::MakeResponse(xlc_start_vod_view, (j_char_t *)pResp, pHeader->length, m_readBuff);
+			CXlHelper::MakeResponse2(xlc_start_vod_view, (j_char_t *)pResp, pHeader->length, m_readBuff);
 			pXlChannel->InputData(1, m_readBuff, nDadaLen);
 		}
 	}

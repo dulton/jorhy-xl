@@ -766,7 +766,7 @@ j_result_t CXlClient::OnSendMsg(J_AsioDataBase *pAsioData)
 {
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
 	CliSendMsg *pReps = (CliSendMsg *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("CXlClient::OnSendMsg = %s", pReps->pData);
+	//J_OS::LOGINFO("CXlClient::OnSendMsg = %s", pReps->pData);
 	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReps->hostId);
 	if (pHost != NULL)
 		pHost->SendMessage(pReps->pData, pHeader->length - sizeof(DevEquipmentId));

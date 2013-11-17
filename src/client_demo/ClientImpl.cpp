@@ -203,17 +203,17 @@ void CClientImpl::StopAlarmInfo(const char *pDevId)
 
 void CClientImpl::GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
 {
-	//struct LogInfoBody {
-	//	CmdHeader head;
-	//	GetLogInfoReq data;
-	//	CmdTail tail;
-	//} logInfoBody;
-	//memset(&logInfoBody, 0, sizeof(LogInfoBody));
-	//memcpy(logInfoBody.data.hostId, pDevId, strlen(pDevId));
-	//logInfoBody.data.tmStart = tmStart;
-	//logInfoBody.data.tmEnd = tmEnd;
-	//MakeCommand(xl_get_loginfo, (char *)&logInfoBody.data, sizeof(GetLogInfoReq), (char *)&logInfoBody);
-	//send(m_sock, (char *)&logInfoBody, sizeof(LogInfoBody), 0);
+	struct LogInfoBody {
+		CmdHeader head;
+		GetLogInfoReq data;
+		CmdTail tail;
+	} logInfoBody;
+	memset(&logInfoBody, 0, sizeof(LogInfoBody));
+	memcpy(logInfoBody.data.hostId, pDevId, strlen(pDevId));
+	logInfoBody.data.tmStart = tmStart;
+	logInfoBody.data.tmEnd = tmEnd;
+	MakeCommand(xlc_get_loginfo, (char *)&logInfoBody.data, sizeof(GetLogInfoReq), (char *)&logInfoBody);
+	send(m_sock, (char *)&logInfoBody, sizeof(LogInfoBody), 0);
 }
 
 void CClientImpl::GetDvrTotleInfo()
@@ -430,7 +430,7 @@ int CClientImpl::MakeCommand(char bCmd, char *pData, int nLen, char *pBody)
 
 int CClientImpl::CheckNum(char *pData, int nLen)
 {
-	int nCheckNum = 0xFE;
+	unsigned int nCheckNum = 0xFE;
 	for (int i=0; i<nLen; ++i)
 		nCheckNum += pData[i];
 
@@ -507,8 +507,13 @@ void CClientImpl::ProcessVideoData(CmdHeader *pHeader,  char *pRecvBuff)
 	{
 		RealViewReq *pReps = (RealViewReq *)(pRecvBuff + sizeof(CmdHeader));
 		AFX_MANAGE_STATE(AfxGetStaticModuleState());
+		int x = CheckNum(pRecvBuff, pHeader->length + sizeof(CmdHeader));
+		int y = *(pRecvBuff + pHeader->length + sizeof(CmdHeader)) & 0xFF;
+		int z = *(pRecvBuff + pHeader->length + sizeof(CmdHeader) + 1) & 0xFF;
+		if (CheckNum(pRecvBuff, pHeader->length + sizeof(CmdHeader)) != (*(pRecvBuff + sizeof(CmdHeader) + pHeader->length) & 0xFF))
+			ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 		m_codec.InputStream((PBYTE)pRecvBuff + sizeof(CmdHeader), pHeader->length);
-		ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
+		//ShowVideoInfo(L"cmd=%d len=%d\n", pHeader->cmd & 0xFF, pHeader->length);
 	}
 	else if ((pHeader->cmd & 0xFF) == xlc_start_vod_view)
 	{

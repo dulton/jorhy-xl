@@ -44,6 +44,8 @@ enum CliCmdType
 	xlc_heart_beat,						///< 客户端在线心跳
 	xlc_send_msg,						///< 发送文本消息
 	///////////////////////////////////////////////////////////////////
+	xlc_get_loginfo,
+	///////////////////////////////////////////////////////////////////
 	xlc_get_dvr_summary = 0x81,	///< 获取DVR总数信息
 	xlc_get_dvr_list,							///< 获取DVR开关机日志
 	xlc_get_dvr_info,						///< 获取单个DVR信息
@@ -200,6 +202,7 @@ typedef struct _tagCliStopVod
 	int channel;							///< 通道号	
 } CliStopVod, *LPCliStopVod;
 
+/// 消息转发
 typedef struct _tagCliSendMsg
 {
 	char hostId[32];						///< 设备ID

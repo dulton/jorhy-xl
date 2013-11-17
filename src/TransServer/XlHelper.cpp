@@ -53,9 +53,41 @@ j_result_t CXlHelper::MakeResponse(j_char_t bCmd, j_char_t *pData, j_int32_t nLe
 	return J_OK;
 }
 
+j_result_t CXlHelper::MakeResponse2(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody)
+{
+	//填充头信息
+	CmdHeader *pHeader = (CmdHeader *)pBody;
+	pHeader->beginCode = 0xFF;
+	pHeader->version = 0x0A;
+	pHeader->flag = 0xFF;
+	pHeader->cmd = bCmd;
+	pHeader->length = nLen;
+	//填充数据区
+	if (nLen > 0)
+		memcpy(pBody + sizeof(CmdHeader), pData, nLen);
+	//填充尾信息
+	CmdTail *pTail = (CmdTail *)(pBody + sizeof(CmdHeader) + nLen);
+	pTail->verify = CheckNum2(pBody, sizeof(CmdHeader) + nLen);
+	pTail->endCode = 0xFE;
+
+	return J_OK;
+}
+
 j_uint32_t CXlHelper::CheckNum(j_char_t *pData, j_int32_t nLen)
 {
 	j_uint32_t nCheckNum = 0xFE;
+	for (int i=0; i<nLen; ++i)
+	{
+		nCheckNum += pData[i];
+		//nCheckNum %= 256;
+	}
+
+	return (nCheckNum % 256);
+}
+
+j_uint32_t CXlHelper::CheckNum2(j_char_t *pData, j_int32_t nLen)
+{
+	__int64 nCheckNum = 0xFE;
 	for (int i=0; i<nLen; ++i)
 	{
 		nCheckNum += pData[i];

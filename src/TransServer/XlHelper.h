@@ -23,7 +23,9 @@ public:
 	/// 公用接口
 	static j_result_t MakeRequest(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
 	static j_result_t MakeResponse(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
+	static j_result_t MakeResponse2(j_char_t bCmd, j_char_t *pData, j_int32_t nLen, j_char_t *pBody);
 	static j_uint32_t CheckNum(j_char_t *pData, j_int32_t nLen);
+	static j_uint32_t CheckNum2(j_char_t *pData, j_int32_t nLen);
 	static j_result_t MakeNetData(J_AsioDataBase *pAsioData, j_char_t *pDataBuff, j_int32_t nLen);
 };
 #endif // !__XLHELPER_H_

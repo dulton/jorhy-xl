@@ -206,12 +206,12 @@ void CVideoDlg::OnBnClickedBtn2()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_2)
 	{
-		m_impl.RealPlay("CD508893472E", 1, m_video_2.m_hWnd);
+		m_impl.RealPlay("XLL325487EDC", 1, m_video_2.m_hWnd);
 		m_bPlay_2 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("CD508893472E", 1);
+		m_impl.RealStop("XLL325487EDC", 1);
 		m_bPlay_2 = FALSE;
 	}
 }
@@ -222,12 +222,12 @@ void CVideoDlg::OnBnClickedBtn3()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_3)
 	{
-		m_impl.RealPlay("CD508893472E", 2, m_video_3.m_hWnd);
+		m_impl.RealPlay("XLL325487EDC", 2, m_video_3.m_hWnd);
 		m_bPlay_3 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("CD508893472E", 2);
+		m_impl.RealStop("XLL325487EDC", 2);
 		m_bPlay_3 = FALSE;
 	}
 }
@@ -238,12 +238,12 @@ void CVideoDlg::OnBnClickedBtn4()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_4)
 	{
-		m_impl.RealPlay("CD508893472E", 3, m_video_8.m_hWnd);
+		m_impl.RealPlay("XLL325487EDC", 3, m_video_8.m_hWnd);
 		m_bPlay_4 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("CD508893472E", 3);
+		m_impl.RealStop("XLL325487EDC", 3);
 		m_bPlay_4 = FALSE;
 	}
 }
@@ -428,5 +428,19 @@ void CVideoDlg::OnBnClickedBtnGetsyserror()
 void CVideoDlg::OnBnClickedBtnGetLog()
 {
 	// TODO: Add your control notification handler code here
-	m_impl.GetLogInfo("XLL325487EDC", -1, -1);
+	UpdateData(TRUE);
+	CTime tempStartTime(m_alarmStartDate.GetYear()
+		,m_alarmStartDate.GetMonth()
+		,m_alarmStartDate.GetDay()
+		,m_alarmStartTime.GetHour()
+		,m_alarmStartTime.GetMinute()
+		,m_alarmStartTime.GetSecond());
+
+	CTime tempEndTime(m_alarmStopDate.GetYear()
+		,m_alarmStopDate.GetMonth()
+		,m_alarmStopDate.GetDay()
+		,m_alarmStopTime.GetHour()
+		,m_alarmStopTime.GetMinute()
+		,m_alarmStopTime.GetSecond());
+	m_impl.GetLogInfo("XLL325487EDC", tempStartTime.GetTime(), tempEndTime.GetTime());
 }

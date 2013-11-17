@@ -126,10 +126,11 @@ void CDeviceManager::CheckDevice()
 		J_Host *pHost = it->second.pHost;
 		if (pHost->IsReady())
 		{
-			pHost->SendMessage("qqqqqqq", strlen("qqqqqqq"));
+			//pHost->SendMessage("qqqqqqq", strlen("qqqqqqq"));
 			if (!it->second.bRegister)
 			{
 				pHost->GetDeviceInfo();
+				pHost->SetTime(time(0));
 				AddDevice(pHost);
 				it->second.bRegister = true;
 			}
