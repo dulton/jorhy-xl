@@ -112,7 +112,8 @@ struct J_Client : virtual public J_Obj
 	/// 发送消息
 	/// @param[in]			strHostId 设备ID
 	/// @param[in]			nType 消息类型
-	virtual j_result_t SendMessage(j_string_t strHostId, j_int32_t nType) = 0;
+	/// @param[in]			nNo 消息编号
+	virtual j_result_t SendMessage(j_string_t strHostId, j_int32_t nType, j_int32_t nNo) = 0;
 	/// 用户请求及回复
 	/// @param[in][out]	pAsioData异步数据	
 	/// @return				参见j_errtype.h 

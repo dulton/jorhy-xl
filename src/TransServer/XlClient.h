@@ -44,7 +44,7 @@ public:
 
 public:
 	///J_Client
-	j_result_t SendMessage(j_string_t strHostId, j_int32_t nType);
+	j_result_t SendMessage(j_string_t strHostId, j_int32_t nType, j_int32_t nNo);
 	j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	j_result_t Broken();
 	j_int32_t GetState();

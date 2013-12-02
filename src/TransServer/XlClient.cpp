@@ -53,7 +53,7 @@ CXlClient::~CXlClient()
 	JoClientManager->Logout(m_userName);
 }
 
-j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType)
+j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType, j_int32_t nNo)
 {
 	struct MessageBody
 	{
@@ -62,7 +62,7 @@ j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType)
 		CmdTail tial;
 	} messageBody;
 	messageBody.data.uiType = nType;
-	messageBody.data.uiNO = 0;
+	messageBody.data.uiNO = nNo;
 	CXlHelper::MakeResponse(xlc_message, (j_char_t *)&messageBody.data, sizeof(CliMessage), (j_char_t *)&messageBody);
 	m_socket.Write_n((j_char_t *)&messageBody, sizeof(CmdHeader) + sizeof(CliMessage) + sizeof(CmdTail));
 	J_OS::LOGINFO("CXlClient::SendMessage");

@@ -36,6 +36,10 @@ CXlHost::~CXlHost()
 {
 	delete m_readBuff;
 	delete m_writeBuff;
+	DevHostInfo devInfo = {0};
+	strcpy(devInfo.hostId, m_hostId.c_str());
+	devInfo.bOnline = false;
+	JoDataBaseObj->UpdateDevInfo(devInfo);
 }
 j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 {
@@ -411,6 +415,7 @@ j_result_t CXlHost::OnGetDevInfo(J_AsioDataBase *pAsioData)
 	DevHostInfo *pReps = (DevHostInfo *)(m_readBuff + sizeof(CmdHeader));
 	J_OS::LOGINFO("XlHost GetInfo hostId = %s, vehicleNum = %s, chnnelNum=%d, phoneNum = %s", 
 		pReps->hostId, pReps->vehicleNum, pReps->totalChannels & 0xFF, pReps->phoneNum);
+	pReps->bOnline = true;
 	JoDataBaseObj->UpdateDevInfo(*pReps);
 
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));

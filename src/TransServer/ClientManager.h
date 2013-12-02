@@ -46,8 +46,9 @@ public:
 	/// 消息通知
 	/// @param[in]		strHostId 设备ID 
 	/// @param[in]		nType 消息类型
+	/// @param[in]		nNo 消息编号
 	/// @return			参见j_errtype.h 
-	j_result_t Notify(j_string_t strHostId, j_int32_t nType);
+	j_result_t Notify(j_string_t strHostId, j_int32_t nType, j_int32_t nNo);
 	/// 创建客户端对象
 	/// @param[in]		nSock 设备连接 
 	/// @param[out]   NULL-失败,否则为Client对象

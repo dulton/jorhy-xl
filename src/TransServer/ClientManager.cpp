@@ -38,7 +38,7 @@ j_result_t CClientManager::Login(const char *pUserName, const char *pPasswd, int
 		UserMap::iterator it = m_userMap.find(pUserName);
 		if (it != m_userMap.end() && nForce == 1)
 		{
-			it->second->SendMessage("", xlc_force_login);
+			it->second->SendMessage("", 0x01, xlc_force_login);
 		}
 		m_userMap[pUserName] = pClient;
 
@@ -62,13 +62,13 @@ j_result_t CClientManager::Logout(const char *pUserName)
 	return J_OK;
 }
 
-j_result_t CClientManager::Notify(j_string_t strHostId, j_int32_t nType)
+j_result_t CClientManager::Notify(j_string_t strHostId, j_int32_t nType, j_int32_t nNo)
 {
 	TLock(m_locker);
 	ClientMap::iterator it = m_clientMap.begin();
 	for (; it!=m_clientMap.end(); ++it)
 	{
-		it->second->SendMessage(strHostId, nType);
+		it->second->SendMessage(strHostId, nType, nNo);
 	}
 	TUnlock(m_locker);
 	return J_OK;

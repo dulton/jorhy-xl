@@ -62,10 +62,12 @@ typedef struct _cmdTail
 ///设备信息
 typedef struct _tagDevHostInfo
 {
-	char hostId[32];					///< 设备ID
+	char hostId[32];			///< 设备ID
 	char vehicleNum[16];		///< 列车号
 	char phoneNum[12];			///< 电话号码
 	char totalChannels;			///< 通道数目
+	bool bOnline;				///< 在线状态
+	bool bState;				///< 设备状态
 } DevHostInfo, *PLDevHostInfo;
 
 /// 报警信息

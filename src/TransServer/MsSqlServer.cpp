@@ -114,7 +114,7 @@ j_result_t CSqlServerAccess::Login(const char *pUserName, const char *pPasswd, i
 				nRet = 2;
 				return J_DB_ERROR;
 			}
-			else 	if (nForce)
+			else if (nForce)
 			{
 				sprintf(strCmd, "UPDATE UserInfo SET State=1 WHERE AccountName='%s';", pUserName);
 				m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
@@ -161,8 +161,16 @@ j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo)
 	try 
 	{
 		char strCmd[256] = {0};
-		sprintf(strCmd, "UPDATE Equipment SET VehicleNO='%s',PhoneNum='%s',TotalChannels=%d WHERE EquipmentID='%s';",
-			devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels & 0xFF, devInfo.hostId);
+		if (devInfo.bOnline == true)
+		{
+			sprintf(strCmd, "UPDATE Equipment SET VehicleNO='%s',PhoneNum='%s',TotalChannels=%d,Online=%d WHERE EquipmentID='%s';",
+				devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels & 0xFF, devInfo.bOnline, devInfo.hostId);
+		}
+		else
+		{
+			sprintf(strCmd, "UPDATE Equipment SET Online=%d WHERE EquipmentID='%s';",
+				devInfo.bOnline, devInfo.hostId);
+		}
 		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 	}
 	catch(...)
