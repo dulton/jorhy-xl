@@ -38,6 +38,11 @@ class CXlClient : public J_Client
 	};
 	typedef std::vector<VodInfo> VodInfoVec;
 	typedef std::vector<j_string_t> AlarmInfoVec;
+
+	///j_string_t optHostId;								操作的设备
+	///j_int32_t  optCommand;						操作的指令
+	///j_time_t   optTime;								操作的时间
+	typedef std::map<CliOptKey, j_time_t> OptionMap;
 public:
 	CXlClient(j_socket_t nSock);
 	~CXlClient();
@@ -53,10 +58,12 @@ private:
 	/// 生成数据接口
 	j_result_t MakeTransData(J_AsioDataBase *pAsioData);
 	j_result_t MakeAlarmData(J_AsioDataBase *pAsioData);
+	j_result_t MakeRcdData(J_AsioDataBase *pAsioData);
 	/// 分析数据接口
 	j_result_t ProcessRequest(J_AsioDataBase *pAsioData);
 	j_result_t ProcessData(J_AsioDataBase *pAsioData);
 	j_result_t ProcessAlarm(J_AsioDataBase *pAsioData);
+	j_result_t ProcessRcd(J_AsioDataBase *pAsioData);
 	j_result_t ProcessConfig(J_AsioDataBase *pAsioData);
 
 	/// 设备相关接口
@@ -82,32 +89,39 @@ private:
 	j_result_t OnStartAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnSendMsg(J_AsioDataBase *pAsioData);
+	j_result_t OnGetRctInfo(J_AsioDataBase *pAsioData);
 
 private:
 	j_char_t m_userName[32];							//用户名
-	J_OS::CTCPSocket m_socket;					//客户端连接
+	J_OS::CTCPSocket m_socket;						//客户端连接
 	j_char_t *m_readBuff;								//命令请求缓存区
 	j_char_t *m_writeBuff;								//命令发送缓存区
 	j_char_t *m_dataBuff;								//视频发送缓存区
 	j_char_t *m_alarmBuff;								//报警发送缓存区
+	j_char_t *m_rcdBuff;									//录像信息发送缓存区
 
 	j_int32_t m_ioCmdState;							//命令请求状态
 	j_int32_t m_ioDataState;							//视频发送状态
 	j_int32_t m_ioAlarmState;							//报警发送状态
+	j_int32_t m_ioRcdState;								//报警发送状态
 	CRingBuffer m_ringBuffer;						//视频流队列
 	J_StreamHeader m_streamHeader;			//视频队列头信息
 	CRingBuffer m_alarmBuffer;						//报警流队列
 	J_StreamHeader m_alarmHeader;				//报警队列头信息
+	CRingBuffer m_rcdBuffer;							//报警流队列
+	J_StreamHeader m_rcdHeader;					//报警队列头信息
 	j_long_t m_nRefCnt;									//视频流引用计数
 	j_long_t m_nAlarmRefCnt;							//报警流引用计数
 	J_OS::CTLock m_vecLocker;						//实时视频访问锁
 	VideoInfoVec m_videoInfoVec;					//实时视频访问信息
 	J_OS::CTLock m_vodLocker;						//历史视频访问锁
-	VodInfoVec m_vodInfoVec;					//历史视频访问信息
+	VodInfoVec m_vodInfoVec;						//历史视频访问信息
 	J_OS::CTLock m_vecAlarmLocker;				//报警访问锁
 	AlarmInfoVec m_alarmInfoVec;					//报警访问信息
 	j_int32_t m_state;										//客户端状态
 	j_int32_t m_lastBreatTime;
 	CXlConfig m_config;
+	///操作集合
+	OptionMap m_optionMap;
 };
 #endif // ~__CLIENT_H_

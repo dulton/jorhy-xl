@@ -41,8 +41,9 @@ public:
 	j_result_t Login(const char *pUserName, const char *pPasswd, int nForce, int &nRet, J_Client *pClient);
 	/// 用户注销
 	/// @param[in]		pUserName 用户名 
+	/// @param[in]		pClient 客户端对象
 	/// @return			参见j_errtype.h 
-	j_result_t Logout(const char *pUserName);
+	j_result_t Logout(const char *pUserName, J_Client *pClient);
 	/// 消息通知
 	/// @param[in]		strHostId 设备ID 
 	/// @param[in]		nType 消息类型

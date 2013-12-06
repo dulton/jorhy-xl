@@ -37,6 +37,7 @@ public:
 	virtual j_result_t GetHostId(j_string_t &strDevId);
 	virtual j_result_t SetTime(j_time_t sysTime);
 	virtual j_result_t GetDeviceInfo();
+	virtual j_result_t EnableRcdInfo(CRingBuffer *pRingBuffer, j_boolean_t bEnable = true);
 	virtual j_result_t EnableAlarm(CRingBuffer *pRingBuffer, j_boolean_t bEnable = true);
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen);
@@ -52,6 +53,7 @@ private:
 	j_result_t OnRealStopData(J_AsioDataBase *pAsioData);
 	j_result_t OnVodPlayData(J_AsioDataBase *pAsioData,  j_int32_t nDadaLen);
 	j_result_t OnVodStopData(J_AsioDataBase *pAsioData);
+	j_result_t OnRcdInfoData(J_AsioDataBase *pAsioData);
 	j_result_t OnSetSysTime(J_AsioDataBase *pAsioData);
 	j_result_t OnGetDevInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnGetLogInfo(J_AsioDataBase *pAsioData);
@@ -61,31 +63,32 @@ private:
 	j_result_t OnRealStop(j_int32_t nChannel);
 	j_result_t OnVodPlay(GUID sessionId, j_int32_t nChannel, j_time_t startTime, j_time_t endTime);
 	j_result_t OnVodStop(GUID sessionId, j_int32_t nChannel);
+	j_result_t OnGetRcdInfo(j_string_t hostId);
 
 private:
-	int AddRingBuffer(CRingBuffer *pRingBuffer)
+	int AddRingBuffer(J_OS::TLocker_t &locker, std::vector<CRingBuffer *> &ringBufferVec, CRingBuffer *pRingBuffer)
 	{
-		TLock(m_vecLocker);
-		m_vecRingBuffer.push_back(pRingBuffer);
-		TUnlock(m_vecLocker);
+		TLock(locker);
+		ringBufferVec.push_back(pRingBuffer);
+		TUnlock(locker);
 
 		return J_OK;
 	}
-	int DelRingBuffer(CRingBuffer *pRingBuffer)
+	int DelRingBuffer(J_OS::TLocker_t &locker, std::vector<CRingBuffer *> &ringBufferVec, CRingBuffer *pRingBuffer)
 	{
-		TLock(m_vecLocker);
-		std::vector<CRingBuffer *>::iterator it = m_vecRingBuffer.begin();
-		for (; it != m_vecRingBuffer.end(); it++)
+		TLock(locker);
+		std::vector<CRingBuffer *>::iterator it = ringBufferVec.begin();
+		for (; it != ringBufferVec.end(); it++)
 		{
 			if (*it == pRingBuffer)
 			{
-				m_vecRingBuffer.erase(it);
-				TUnlock(m_vecLocker);
+				ringBufferVec.erase(it);
+				TUnlock(locker);
 
 				return J_OK;
 			}
 		}
-		TUnlock(m_vecLocker);
+		TUnlock(locker);
 		return J_NOT_EXIST;
 	}
 
@@ -102,6 +105,8 @@ private:
 	j_int32_t m_ioState;				//1-读头数据,2-读数据区+尾数据
 	J_OS::TLocker_t m_vecLocker;
 	std::vector<CRingBuffer *> m_vecRingBuffer;
+	J_OS::TLocker_t m_vecRcdLocker;
+	std::vector<CRingBuffer *> m_vecRcdRingBuffer;
 };
 
 #endif

@@ -25,6 +25,7 @@
 #define XL_CMD_BUFFER_SIZE (2 * 1024)
 #define XL_DATA_BUFFER_SIZE (1024 * 1024)
 #define XL_ALARM_BUFFER_SIZE (2 * 1024)
+#define XL_RCD_BUFFER_SIZE (64)
 
 CXlClient::CXlClient(j_socket_t nSock)
  : m_socket(nSock)
@@ -35,9 +36,11 @@ CXlClient::CXlClient(j_socket_t nSock)
 	m_writeBuff = new char[XL_CMD_BUFFER_SIZE];		
 	m_dataBuff = new char[XL_DATA_BUFFER_SIZE];	
 	m_alarmBuff = new char[XL_ALARM_BUFFER_SIZE];	
+	m_rcdBuff = new char[XL_RCD_BUFFER_SIZE];	
 	m_ioCmdState = xl_init_state;
 	m_ioDataState = xl_init_state;
 	m_ioAlarmState = xl_init_state;
+	m_ioRcdState = xl_init_state;
 	m_nRefCnt = 0;
 	m_nAlarmRefCnt = 0;
 	m_lastBreatTime = time(0);
@@ -50,7 +53,9 @@ CXlClient::~CXlClient()
 	delete m_readBuff;
 	delete m_writeBuff;
 	delete m_dataBuff;
-	JoClientManager->Logout(m_userName);
+	delete m_alarmBuff;
+	delete m_rcdBuff;
+	JoClientManager->Logout(m_userName, this);
 }
 
 j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType, j_int32_t nNo)
@@ -82,6 +87,9 @@ j_result_t CXlClient::ParserRequest(J_AsioDataBase *pAsioData)
 		nResult = ProcessData(pAsioData);
 		break;
 	case J_AsioDataBase::j_alarm_e:
+		nResult = ProcessAlarm(pAsioData);
+		break;
+	case J_AsioDataBase::j_rcd_e:
 		nResult = ProcessAlarm(pAsioData);
 		break;
 	case J_AsioDataBase::j_log_e:
@@ -129,6 +137,19 @@ j_result_t CXlClient::MakeAlarmData(J_AsioDataBase *pAsioData)
 	m_alarmBuffer.PopBuffer(m_alarmBuff, m_alarmHeader);
 	pAsioData->ioWrite.buf = m_alarmBuff;
 	pAsioData->ioWrite.bufLen = m_alarmHeader.dataLen;
+	pAsioData->ioWrite.finishedLen = 0;
+	pAsioData->ioWrite.whole = true;
+	pAsioData->ioWrite.shared = true;
+
+	return J_OK;
+}
+
+j_result_t CXlClient::MakeRcdData(J_AsioDataBase *pAsioData)
+{
+	memset(&m_rcdHeader, 0, sizeof(J_StreamHeader));
+	m_rcdBuffer.PopBuffer(m_rcdBuff, m_rcdHeader);
+	pAsioData->ioWrite.buf = m_rcdBuff;
+	pAsioData->ioWrite.bufLen = m_rcdHeader.dataLen;
 	pAsioData->ioWrite.finishedLen = 0;
 	pAsioData->ioWrite.whole = true;
 	pAsioData->ioWrite.shared = true;
@@ -196,6 +217,11 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 		case xlc_send_msg:
 			OnSendMsg(pAsioData);
 			m_ioCmdState = xl_write_body_state;
+			break;
+		case xlc_get_rcd_info:
+			OnGetRctInfo(pAsioData);
+			m_ioCmdState = xl_read_head_state;
+			break;
 		default:
 			ProcessConfig(pAsioData);
 			break;
@@ -311,6 +337,28 @@ j_result_t CXlClient::ProcessAlarm(J_AsioDataBase *pAsioData)
 	else
 	{
 		pAsioData->ioCall = J_AsioDataBase::j_keep_e;
+	}
+
+	return nResult;
+}
+
+j_result_t CXlClient::ProcessRcd(J_AsioDataBase *pAsioData)
+{
+	j_result_t nResult = J_OK;
+	if (m_ioRcdState == xl_init_state)
+	{
+		pAsioData->ioType = J_AsioDataBase::j_rcd_e;
+		//pAsioData->hEvent = WSACreateEvent();
+
+		pAsioData->ioCall = J_AsioDataBase::j_write_e;
+		m_ioRcdState = xl_write_body_state;
+		nResult = MakeRcdData(pAsioData);
+	}
+	else
+	{
+		pAsioData->ioCall = J_AsioDataBase::j_write_e;
+		m_ioRcdState = xl_write_body_state;
+		nResult =MakeRcdData(pAsioData);
 	}
 
 	return nResult;
@@ -622,7 +670,7 @@ j_result_t CXlClient::OnLogin(J_AsioDataBase *pAsioData)
 
 j_result_t CXlClient::OnLogout(J_AsioDataBase *pAsioData)
 {
-	JoClientManager->Logout(m_userName);
+	JoClientManager->Logout(m_userName, this);
 	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
 	CliRetValue2 data = {0};
 	data.nRetVal = 0x00;
@@ -778,6 +826,30 @@ j_result_t CXlClient::OnSendMsg(J_AsioDataBase *pAsioData)
 	CXlHelper::MakeResponse(xlc_send_msg, (j_char_t *)&data, sizeof(CliRetValue), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnGetRctInfo(J_AsioDataBase *pAsioData)
+{
+	CliRcdInfo *pReps = (CliRcdInfo *)(m_readBuff + sizeof(CmdHeader));
+	J_OS::LOGINFO("CXlClient::OnGetRctInfo hostId = %s", pReps->hostId);
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	if (m_ioRcdState == xl_init_state)
+	{
+		J_Host *pHost = JoDeviceManager->GetDeviceObj(pReps->hostId);
+		if (pHost != NULL)
+		{
+			pHost->EnableRcdInfo(&m_rcdBuffer);
+			pAsioData->ioRead.buf = m_readBuff;
+			pAsioData->ioRead.bufLen = pAsioData->ioRead.finishedLen + sizeof(CmdHeader);
+			pHost->ParserRequest(pAsioData);
+		}
+
+		pAsioData->ioCall = J_AsioDataBase::j_read_write_rcd_e;
+		m_ioAlarmState = xl_write_body_state;
+	}
 
 	return J_OK;
 }

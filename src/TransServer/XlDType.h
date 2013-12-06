@@ -31,9 +31,8 @@ enum DvrCmdType
 	xld_real_stop,						///< 停止实时视频播放
 	xld_vod_play,						///< 开始录像回放
 	xld_vod_stop,						///< 停止录像回放
-	xld_start_real_alarm,				///< 开始报警记录下载
-	xld_stop_real_alarm,				///< 停止报警记录下载
 	xld_errcode_download,			///< 系统异常下载
+	xld_get_rcd_info,					///< 获取录像信息
 };
 
 #pragma pack(push)
@@ -142,6 +141,13 @@ typedef struct _tagDevStopVod
 	char hostId[32];						///< 设备ID
 	__int64 channel;					///< 通道号	
 } DevStopVod, *LPDevStopVod;
+
+typedef struct _tagDevRcdInfo
+{
+	char szID[32];							///< 车辆ID
+	time_t tmRecIntervalStartPt;		///< 录像区间开始时间
+	time_t tmRecIntervalEndPt;		///< 录像区间结束时间
+} DevRcdInfo, *LPDevRcdInfo;
 
 #pragma pack(pop)
 

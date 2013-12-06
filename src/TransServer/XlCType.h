@@ -43,6 +43,7 @@ enum CliCmdType
 	xlc_stop_vod_view,				///< 停止录像回放（下载）
 	xlc_heart_beat,						///< 客户端在线心跳
 	xlc_send_msg,						///< 发送文本消息
+	xlc_get_rcd_info,					///< 获取录像信息
 	///////////////////////////////////////////////////////////////////
 	xlc_get_loginfo,
 	///////////////////////////////////////////////////////////////////
@@ -64,6 +65,26 @@ enum CliCmdType
 	xlc_mod_department_info,		///< 修改单位的信息
 	xlc_del_department_info,			///< 删除单位
 	xlc_get_alarm_info,
+};
+
+struct CliOptKey
+{
+	CliOptKey(const char *pHostId, j_int32_t nCommand)
+	{
+		m_hostId = pHostId;
+		m_nCommand = nCommand;
+	}
+	bool operator<(const CliOptKey &other) const
+	{
+		bool b_ret = false;
+		if (m_hostId != other.m_hostId)
+			b_ret = m_hostId < other.m_hostId;
+		else
+			b_ret = m_nCommand < other.m_nCommand;
+		return b_ret;
+	}
+	j_string_t m_hostId;
+	j_int32_t m_nCommand;
 };
 
 #pragma pack(push)
@@ -301,6 +322,13 @@ typedef struct _tagCliConfigRetVal
 {
 	int nRetVal;
 } CliConfigRetVal, *LPCliConfigRetVal;
+
+typedef struct _tagCliRcdInfo
+{
+	char hostId[32];							///< 车辆ID
+	time_t tmRecIntervalStartPt;		///< 录像区间开始时间
+	time_t tmRecIntervalEndPt;		///< 录像区间结束时间
+} CliRcdInfo, *LPCliRcdInfo;
 
 #pragma pack(pop)
 

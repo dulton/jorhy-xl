@@ -48,14 +48,17 @@ j_result_t CClientManager::Login(const char *pUserName, const char *pPasswd, int
 	return J_OK;
 }
 
-j_result_t CClientManager::Logout(const char *pUserName)
+j_result_t CClientManager::Logout(const char *pUserName, J_Client *pClient)
 {
 	TLock(m_lockerUser);
 	UserMap::iterator it = m_userMap.find(pUserName);
 	if (it != m_userMap.end())
 	{
-		JoDataBaseObj->Logout(pUserName);
-		m_userMap.erase(pUserName);
+		if (pClient == it->second)
+		{
+			JoDataBaseObj->Logout(pUserName);
+			m_userMap.erase(pUserName);
+		}
 	}
 	TUnlock(m_lockerUser);
 	

@@ -99,6 +99,11 @@ j_result_t CTcpServer4Client::OnRead(J_AsioDataBase *pAsioData, int nRet)
 			pDataBase->ioType = J_AsioDataBase::j_alarm_e;
 			pClient->ParserRequest(pDataBase);
 		}
+		else if (pDataBase->ioCall == J_AsioDataBase::j_read_write_rcd_e)
+		{
+			pDataBase->ioType = J_AsioDataBase::j_rcd_e;
+			pClient->ParserRequest(pDataBase);
+		}
 		else if (pDataBase->ioCall == J_AsioDataBase::j_read_write_dvrlist_e)
 		{
 			pDataBase->ioType = J_AsioDataBase::j_dvr_list_e;

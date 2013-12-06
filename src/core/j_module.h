@@ -91,6 +91,11 @@ struct J_Host : virtual public J_Obj
 	///获取设备信息
 	///@return			参见x_errtype.h
 	virtual j_result_t GetDeviceInfo() = 0;
+	///接收录像信息
+	///@param[in]		pRingBuffer 流队列对象
+	///@param[in]		bEnable true-启动,false-停止
+	///@return			参见x_errtype.h
+	virtual j_result_t EnableRcdInfo(CRingBuffer *pRingBuffer, j_boolean_t bEnable = true) = 0;
 	///启动报警
 	///@param[in]		pRingBuffer 流队列对象
 	///@param[in]		bEnable true-启动,false-停止

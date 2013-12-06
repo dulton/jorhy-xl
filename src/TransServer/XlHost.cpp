@@ -41,6 +41,7 @@ CXlHost::~CXlHost()
 	devInfo.bOnline = false;
 	JoDataBaseObj->UpdateDevInfo(devInfo);
 }
+
 j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 {
 	J_Obj *pChannel = NULL;
@@ -125,15 +126,28 @@ j_result_t CXlHost::GetDeviceInfo()
 	return J_OK;
 }
 
+j_result_t CXlHost::EnableRcdInfo(CRingBuffer *pRingBuffer, j_boolean_t bEnable)
+{
+	if (bEnable)
+	{
+		AddRingBuffer(m_vecRcdLocker, m_vecRcdRingBuffer, pRingBuffer);
+	}
+	else
+	{
+		DelRingBuffer(m_vecRcdLocker, m_vecRcdRingBuffer, pRingBuffer);
+	}
+	return J_OK;
+}
+
 j_result_t CXlHost::EnableAlarm(CRingBuffer *pRingBuffer, j_boolean_t bEnable)
 {
 	if (bEnable)
 	{
-		AddRingBuffer(pRingBuffer);
+		AddRingBuffer(m_vecLocker, m_vecRingBuffer, pRingBuffer);
 	}
 	else
 	{
-		DelRingBuffer(pRingBuffer);
+		DelRingBuffer(m_vecLocker, m_vecRingBuffer, pRingBuffer);
 	}
 	return J_OK;
 }
@@ -193,6 +207,12 @@ j_result_t CXlHost::ProcessClientCmd(J_AsioDataBase *pAsioData)
 			OnVodStop(pStopVod->sessionId, pStopVod->channel);
 		}
 		break;
+	case xlc_get_rcd_info:
+		{
+			DevEquipmentId *pHostId = (DevEquipmentId *)(pDataBuff + sizeof(CmdHeader));
+			OnGetRcdInfo(pHostId->hostId);
+		}
+		break;
 	default:
 		break;
 	}
@@ -249,6 +269,10 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 			break;
 		case xld_vod_stop:
 			OnVodStopData(pAsioData);
+			m_ioState = xl_read_head_state;
+			break;
+		case xld_get_rcd_info:
+			OnRcdInfoData(pAsioData);
 			m_ioState = xl_read_head_state;
 			break;
 		case xld_set_time:
@@ -399,6 +423,37 @@ j_result_t CXlHost::OnVodStopData(J_AsioDataBase *pAsioData)
 	return J_OK;
 }
 
+j_result_t CXlHost::OnRcdInfoData(J_AsioDataBase *pAsioData)
+{
+	DevRcdInfo *pResp = (DevRcdInfo *)(m_readBuff + sizeof(CmdHeader));
+	J_OS::LOGINFO("XlHost RcdInfoData %d", pResp->szID);
+	if (m_bReady)
+	{
+		CliRcdInfo cliRcdInfo = {0};
+		strcpy((char *)cliRcdInfo.hostId, m_hostId.c_str());
+		cliRcdInfo.tmRecIntervalStartPt = pResp->tmRecIntervalStartPt;
+		cliRcdInfo.tmRecIntervalEndPt = pResp->tmRecIntervalEndPt;
+
+		int nBodyLen = sizeof(CmdHeader) + sizeof(CliRcdInfo) + sizeof(CmdTail);
+		j_char_t *pBuffer = new char[nBodyLen];
+		CXlHelper::MakeResponse(xlc_get_rcd_info, (char *)&cliRcdInfo, sizeof(CliAlarmInfo), pBuffer);
+		J_StreamHeader streamHeader = {0};
+		streamHeader.dataLen = nBodyLen;
+		TLock(m_vecLocker);
+		std::vector<CRingBuffer *>::iterator it = m_vecRcdRingBuffer.begin();
+		for (; it != m_vecRcdRingBuffer.end(); it++)
+		{
+			(*it)->PushBuffer(pBuffer, streamHeader);
+		}
+		TUnlock(m_vecLocker);
+	}
+	///·µ»ØÊý¾Ý
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+
+	return J_OK;
+}
+
 j_result_t CXlHost::OnSetSysTime(J_AsioDataBase *pAsioData)
 {
 	DevRetVal *pResp = (DevRetVal *)(m_readBuff + sizeof(CmdHeader));
@@ -532,5 +587,20 @@ j_result_t CXlHost::OnVodStop(GUID sessionId, j_int32_t nChannel)
 	CXlHelper::MakeRequest(xld_vod_stop, (char *)&vodStopBody.data, sizeof(DevStopVod), (char *)&vodStopBody);
 	m_cmdSocket.Write_n((const char *)&vodStopBody, sizeof(VodStopInfoBody));
 
+	return J_OK;
+}
+
+j_result_t CXlHost::OnGetRcdInfo(j_string_t hostId)
+{
+	struct GetRcdBody
+	{
+		CmdHeader head;
+		DevEquipmentId data;
+		CmdTail tail;
+	} getRcdBody;
+	memset (&getRcdBody, 0, sizeof(GetRcdBody));
+	strcpy(getRcdBody.data.hostId, m_hostId.c_str());
+	CXlHelper::MakeRequest(xld_get_rcd_info, (char *)&getRcdBody.data, sizeof(DevEquipmentId), (char *)&getRcdBody);
+	m_cmdSocket.Write_n((const char *)&getRcdBody, sizeof(GetRcdBody));
 	return J_OK;
 }
