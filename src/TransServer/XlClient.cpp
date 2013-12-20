@@ -89,8 +89,8 @@ j_result_t CXlClient::ParserRequest(J_AsioDataBase *pAsioData)
 	case J_AsioDataBase::j_alarm_e:
 		nResult = ProcessAlarm(pAsioData);
 		break;
-	case J_AsioDataBase::j_rcd_e:
-		nResult = ProcessAlarm(pAsioData);
+	case J_AsioDataBase::j_rcd_e: case J_AsioDataBase::j_rcd_keep_e:
+		nResult = ProcessRcd(pAsioData);
 		break;
 	case J_AsioDataBase::j_log_e:
 	case J_AsioDataBase::j_alarm_history_e:
@@ -153,6 +153,17 @@ j_result_t CXlClient::MakeRcdData(J_AsioDataBase *pAsioData)
 	pAsioData->ioWrite.finishedLen = 0;
 	pAsioData->ioWrite.whole = true;
 	pAsioData->ioWrite.shared = true;
+
+	CliRcdInfo *pResp = (CliRcdInfo *)(m_rcdBuff + sizeof(CmdHeader));
+	if (pResp->tmRecIntervalEndPt == -1)
+	{
+		J_Host *pHost = JoDeviceManager->GetDeviceObj(pResp->hostId);
+		if (pHost != NULL)
+		{
+			pHost->EnableRcdInfo(&m_rcdBuffer, false);
+			pAsioData->ioType = J_AsioDataBase::j_rcd_keep_e;
+		}
+	}
 
 	return J_OK;
 }
@@ -331,7 +342,7 @@ j_result_t CXlClient::ProcessAlarm(J_AsioDataBase *pAsioData)
 		{
 			pAsioData->ioCall = J_AsioDataBase::j_write_e;
 			m_ioAlarmState = xl_write_body_state;
-			nResult =MakeAlarmData(pAsioData);
+			nResult = MakeAlarmData(pAsioData);
 		}
 	}
 	else
@@ -356,9 +367,17 @@ j_result_t CXlClient::ProcessRcd(J_AsioDataBase *pAsioData)
 	}
 	else
 	{
-		pAsioData->ioCall = J_AsioDataBase::j_write_e;
-		m_ioRcdState = xl_write_body_state;
-		nResult =MakeRcdData(pAsioData);
+		if (pAsioData->ioType == J_AsioDataBase::j_rcd_keep_e)
+		{
+			m_ioRcdState = xl_init_state;
+			pAsioData->ioCall = J_AsioDataBase::j_keep_e;
+		}
+		else
+		{
+			pAsioData->ioCall = J_AsioDataBase::j_write_e;
+			m_ioRcdState = xl_write_body_state;
+			nResult = MakeRcdData(pAsioData);
+		}
 	}
 
 	return nResult;

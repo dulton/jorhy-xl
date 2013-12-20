@@ -116,10 +116,10 @@ j_result_t CSqlServerAccess::Login(const char *pUserName, const char *pPasswd, i
 			}
 			else if (nForce)
 			{
-				sprintf(strCmd, "UPDATE UserInfo SET State=1 WHERE AccountName='%s';", pUserName);
+				sprintf(strCmd, "UPDATE UserInfo SET Online=1 WHERE AccountName='%s';", pUserName);
 				m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 			}
-			else if (m_pRec->GetCollect("State").intVal == 1)
+			else if (m_pRec->GetCollect("Online").intVal == 1)
 			{
 				nRet = 6;
 				return J_DB_ERROR;
@@ -128,7 +128,7 @@ j_result_t CSqlServerAccess::Login(const char *pUserName, const char *pPasswd, i
 			{
 				nRet = 0;
 				memset(strCmd, 0, sizeof(strCmd));
-				sprintf(strCmd, "UPDATE UserInfo SET State=1 WHERE AccountName='%s';", pUserName);
+				sprintf(strCmd, "UPDATE UserInfo SET Online=1 WHERE AccountName='%s';", pUserName);
 				m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 			}
 		}
@@ -146,7 +146,7 @@ j_result_t CSqlServerAccess::Logout(const char *pUserName)
 	try 
 	{
 		char strCmd[128] = {0};
-		sprintf(strCmd, "UPDATE UserInfo SET State=0 WHERE AccountName='%s';", pUserName);
+		sprintf(strCmd, "UPDATE UserInfo SET Online=0 WHERE AccountName='%s';", pUserName);
 		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 	}
 	catch(...)

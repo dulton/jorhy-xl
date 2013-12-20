@@ -28,7 +28,8 @@ CXlHost::CXlHost(j_socket_t nSock)
 	m_lastBreatTime = time(0);
 
 	m_readBuff = new char[BUFFER_SIZE];			
-	m_writeBuff = new char[BUFFER_SIZE];			
+	m_writeBuff = new char[BUFFER_SIZE];	
+	m_rcdBuffer = new char[1024];
 	m_ioState = xl_init_state;
 }
 
@@ -36,6 +37,7 @@ CXlHost::~CXlHost()
 {
 	delete m_readBuff;
 	delete m_writeBuff;
+	delete m_rcdBuffer;
 	DevHostInfo devInfo = {0};
 	strcpy(devInfo.hostId, m_hostId.c_str());
 	devInfo.bOnline = false;
@@ -67,7 +69,7 @@ j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 
 j_boolean_t CXlHost::IsReady()
 {
-	if (time(0) - m_lastBreatTime > 5)
+	if (time(0) - m_lastBreatTime > 15)
 		m_bReady = false;
 
 	return m_bReady;
@@ -341,7 +343,7 @@ j_result_t CXlHost::OnAlarmInfo(J_AsioDataBase *pAsioData)
 		cliAlarmInfo.gps.dGPSSpeed = pAlarmInfo->gps.dGPSSpeed;
 		cliAlarmInfo.speed = pAlarmInfo->speed;
 		cliAlarmInfo.tmTimeStamp = pAlarmInfo->tmTimeStamp;
-		CXlHelper::MakeResponse(xlc_start_real_alarm_info, (char *)&cliAlarmInfo, sizeof(CliAlarmInfo), m_readBuff);
+		CXlHelper::MakeResponse2(xlc_start_real_alarm_info, (char *)&cliAlarmInfo, sizeof(CliAlarmInfo), m_readBuff);
 		J_StreamHeader streamHeader = {0};
 		streamHeader.dataLen = sizeof(CmdHeader) + sizeof(CliAlarmInfo) + sizeof(CmdTail);
 		TLock(m_vecLocker);
@@ -383,7 +385,7 @@ j_result_t CXlHost::OnRealPlayData(J_AsioDataBase *pAsioData, j_int32_t nDadaLen
 j_result_t CXlHost::OnRealStopData(J_AsioDataBase *pAsioData)
 {
 	DevRetVal *pResp = (DevRetVal *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("XlHost realStop %d", pResp->nRetVal);
+	J_OS::LOGINFO("XlHost OnRealStopData %d", pResp->nRetVal);
 	///返回数据
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
@@ -416,7 +418,7 @@ j_result_t CXlHost::OnVodPlayData(J_AsioDataBase *pAsioData,  j_int32_t nDadaLen
 j_result_t CXlHost::OnVodStopData(J_AsioDataBase *pAsioData)
 {
 	DevRetVal *pResp = (DevRetVal *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("XlHost realStop %d", pResp->nRetVal);
+	J_OS::LOGINFO("XlHost OnVodStopData %d", pResp->nRetVal);
 	///返回数据
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
@@ -426,7 +428,8 @@ j_result_t CXlHost::OnVodStopData(J_AsioDataBase *pAsioData)
 j_result_t CXlHost::OnRcdInfoData(J_AsioDataBase *pAsioData)
 {
 	DevRcdInfo *pResp = (DevRcdInfo *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("XlHost RcdInfoData %d", pResp->szID);
+	J_OS::LOGINFO("XlHost RcdInfoData hostId = %s %I64d %I64d", pResp->szID,
+		pResp->tmRecIntervalStartPt, pResp->tmRecIntervalEndPt);
 	if (m_bReady)
 	{
 		CliRcdInfo cliRcdInfo = {0};
@@ -435,17 +438,16 @@ j_result_t CXlHost::OnRcdInfoData(J_AsioDataBase *pAsioData)
 		cliRcdInfo.tmRecIntervalEndPt = pResp->tmRecIntervalEndPt;
 
 		int nBodyLen = sizeof(CmdHeader) + sizeof(CliRcdInfo) + sizeof(CmdTail);
-		j_char_t *pBuffer = new char[nBodyLen];
-		CXlHelper::MakeResponse(xlc_get_rcd_info, (char *)&cliRcdInfo, sizeof(CliAlarmInfo), pBuffer);
+		CXlHelper::MakeResponse2(xlc_get_rcd_info, (char *)&cliRcdInfo, sizeof(CliRcdInfo), m_rcdBuffer);
 		J_StreamHeader streamHeader = {0};
 		streamHeader.dataLen = nBodyLen;
-		TLock(m_vecLocker);
+		TLock(m_vecRcdLocker);
 		std::vector<CRingBuffer *>::iterator it = m_vecRcdRingBuffer.begin();
 		for (; it != m_vecRcdRingBuffer.end(); it++)
 		{
-			(*it)->PushBuffer(pBuffer, streamHeader);
+			(*it)->PushBuffer(m_rcdBuffer, streamHeader);
 		}
-		TUnlock(m_vecLocker);
+		TUnlock(m_vecRcdLocker);
 	}
 	///返回数据
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
@@ -457,7 +459,7 @@ j_result_t CXlHost::OnRcdInfoData(J_AsioDataBase *pAsioData)
 j_result_t CXlHost::OnSetSysTime(J_AsioDataBase *pAsioData)
 {
 	DevRetVal *pResp = (DevRetVal *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("XlHost realStop %d", pResp->nRetVal);
+	J_OS::LOGINFO("XlHost OnSetSysTime %d", pResp->nRetVal);
 
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;

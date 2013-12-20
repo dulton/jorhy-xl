@@ -102,6 +102,7 @@ private:
 	J_OS::TLocker_t m_channelLocker;
 	j_char_t *m_readBuff;
 	j_char_t *m_writeBuff;
+	j_char_t *m_rcdBuffer;
 	j_int32_t m_ioState;				//1-读头数据,2-读数据区+尾数据
 	J_OS::TLocker_t m_vecLocker;
 	std::vector<CRingBuffer *> m_vecRingBuffer;
