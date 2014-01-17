@@ -19,8 +19,8 @@
 #include "XlDType.h"
 #include "XlCType.h"
 
-//#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" no_namespace rename("EOF", "EndOfFile")
-#import "msado15.dll" no_namespace rename("EOF", "EndOfFile")
+#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" no_namespace rename("EOF", "EndOfFile")
+//#import "msado15.dll" no_namespace rename("EOF", "EndOfFile")
 /// 本类的功能:  SqlServer数据库操作类
 /// 数据库的增删改查 
 class CSqlServerAccess : public J_DbAccess
@@ -38,7 +38,7 @@ public:
 public:
 	j_result_t Login(const char *pUserName, const char *pPasswd, int nForce, int &nRet);
 	j_result_t Logout(const char *pUserName);
-	j_result_t UpdateDevInfo(const DevHostInfo &devInfo);
+	j_result_t UpdateDevInfo(const DevHostInfo &devInfo, bool bOnline);
 	j_result_t GetDevInfo(DevHostInfo &devInfo);
 	j_result_t InsertAlarmInfo(const char *pHostId, const DevAlarmInfo& alarmInfo);
 	time_t GetDevLogLastTime(const char *pHostId);

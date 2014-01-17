@@ -76,30 +76,31 @@ typedef struct _tagDevHostInfo
 	char vehicleNum[16];		///< 列车号
 	char phoneNum[12];			///< 电话号码
 	char totalChannels;			///< 通道数目
-	bool bOnline;				///< 在线状态
-	bool bState;				///< 设备状态
+	//bool bOnline;				///< 在线状态
+	//bool bState;				///< 设备状态
 } DevHostInfo, *PLDevHostInfo;
 
 /// 报警信息
 typedef struct _tagDevAlarmInfo
 {
-	__int64 bAlarm;								///< 报警信息
-	struct  
-	{
-		double dLatitude;
-		double dLongitude;
-		double dGPSSpeed;
-	} gps;												///< GPS信息
-	double	speed;									///< 车速
-	time_t tmTimeStamp;						///< 时间戳
+	time_t tmTimeStamp;				///< 时间戳
+	char bAlarm;								///< 报警信息
+	//struct  
+	//{
+	//	double dLatitude;
+	//	double dLongitude;
+	//	double dGPSSpeed;
+	//} gps;												///< GPS信息
+	//double	speed;									///< 车速
 } DevAlarmInfo, *LPDevAlarmInfo;
 typedef std::queue<DevAlarmInfo> DevAlarmInfoQueue;
 
 /// 日志信息  
 typedef struct _tagDevLogInfo
 {
-	__int64 bStatus;			///< 设备状态,0-开机,1-关机
+	char szID[32];				///< 车号
 	time_t tmTime;				///< 开关机时间
+	char bStatus;				///< 设备状态,0-开机,1-关机
 } DevLogInfo, *LPDevLogInfo;
 typedef std::queue<DevLogInfo> DevLogInfoQueue;
 
@@ -124,6 +125,7 @@ typedef struct _tagDevSetTime
 /// 获取日志信息
 typedef struct _tagDevGetLogInfo
 {
+	char	  szID[32];		///< 车号
 	time_t tmStart;		///< 开始时间
 	time_t tmEnd;		///< 结束时间
 } DevGetLogInfo, *LPDevGetLogInfo;
@@ -140,7 +142,7 @@ typedef struct _tagDevStartVod
 {
 	GUID sessionId;					///< 回话ID
 	char hostId[32];						///< 设备ID
-	__int64 channel;					///< 通道号	
+	unsigned char channel;			///< 通道号	
 	time_t tmStartTime;				///< 开始时间
 	time_t tmEndTime;				///< 结束时间
 } DevStartVod, *LPDevStartVod;
@@ -149,16 +151,16 @@ typedef struct _tagDevStartVod
 typedef struct _tagDevStopVod 
 {
 	GUID sessionId;					///< 回话ID
-	char hostId[32];						///< 设备ID
-	__int64 channel;					///< 通道号	
+	//char hostId[32];						///< 设备ID
+	//char channel;					///< 通道号	
 } DevStopVod, *LPDevStopVod;
 
 typedef struct _tagMsgInfo
 {
-	unsigned int nMsgCode;					///< 消息码
-	char hostId[32];						///< 车号
-	int channel;							///< 通道号
-	GUID sessionId;							///< 会话ID
+	char hostId[32];								///< 车号
+	unsigned char channel;					///< 通道号
+	unsigned int nMsgCode;				///< 消息码
+	unsigned char bReserve[16];			///< 会话ID
 } DevMsgInfo, *LPDevMsgInfo;
 
 typedef struct _tagDevRcdInfo

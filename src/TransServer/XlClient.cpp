@@ -142,7 +142,7 @@ j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
 			DevStopVod *pResp = (DevStopVod *)(m_dataBuff + sizeof(CmdHeader));
 
 			pAsioData->ioWrite.bufLen = 0;
-			SendMsgInfo(pResp->hostId, xlc_msg_dev, xlc_playvod_complete, pResp->channel);
+			//SendMsgInfo(pResp->hostId, xlc_msg_dev, xlc_playvod_complete, pResp->channel);
 		}
 	}
 
@@ -651,9 +651,9 @@ j_result_t CXlClient::StopAllVod()
 		if (pHost != NULL)
 		{
 			memset(&vodStopBody, 0, sizeof(VodStopBody));
-			memcpy(vodStopBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
+			//memcpy(vodStopBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
 			vodStopBody.data.sessionId = it->sessionId;
-			vodStopBody.data.channel = it->nChanId;
+			//vodStopBody.data.channel = it->nChanId;
 			CXlHelper::MakeRequest(xlc_stop_vod_view, (char *)&vodStopBody.data, sizeof(DevStopVod), (char *)&vodStopBody);
 
 			asioData.ioType = J_AsioDataBase::j_command_e;

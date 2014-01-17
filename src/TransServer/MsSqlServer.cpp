@@ -190,7 +190,7 @@ j_result_t CSqlServerAccess::Logout(const char *pUserName)
 	return J_OK;
 }
 
-j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo)
+j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo, bool bOnline)
 {
 	try 
 	{
@@ -201,20 +201,20 @@ j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo)
 		{
 			memset (strCmd, 0, sizeof(strCmd));
 			sprintf(strCmd, "INSERT INTO Equipment (EquipmentID,VehicleNO,PhoneNum,TotalChannels,Online,State) VALUES ('%s','%s','%s',%d,%d,%d);", 
-				devInfo.hostId, devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels, devInfo.bOnline, 1);
+				devInfo.hostId, devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels, bOnline, 1);
 			m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 		}
 		
 		memset (strCmd, 0, sizeof(strCmd));
-		if (devInfo.bOnline == true)
+		if (bOnline == true)
 		{
 			sprintf(strCmd, "UPDATE Equipment SET VehicleNO='%s',PhoneNum='%s',TotalChannels=%d,Online=%d WHERE EquipmentID='%s';",
-				devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels & 0xFF, devInfo.bOnline, devInfo.hostId);
+				devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels & 0xFF, bOnline, devInfo.hostId);
 		}
 		else
 		{
 			sprintf(strCmd, "UPDATE Equipment SET Online=%d WHERE EquipmentID='%s';",
-				devInfo.bOnline, devInfo.hostId);
+				bOnline, devInfo.hostId);
 		}
 		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 	}
@@ -252,9 +252,9 @@ j_result_t CSqlServerAccess::InsertAlarmInfo(const char *pHostId, const DevAlarm
 	try 
 	{
 		char strCmd[512] = {0};
-		sprintf(strCmd, "INSERT INTO Alarm(EquipmentID,Alarm,GPS_Latitude,GPS_Longitude,GPS_Speed,Speed,TimeStamp)VALUES('%s',%I64d,%f,%f,%f,%f,%d);",
-			pHostId, alarmInfo.bAlarm & 0xFF, alarmInfo.gps.dLatitude, alarmInfo.gps.dLongitude, alarmInfo.gps.dGPSSpeed, alarmInfo.speed, alarmInfo.tmTimeStamp);
-		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		//sprintf(strCmd, "INSERT INTO Alarm(EquipmentID,Alarm,GPS_Latitude,GPS_Longitude,GPS_Speed,Speed,TimeStamp)VALUES('%s',%I64d,%f,%f,%f,%f,%d);",
+		//	pHostId, alarmInfo.bAlarm & 0xFF, alarmInfo.gps.dLatitude, alarmInfo.gps.dLongitude, alarmInfo.gps.dGPSSpeed, alarmInfo.speed, alarmInfo.tmTimeStamp);
+		//m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 	}
 	catch (...)
 	{

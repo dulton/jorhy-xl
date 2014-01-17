@@ -40,8 +40,8 @@ CXlHost::~CXlHost()
 	delete m_rcdBuffer;
 	DevHostInfo devInfo = {0};
 	strcpy(devInfo.hostId, m_hostId.c_str());
-	devInfo.bOnline = false;
-	JoDataBaseObj->UpdateDevInfo(devInfo);
+	//devInfo.bOnline = false;
+	JoDataBaseObj->UpdateDevInfo(devInfo, false);
 }
 
 j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
@@ -353,10 +353,10 @@ j_result_t CXlHost::OnAlarmInfo(J_AsioDataBase *pAsioData)
 		//memcpy((((char *)&cliAlarmInfo)+sizeof(cliAlarmInfo.pHostId)), pAlarmInfo, sizeof(CliAlarmInfo));
 		cliAlarmInfo.bAlarm = pAlarmInfo->bAlarm & 0xFF;
 		//J_OS::LOGINFO("%d %s", cliAlarmInfo.bAlarm, cliAlarmInfo.pHostId);
-		cliAlarmInfo.gps.dLatitude = pAlarmInfo->gps.dLatitude;
+		/*cliAlarmInfo.gps.dLatitude = pAlarmInfo->gps.dLatitude;
 		cliAlarmInfo.gps.dLongitude = pAlarmInfo->gps.dLongitude;
 		cliAlarmInfo.gps.dGPSSpeed = pAlarmInfo->gps.dGPSSpeed;
-		cliAlarmInfo.speed = pAlarmInfo->speed;
+		cliAlarmInfo.speed = pAlarmInfo->speed;*/
 		cliAlarmInfo.tmTimeStamp = pAlarmInfo->tmTimeStamp;
 		CXlHelper::MakeResponse2(xlc_start_real_alarm_info, (char *)&cliAlarmInfo, sizeof(CliAlarmInfo), m_readBuff);
 		J_StreamHeader streamHeader = {0};
@@ -490,8 +490,8 @@ j_result_t CXlHost::OnGetDevInfo(J_AsioDataBase *pAsioData)
 	DevHostInfo *pReps = (DevHostInfo *)(m_readBuff + sizeof(CmdHeader));
 	J_OS::LOGINFO("XlHost GetInfo hostId = %s, vehicleNum = %s, chnnelNum=%d, phoneNum = %s", 
 		pReps->hostId, pReps->vehicleNum, pReps->totalChannels & 0xFF, pReps->phoneNum);
-	pReps->bOnline = true;
-	JoDataBaseObj->UpdateDevInfo(*pReps);
+	//pReps->bOnline = true;
+	JoDataBaseObj->UpdateDevInfo(*pReps, true);
 
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
@@ -547,9 +547,9 @@ j_result_t CXlHost::OnMsgInfo(J_AsioDataBase *pAsioData)
 				{
 					DevStopVod data = {0};
 					int nDataLen = sizeof(CmdHeader) + sizeof(DevStopVod) + sizeof(CmdTail);
-					memcpy(&data.sessionId, &pReps->sessionId, sizeof(GUID));
-					strcpy(data.hostId, m_hostId.c_str());
-					data.channel = pReps->channel & 0xFF;
+					memcpy(&data.sessionId, &pReps->bReserve, sizeof(GUID));
+					//strcpy(data.hostId, m_hostId.c_str());
+					//data.channel = pReps->channel & 0xFF;
 					CXlHelper::MakeResponse2(xlc_playvod_complete_inner, (j_char_t *)&data, sizeof(DevStopVod), m_readBuff);
 					pXlChannel->InputData(1, m_readBuff, nDataLen);
 				}
@@ -654,8 +654,8 @@ j_result_t CXlHost::OnVodStop(GUID sessionId, j_int32_t nChannel)
 		CmdTail tail;
 	} vodStopBody;
 	memset (&vodStopBody, 0, sizeof(VodStopInfoBody));
-	strcpy(vodStopBody.data.hostId, m_hostId.c_str());
-	vodStopBody.data.channel = nChannel;
+	//strcpy(vodStopBody.data.hostId, m_hostId.c_str());
+	//vodStopBody.data.channel = nChannel;
 	vodStopBody.data.sessionId = sessionId;
 	CXlHelper::MakeRequest(xld_vod_stop, (char *)&vodStopBody.data, sizeof(DevStopVod), (char *)&vodStopBody);
 	m_cmdSocket.Write_n((const char *)&vodStopBody, sizeof(VodStopInfoBody));
