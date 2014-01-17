@@ -65,6 +65,7 @@ int main(int argc, char **argv)
 		J_OS::LOGINFO("数据库连接失败, IP地址:%s,端口:%d,用户名:%s,密码:%s", strDbAddr, nDbPort, strDbUser, strDbPassWord);
 		return -1;
 	}
+	JoDataBaseObj->Init();
 
 	CTcpServer4Device g_deviceServer;
 	CTcpServer4Client g_clientServer;

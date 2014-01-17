@@ -46,6 +46,7 @@ CXlClient::CXlClient(j_socket_t nSock)
 	m_lastBreatTime = time(0);
 
 	m_config.Init(m_readBuff, m_writeBuff);
+	J_OS::LOGINFO("CXlClient::CXlClient() %d", this);
 }
 
 CXlClient::~CXlClient()
@@ -56,9 +57,10 @@ CXlClient::~CXlClient()
 	delete m_alarmBuff;
 	delete m_rcdBuff;
 	JoClientManager->Logout(m_userName, this);
+	J_OS::LOGINFO("CXlClient::~CXlClient() %d", this);
 }
 
-j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType, j_int32_t nNo)
+j_result_t CXlClient::SendMsgInfo(j_string_t strHostId, j_int32_t nType, j_int32_t nNo, j_int32_t nChannel)
 {
 	struct MessageBody
 	{
@@ -66,11 +68,14 @@ j_result_t CXlClient::SendMessage(j_string_t strHostId, j_int32_t nType, j_int32
 		CliMessage data;
 		CmdTail tial;
 	} messageBody;
+	memset (&messageBody, 0, sizeof(MessageBody));
 	messageBody.data.uiType = nType;
 	messageBody.data.uiNO = nNo;
+	messageBody.data.nChannelID = nChannel;
+	strcpy(messageBody.data.hostID, strHostId.c_str());
 	CXlHelper::MakeResponse(xlc_message, (j_char_t *)&messageBody.data, sizeof(CliMessage), (j_char_t *)&messageBody);
 	m_socket.Write_n((j_char_t *)&messageBody, sizeof(CmdHeader) + sizeof(CliMessage) + sizeof(CmdTail));
-	J_OS::LOGINFO("CXlClient::SendMessage");
+	J_OS::LOGINFO("CXlClient::SendMessage %d-%d", nType, nNo);
 
 	return J_OK;
 }
@@ -128,6 +133,19 @@ j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
 	pAsioData->ioWrite.whole = true;
 	pAsioData->ioWrite.shared = true;
 
+	if (m_streamHeader.dataLen > 0)
+	{
+		CmdHeader *pHeader = (CmdHeader *)m_dataBuff;
+		//J_OS::LOGINFO("%d", pHeader->cmd);
+		if (pHeader->cmd == xlc_playvod_complete_inner)
+		{
+			DevStopVod *pResp = (DevStopVod *)(m_dataBuff + sizeof(CmdHeader));
+
+			pAsioData->ioWrite.bufLen = 0;
+			SendMsgInfo(pResp->hostId, xlc_msg_dev, xlc_playvod_complete, pResp->channel);
+		}
+	}
+
 	return J_OK;
 }
 
@@ -154,14 +172,22 @@ j_result_t CXlClient::MakeRcdData(J_AsioDataBase *pAsioData)
 	pAsioData->ioWrite.whole = true;
 	pAsioData->ioWrite.shared = true;
 
-	CliRcdInfo *pResp = (CliRcdInfo *)(m_rcdBuff + sizeof(CmdHeader));
-	if (pResp->tmRecIntervalEndPt == -1)
+	if (pAsioData->ioWrite.bufLen > 0)
 	{
-		J_Host *pHost = JoDeviceManager->GetDeviceObj(pResp->hostId);
-		if (pHost != NULL)
+		//J_OS::LOGINFO("CXlClient::MakeRcdData");
+		CmdHeader *pHeader = (CmdHeader *)m_rcdBuff;
+		if (pHeader->cmd == xlc_rcdinfo_complete_inner)
 		{
-			pHost->EnableRcdInfo(&m_rcdBuffer, false);
-			pAsioData->ioType = J_AsioDataBase::j_rcd_keep_e;
+			CliRcdInfo *pResp = (CliRcdInfo *)(m_rcdBuff + sizeof(CmdHeader));
+			J_Host *pHost = JoDeviceManager->GetDeviceObj(pResp->hostId);
+			if (pHost != NULL)
+			{
+				pHost->EnableRcdInfo(&m_rcdBuffer, false);
+				pAsioData->ioType = J_AsioDataBase::j_rcd_keep_e;
+			}
+			pAsioData->ioWrite.bufLen = 0;
+			//J_OS::LOGINFO("CXlClient::SendMsgInfo %d-%d", xlc_msg_dev, xlc_rcd_info_complete);
+			SendMsgInfo(pResp->hostId, xlc_msg_dev, xlc_rcd_info_complete);
 		}
 	}
 

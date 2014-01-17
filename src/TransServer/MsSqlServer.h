@@ -32,6 +32,7 @@ public:
 public:
 	///J_DbAccess
 	virtual j_result_t Connect(const j_char_t *pAddr, j_int16_t nPort, const j_char_t *pUa, const j_char_t *pPwd);
+	virtual j_result_t Init();
 	virtual j_result_t Release();
 
 public:

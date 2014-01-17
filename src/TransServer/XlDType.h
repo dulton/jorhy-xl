@@ -21,18 +21,29 @@
 enum DvrCmdType
 {
 	xld_register = 0,					///< DVR主机注册
-	xld_set_time,							///< 服务器校时
+	xld_set_time,						///< 服务器校时
 	xld_get_loginfo,					///< 获取DVR开关机日志
-	xld_send_message,				///< 发送消息
+	xld_send_message,					///< 发送消息
 	xld_heartbeat = 4,					///< 心跳检测
-	xld_get_alraminfo,				///< 报警获取
+	xld_get_alraminfo,					///< 报警获取
 	xld_get_devinfo,					///< 设备信息获取
 	xld_real_play,						///< 开始实时视频播放
 	xld_real_stop,						///< 停止实时视频播放
 	xld_vod_play,						///< 开始录像回放
 	xld_vod_stop,						///< 停止录像回放
-	xld_errcode_download,			///< 系统异常下载
+	xld_msg_info,						///< 系统异常下载
 	xld_get_rcd_info,					///< 获取录像信息
+};
+
+/// 消息类型定义
+enum DvrMsgType
+{
+	xld_alarm_complete = 0,				///< 报警下载完成
+	xld_log_complete,					///< 日志下载完成
+	xld_playvod_complete,				///< 回放完成
+	xld_disk_full,						///< 录像已满
+	xld_playreal_complete,				///< 实时播放完成
+	xld_rcd_info_complete,				///< 获取录像区间完成
 };
 
 #pragma pack(push)
@@ -141,6 +152,14 @@ typedef struct _tagDevStopVod
 	char hostId[32];						///< 设备ID
 	__int64 channel;					///< 通道号	
 } DevStopVod, *LPDevStopVod;
+
+typedef struct _tagMsgInfo
+{
+	unsigned int nMsgCode;					///< 消息码
+	char hostId[32];						///< 车号
+	int channel;							///< 通道号
+	GUID sessionId;							///< 会话ID
+} DevMsgInfo, *LPDevMsgInfo;
 
 typedef struct _tagDevRcdInfo
 {

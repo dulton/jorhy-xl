@@ -115,7 +115,7 @@ void CXAsio::OnWork()
 	while (m_bStarted)
 	{
 		SetLastError(ERROR_SUCCESS);
-		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwBytesTransferred, (LPDWORD)&dwFlag, (LPOVERLAPPED *)&pPerIoData, 1000) == 0)
+		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwBytesTransferred, (LPDWORD)&dwFlag, (LPOVERLAPPED *)&pPerIoData, 3000) == 0)
 		{
 			DWORD dwError = WSAGetLastError();
 			if (dwError == WAIT_TIMEOUT)

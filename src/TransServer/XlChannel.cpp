@@ -60,6 +60,7 @@ j_result_t CXlChannel::InputData(const j_int32_t nType, const j_char_t *pData, j
 		std::vector<CRingBuffer *>::iterator it = m_vecRingBuffer.begin();
 		for (; it != m_vecRingBuffer.end(); it++)
 		{
+			//J_OS::LOGINFO("CXlChannel::InputData %d", m_nChannelNum);
 			(*it)->PushBuffer(pData, streamHeader);
 		}
 		TUnlock(m_vecLocker);
@@ -67,6 +68,9 @@ j_result_t CXlChannel::InputData(const j_int32_t nType, const j_char_t *pData, j
 	else
 	{
 		GUID *pGuid = (GUID *)(pData + sizeof(CmdHeader));
+		//GUID guidNull = {0};
+		//CmdHeader *pHeader = (CmdHeader *)pData;
+		//J_OS::LOGINFO("********%d", pHeader->cmd);
 		TLock(m_mapLocker);
 		std::map<j_guid_t, CRingBuffer *>::iterator it = m_mapRingBuffer.find(*pGuid);
 		if (it != m_mapRingBuffer.end())
@@ -74,6 +78,16 @@ j_result_t CXlChannel::InputData(const j_int32_t nType, const j_char_t *pData, j
 			it->second->PushBuffer(pData, streamHeader);
 		}
 		TUnlock(m_mapLocker);
+		//if(memcmp(pGuid, &guidNull, sizeof(GUID)) == 0)
+		//{
+		//	TLock(m_mapLocker);
+		//	std::map<j_guid_t, CRingBuffer *>::iterator it2 = m_mapRingBuffer.begin();
+		//	for (;it2 != m_mapRingBuffer.end(); ++it2)
+		//	{
+		//		it2->second->PushBuffer(pData, streamHeader);
+		//	}
+		//	TUnlock(m_mapLocker);
+		//}
 	}
 	//J_OS::LOGINFO("channel = %d length = %d", m_nChannelNum, nLen);
 	return J_OK;

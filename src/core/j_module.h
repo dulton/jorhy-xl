@@ -39,6 +39,9 @@ struct J_DbAccess : virtual public J_Obj
 	///@param[in]		pPwd 密码
 	///@return			参见x_errtype.h
 	virtual j_result_t Connect(const j_char_t *pAddr, j_int16_t nPort, const j_char_t *pUa, const j_char_t *pPwd) = 0;
+	///初始化数据库
+	///@return			参见x_errtype.h
+	virtual j_result_t Init() = 0;
 	///释放数据库连接
 	///@return			参见x_errtype.h
 	virtual j_result_t Release() = 0;
@@ -118,7 +121,8 @@ struct J_Client : virtual public J_Obj
 	/// @param[in]			strHostId 设备ID
 	/// @param[in]			nType 消息类型
 	/// @param[in]			nNo 消息编号
-	virtual j_result_t SendMessage(j_string_t strHostId, j_int32_t nType, j_int32_t nNo) = 0;
+	/// @param[in]			nChannel 通道号
+	virtual j_result_t SendMsgInfo(j_string_t strHostId, j_int32_t nType, j_int32_t nNo, j_int32_t nChannel = 0) = 0;
 	/// 用户请求及回复
 	/// @param[in][out]	pAsioData异步数据	
 	/// @return				参见j_errtype.h 

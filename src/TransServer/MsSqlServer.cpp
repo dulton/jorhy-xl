@@ -77,6 +77,40 @@ j_result_t CSqlServerAccess::Connect(const j_char_t *pAddr, j_int16_t nPort, con
 	return J_OK;
 }
 
+j_result_t CSqlServerAccess::Init()
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM Equipment;");
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		while (!m_pRec->EndOfFile)
+		{
+			memset (strCmd, 0, sizeof(strCmd));
+			sprintf(strCmd, "UPDATE Equipment SET Online=0 WHERE EquipmentID='%s';"
+				, (char*)_bstr_t(m_pRec->GetCollect("EquipmentID")));
+			m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+			m_pRec->MoveNext();
+		}
+		memset (strCmd, 0, sizeof(strCmd));
+		sprintf(strCmd, "SELECT * FROM UserInfo;");
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		while (!m_pRec->EndOfFile)
+		{
+			memset (strCmd, 0, sizeof(strCmd));
+			sprintf(strCmd, "UPDATE UserInfo SET Online=0 WHERE AccountName='%s';"
+				, (char*)_bstr_t(m_pRec->GetCollect("AccountName")));
+			m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+			m_pRec->MoveNext();
+		}
+	}
+	catch (...)
+	{
+		return J_DB_ERROR;
+	}
+	return J_OK;
+}
+
 j_result_t CSqlServerAccess::Release()
 {
 	try
@@ -161,6 +195,17 @@ j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo)
 	try 
 	{
 		char strCmd[256] = {0};
+		sprintf(strCmd, "SELECT * FROM Equipment WHERE EquipmentID='%s';", devInfo.hostId);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (m_pRec->EndOfFile)
+		{
+			memset (strCmd, 0, sizeof(strCmd));
+			sprintf(strCmd, "INSERT INTO Equipment (EquipmentID,VehicleNO,PhoneNum,TotalChannels,Online,State) VALUES ('%s','%s','%s',%d,%d,%d);", 
+				devInfo.hostId, devInfo.vehicleNum, devInfo.phoneNum, devInfo.totalChannels, devInfo.bOnline, 1);
+			m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		}
+		
+		memset (strCmd, 0, sizeof(strCmd));
 		if (devInfo.bOnline == true)
 		{
 			sprintf(strCmd, "UPDATE Equipment SET VehicleNO='%s',PhoneNum='%s',TotalChannels=%d,Online=%d WHERE EquipmentID='%s';",

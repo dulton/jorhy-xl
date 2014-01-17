@@ -53,6 +53,7 @@ private:
 	j_result_t OnRealStopData(J_AsioDataBase *pAsioData);
 	j_result_t OnVodPlayData(J_AsioDataBase *pAsioData,  j_int32_t nDadaLen);
 	j_result_t OnVodStopData(J_AsioDataBase *pAsioData);
+	j_result_t OnMsgInfo(J_AsioDataBase *pAsioData);
 	j_result_t OnRcdInfoData(J_AsioDataBase *pAsioData);
 	j_result_t OnSetSysTime(J_AsioDataBase *pAsioData);
 	j_result_t OnGetDevInfo(J_AsioDataBase *pAsioData);

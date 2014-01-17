@@ -24,11 +24,32 @@ enum CliCmdState
 };
 
 /// 消息类型
-enum CliMegType
+enum CliMsgType
 {
-	xlc_force_login = 0x01,
+	xlc_msg_user = 0x01,			///< 用户消息
+	xlc_msg_dev,					///< 设备消息
+	xlc_msg_disk,					///< 磁盘消息
 };
 
+enum CliMsgSubTypeForUser
+{
+	xlc_force_login = 0x01,			///< 用户强制下线
+	xlc_user_deleted,				///< 用户被删除
+};
+
+enum CliMsgSubTypeForDev
+{
+	xlc_alarm_complete = 0x01,				///< 报警下载完成
+	xlc_log_complete,					///< 日志下载完成
+	xlc_playvod_complete,				///< 回放完成
+	xlc_rcd_info_complete,				///< 获取录像区间完成
+};
+
+enum CliMsgSubTypeForDisk
+{
+	xlc_disk_full = 0x01,				///< 录像已满
+};
+	
 /// 操作指令定义  
 enum CliCmdType
 {
@@ -65,6 +86,9 @@ enum CliCmdType
 	xlc_mod_department_info,		///< 修改单位的信息
 	xlc_del_department_info,			///< 删除单位
 	xlc_get_alarm_info,
+	///历史视频完成,内部使用
+	xlc_playvod_complete_inner = 0xF0,		///< 历史回放完成
+	xlc_rcdinfo_complete_inner = 0xF1,		///< 获取历史区间完成
 };
 
 struct CliOptKey
@@ -97,6 +121,8 @@ typedef struct _tagCliMessage
 {
 	unsigned int uiType;   	///< 消息类型
 	unsigned int uiNO;		///< 消息编号
+	char hostID[32];		///< 设备ID 
+	int nChannelID;			///< 通道号 
 } CliMessage, *LPCliMessage;
 
 /// 用户登录
@@ -119,7 +145,7 @@ typedef struct _tagCliDevInfo
 /// 报警信息
 typedef struct _tagCliAlarmInfo
 {
-	char pHostId[32];							///< 设备ID
+	char pHostId[32];						///< 设备ID
 	int bAlarm;								///< 报警信息
 	struct  
 	{
@@ -159,16 +185,16 @@ typedef struct _tagCliRealViewRetValue
 {
 	char  pHostId[32];		///< 设备ID
 	int nChannelId;			///< 通道号 
-	int nRetVal;				///< 回复码 0-成功,1-失败
+	int nRetVal;			///< 回复码 0-成功,1-失败
 } CliRealViewRetValue, *LPCliRealViewRetValue;
 
 /// 历史播放停止回复
 typedef struct _tagCliVodStopRetValue
 {
-	GUID sessionId;		///< 回话ID
+	GUID sessionId;			///< 会话ID
 	char  pHostId[32];		///< 设备ID
 	int nChannelId;			///< 通道号 
-	int nRetVal;				///< 回复码 0-成功,1-失败
+	int nRetVal;			///< 回复码 0-成功,1-失败
 } CliVodStopRetValue, *LPCliVodStopRetValue;
 
 /// 设备ID
@@ -325,9 +351,9 @@ typedef struct _tagCliConfigRetVal
 
 typedef struct _tagCliRcdInfo
 {
-	char hostId[32];							///< 车辆ID
+	char hostId[32];					///< 车辆ID
 	time_t tmRecIntervalStartPt;		///< 录像区间开始时间
-	time_t tmRecIntervalEndPt;		///< 录像区间结束时间
+	time_t tmRecIntervalEndPt;			///< 录像区间结束时间
 } CliRcdInfo, *LPCliRcdInfo;
 
 #pragma pack(pop)

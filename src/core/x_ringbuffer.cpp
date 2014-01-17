@@ -8,6 +8,7 @@
 CRingBuffer::CRingBuffer(int nCacheFrameNum, int nBufferSize)
 {
 	m_pBuffer = new char[nBufferSize];
+	//memset (m_pBuffer, 0, nBufferSize);
 	m_pBegin = m_pBuffer;
 	m_pEnd = m_pBuffer + nBufferSize;
 	m_pWritePoint = m_pReadPoint = m_pBegin;

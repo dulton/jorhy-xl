@@ -46,6 +46,7 @@ CXlHost::~CXlHost()
 
 j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 {
+	//J_OS::LOGINFO("MakeChannel ch = %d", nChannelNum);
 	J_Obj *pChannel = NULL;
 	ChannelMap::iterator it = m_channelMap.find(nChannelNum);
 	if (it != m_channelMap.end())
@@ -132,11 +133,20 @@ j_result_t CXlHost::EnableRcdInfo(CRingBuffer *pRingBuffer, j_boolean_t bEnable)
 {
 	if (bEnable)
 	{
+		///清除所有记录
+		TLock(m_vecRcdLocker);
+		m_vecRcdRingBuffer.clear();
+		//J_OS::LOGINFO("m_vecRcdRingBuffer.clear = %d", m_vecRcdRingBuffer.size());
+		TUnlock(m_vecRcdLocker);
+		///添加新记录
 		AddRingBuffer(m_vecRcdLocker, m_vecRcdRingBuffer, pRingBuffer);
+		//J_OS::LOGINFO("m_vecRcdRingBuffer.size = %d", m_vecRcdRingBuffer.size());
 	}
 	else
 	{
+		///删除记录
 		DelRingBuffer(m_vecRcdLocker, m_vecRcdRingBuffer, pRingBuffer);
+		//J_OS::LOGINFO("m_vecRcdRingBuffer.DelRingBuffer = %d", m_vecRcdRingBuffer.size());
 	}
 	return J_OK;
 }
@@ -273,6 +283,10 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 			OnVodStopData(pAsioData);
 			m_ioState = xl_read_head_state;
 			break;
+		case xld_msg_info:
+			OnMsgInfo(pAsioData);
+			m_ioState = xl_read_head_state;
+			break;
 		case xld_get_rcd_info:
 			OnRcdInfoData(pAsioData);
 			m_ioState = xl_read_head_state;
@@ -337,7 +351,8 @@ j_result_t CXlHost::OnAlarmInfo(J_AsioDataBase *pAsioData)
 		CliAlarmInfo cliAlarmInfo = {0};
 		strcpy((char *)cliAlarmInfo.pHostId, m_hostId.c_str());
 		//memcpy((((char *)&cliAlarmInfo)+sizeof(cliAlarmInfo.pHostId)), pAlarmInfo, sizeof(CliAlarmInfo));
-		cliAlarmInfo.bAlarm = pAlarmInfo->bAlarm;
+		cliAlarmInfo.bAlarm = pAlarmInfo->bAlarm & 0xFF;
+		//J_OS::LOGINFO("%d %s", cliAlarmInfo.bAlarm, cliAlarmInfo.pHostId);
 		cliAlarmInfo.gps.dLatitude = pAlarmInfo->gps.dLatitude;
 		cliAlarmInfo.gps.dLongitude = pAlarmInfo->gps.dLongitude;
 		cliAlarmInfo.gps.dGPSSpeed = pAlarmInfo->gps.dGPSSpeed;
@@ -363,7 +378,7 @@ j_result_t CXlHost::OnRealPlayData(J_AsioDataBase *pAsioData, j_int32_t nDadaLen
 {
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
 	DevRealPlay *pResp = (DevRealPlay *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("host hostId = %s, channel = %d", pResp->hostId, pResp->channel & 0xFF);
+	//J_OS::LOGINFO("host hostId = %s, channel = %d", pResp->hostId, pResp->channel & 0xFF);
 	TLock(m_channelLocker);
 	ChannelMap::iterator it = m_channelMap.find(pResp->channel & 0xFF);
 	if (it != m_channelMap.end())
@@ -428,8 +443,8 @@ j_result_t CXlHost::OnVodStopData(J_AsioDataBase *pAsioData)
 j_result_t CXlHost::OnRcdInfoData(J_AsioDataBase *pAsioData)
 {
 	DevRcdInfo *pResp = (DevRcdInfo *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("XlHost RcdInfoData hostId = %s %I64d %I64d", pResp->szID,
-		pResp->tmRecIntervalStartPt, pResp->tmRecIntervalEndPt);
+	//J_OS::LOGINFO("1 -- XlHost RcdInfoData hostId = %s %I64d %I64d", pResp->szID,
+	//	pResp->tmRecIntervalStartPt, pResp->tmRecIntervalEndPt);
 	if (m_bReady)
 	{
 		CliRcdInfo cliRcdInfo = {0};
@@ -442,9 +457,12 @@ j_result_t CXlHost::OnRcdInfoData(J_AsioDataBase *pAsioData)
 		J_StreamHeader streamHeader = {0};
 		streamHeader.dataLen = nBodyLen;
 		TLock(m_vecRcdLocker);
+		//J_OS::LOGINFO("m_vecRcdRingBuffer.size = %d", m_vecRcdRingBuffer.size());
 		std::vector<CRingBuffer *>::iterator it = m_vecRcdRingBuffer.begin();
-		for (; it != m_vecRcdRingBuffer.end(); it++)
+		for (; it != m_vecRcdRingBuffer.end(); ++it)
 		{
+			//J_OS::LOGINFO("2 -- XlHost RcdInfoData hostId = %s %I64d %I64d", pResp->szID,
+			//	pResp->tmRecIntervalStartPt, pResp->tmRecIntervalEndPt);
 			(*it)->PushBuffer(m_rcdBuffer, streamHeader);
 		}
 		TUnlock(m_vecRcdLocker);
@@ -487,6 +505,58 @@ j_result_t CXlHost::OnGetLogInfo(J_AsioDataBase *pAsioData)
 	J_OS::LOGINFO("XlHost GetLogInfo state=%d, time=%d", pReps->bStatus & 0xFF, pReps->tmTime);
 	JoDataBaseObj->InsertLogInfo(m_hostId.c_str(), pReps->bStatus & 0xFF, pReps->tmTime);
 
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+	return J_OK;
+}
+
+j_result_t CXlHost::OnMsgInfo(J_AsioDataBase *pAsioData)
+{
+	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
+	DevMsgInfo *pReps = (DevMsgInfo *)(m_readBuff + sizeof(CmdHeader));
+	J_OS::LOGINFO("XlHost OnMsgInfo msg_code=%d, msg_ch=%d, %d", pReps->nMsgCode, pReps->channel & 0xFF, pHeader->length);
+	if (m_bReady)
+	{
+		if (pReps->nMsgCode == xld_rcd_info_complete)
+		{
+			CliRcdInfo cliRcdInfo = {0};
+			strcpy((char *)cliRcdInfo.hostId, m_hostId.c_str());
+			cliRcdInfo.tmRecIntervalStartPt = -1;
+			cliRcdInfo.tmRecIntervalEndPt = -1;
+
+			int nBodyLen = sizeof(CmdHeader) + sizeof(CliRcdInfo) + sizeof(CmdTail);
+			CXlHelper::MakeResponse2(xlc_rcdinfo_complete_inner, (char *)&cliRcdInfo, sizeof(CliRcdInfo), m_rcdBuffer);
+			J_StreamHeader streamHeader = {0};
+			streamHeader.dataLen = nBodyLen;
+			TLock(m_vecRcdLocker);
+			std::vector<CRingBuffer *>::iterator it = m_vecRcdRingBuffer.begin();
+			for (; it != m_vecRcdRingBuffer.end(); it++)
+			{
+				(*it)->PushBuffer(m_rcdBuffer, streamHeader);
+			}
+			TUnlock(m_vecRcdLocker);
+		}
+		else if (pReps->nMsgCode == xld_playvod_complete)
+		{
+			TLock(m_channelLocker);
+			ChannelMap::iterator it = m_channelMap.find(pReps->channel & 0xFF);
+			if (it != m_channelMap.end())
+			{
+				CXlChannel *pXlChannel = dynamic_cast<CXlChannel *>(it->second.pChannel);
+				if (pXlChannel != NULL)
+				{
+					DevStopVod data = {0};
+					int nDataLen = sizeof(CmdHeader) + sizeof(DevStopVod) + sizeof(CmdTail);
+					memcpy(&data.sessionId, &pReps->sessionId, sizeof(GUID));
+					strcpy(data.hostId, m_hostId.c_str());
+					data.channel = pReps->channel & 0xFF;
+					CXlHelper::MakeResponse2(xlc_playvod_complete_inner, (j_char_t *)&data, sizeof(DevStopVod), m_readBuff);
+					pXlChannel->InputData(1, m_readBuff, nDataLen);
+				}
+			}
+			TUnlock(m_channelLocker);
+		}
+	}
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
 	return J_OK;
@@ -556,6 +626,7 @@ j_result_t CXlHost::OnRealStop(j_int32_t nChannel)
 
 j_result_t CXlHost::OnVodPlay(GUID sessionId, j_int32_t nChannel, j_time_t startTime, j_time_t endTime)
 {
+	//J_OS::LOGINFO("OnVodPlay ch=%d", nChannel);
 	struct VodPlayInfoBody
 	{
 		CmdHeader head;
