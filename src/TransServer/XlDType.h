@@ -133,7 +133,7 @@ typedef struct _tagDevGetLogInfo
 /// 实时播放
 typedef struct _tagDevRealPlay
 {
-	char hostId[32];						///< 设备ID
+	char hostId[32];				///< 设备ID
 	unsigned char channel;			///< 通道号				
 } DevRealPlay, *LPDevRealPlay;
 
