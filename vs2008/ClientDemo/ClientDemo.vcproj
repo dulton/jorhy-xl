@@ -264,19 +264,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\client_demo\stdafx.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\client_demo\targetver.h"
+				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\client_demo\targetver.h"
 				>
 			</File>
 			<File
@@ -312,5 +312,9 @@
 		</File>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="ClientDemo.rc"
+		/>
 	</Globals>
 </VisualStudioProject>

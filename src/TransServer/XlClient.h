@@ -90,6 +90,9 @@ private:
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnSendMsg(J_AsioDataBase *pAsioData);
 	j_result_t OnGetRctInfo(J_AsioDataBase *pAsioData);
+	j_result_t OnUploadStart(J_AsioDataBase *pAsioData);
+	j_result_t OnUploadFile(J_AsioDataBase *pAsioData);
+	j_result_t OnUploadStop(J_AsioDataBase *pAsioData);
 
 private:
 	j_char_t m_userName[32];							//ÓÃ»§Ãû

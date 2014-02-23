@@ -57,6 +57,7 @@ BEGIN_MESSAGE_MAP(CConfigDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_AddDpInfo, &CConfigDlg::OnBnClickedBtnAddDepartmentInfo)
 	ON_BN_CLICKED(IDC_BTN_MFDpInfo, &CConfigDlg::OnBnClickedBtnMfDepartmentInfo)
 	ON_BN_CLICKED(IDC_BTN_DelDepartment, &CConfigDlg::OnBnClickedBtnDeldepartment)
+	ON_BN_CLICKED(IDC_BTN_UPLOAD, &CConfigDlg::OnBnClickedBtnUpload)
 END_MESSAGE_MAP()
 
 
@@ -354,4 +355,17 @@ void CConfigDlg::OnBnClickedBtnDeldepartment()
 	DepartmentInfo info = {0};
 	GetDepartmentInfo(info);
 	m_impl.DeleteDepartmentInfo(info);
+}
+
+void CConfigDlg::OnBnClickedBtnUpload()
+{
+	// TODO: Add your control notification handler code here
+	CString strFilePath;
+	CFileDialog dlg( TRUE, _T( "*.*" ), _T( "*.*" ), OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, _T( "所有文件|*||" ) );
+	if ( dlg.DoModal() == IDOK ) {
+		strFilePath = dlg.GetPathName();
+		char filePath[512] = {0};
+		sprintf_s(filePath, "%S", (LPSTR)(LPCTSTR)strFilePath);
+		m_impl.UploadFile(filePath, "XLL325487EDC");
+	}
 }

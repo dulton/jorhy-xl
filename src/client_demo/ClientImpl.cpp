@@ -201,6 +201,55 @@ void CClientImpl::StopAlarmInfo(const char *pDevId)
 	send(m_sock, (char *)&alarmStopBody, sizeof(AlarmStopBody), 0);
 }
 
+void CClientImpl::UploadFile(const char *pFilePath, const char *pDevId)
+{
+	//开始文件上传
+	struct StartUploadBody {
+		CmdHeader head;
+		CliUploadStart data;
+		CmdTail tail;
+	} startUploadBody;
+	memset(&startUploadBody, 0, sizeof(StartUploadBody));
+	memcpy(startUploadBody.data.szID, pDevId, strlen(pDevId));
+	memcpy(startUploadBody.data.szFileName, pFilePath, strlen(pFilePath));
+	MakeCommand(xlc_start_upload, (char *)&startUploadBody.data, sizeof(CliUploadStart), (char *)&startUploadBody);
+	send(m_sock, (char *)&startUploadBody, sizeof(StartUploadBody), 0);
+	//文件上传
+	FILE *pFile = fopen(pFilePath, "rb+");
+	if (pFile)
+	{
+		char pBuffer[2048] = {0};
+		char pData[1024] = {0};
+		while (1)
+		{
+			memset(pData, 0, sizeof(pFile));
+			int nReadLen = fread(pData, 1, 1024, pFile);
+			if (nReadLen > 0)
+			{
+				MakeCommand(xlc_upload, (char *)pData, nReadLen, (char *)pBuffer);
+				int n = sizeof(CmdHeader) + sizeof(CmdTail) + nReadLen;
+				send(m_sock, (char *)pBuffer, sizeof(CmdHeader) + sizeof(CmdTail) + nReadLen, 0);
+			}
+			else
+			{
+				fclose(pFile);
+				break;
+			}
+		}
+	}
+	//停止文件上传
+	struct StopUploadBody {
+		CmdHeader head;
+		CliUploadStop data;
+		CmdTail tail;
+	} stopUploadBody;
+	memset(&stopUploadBody, 0, sizeof(StartUploadBody));
+	memcpy(stopUploadBody.data.szID, pDevId, strlen(pDevId));
+	//memcpy(stopUploadBody.data.szCheck, pFilePath, strlen(pFilePath));
+	MakeCommand(xlc_stop_upload, (char *)&stopUploadBody.data, sizeof(CliUploadStop), (char *)&stopUploadBody);
+	send(m_sock, (char *)&stopUploadBody, sizeof(StopUploadBody), 0);
+}
+
 void CClientImpl::GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd)
 {
 	struct LogInfoBody {

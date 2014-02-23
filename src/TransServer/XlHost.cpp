@@ -233,6 +233,8 @@ j_result_t CXlHost::ProcessClientCmd(J_AsioDataBase *pAsioData)
 
 j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 {
+	// 收到数据表示连接正常
+	m_lastBreatTime = time(0);
 	if (m_ioState == xl_init_state)
 	{
 		CXlHelper::MakeRequest(xld_register, NULL, 0, (j_char_t *)m_writeBuff);
@@ -337,6 +339,7 @@ j_result_t CXlHost::OnHeartBeat(J_AsioDataBase *pAsioData)
 	m_lastBreatTime = time(0);
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+	J_OS::LOGINFO("CXlHost::OnHeartBeat");
 	return J_OK;
 }
 
@@ -353,10 +356,10 @@ j_result_t CXlHost::OnAlarmInfo(J_AsioDataBase *pAsioData)
 		//memcpy((((char *)&cliAlarmInfo)+sizeof(cliAlarmInfo.pHostId)), pAlarmInfo, sizeof(CliAlarmInfo));
 		cliAlarmInfo.bAlarm = pAlarmInfo->bAlarm & 0xFF;
 		//J_OS::LOGINFO("%d %s", cliAlarmInfo.bAlarm, cliAlarmInfo.pHostId);
-		/*cliAlarmInfo.gps.dLatitude = pAlarmInfo->gps.dLatitude;
-		cliAlarmInfo.gps.dLongitude = pAlarmInfo->gps.dLongitude;
-		cliAlarmInfo.gps.dGPSSpeed = pAlarmInfo->gps.dGPSSpeed;
-		cliAlarmInfo.speed = pAlarmInfo->speed;*/
+		cliAlarmInfo.gps.dLatitude = pAlarmInfo->dLatitude;
+		cliAlarmInfo.gps.dLongitude = pAlarmInfo->dLongitude;
+		cliAlarmInfo.gps.dGPSSpeed = pAlarmInfo->dGPSSpeed;
+		cliAlarmInfo.speed = pAlarmInfo->dGPSSpeed;
 		cliAlarmInfo.tmTimeStamp = pAlarmInfo->tmTimeStamp;
 		CXlHelper::MakeResponse2(xlc_start_real_alarm_info, (char *)&cliAlarmInfo, sizeof(CliAlarmInfo), m_readBuff);
 		J_StreamHeader streamHeader = {0};

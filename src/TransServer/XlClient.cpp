@@ -142,7 +142,7 @@ j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
 			DevStopVod *pResp = (DevStopVod *)(m_dataBuff + sizeof(CmdHeader));
 
 			pAsioData->ioWrite.bufLen = 0;
-			//SendMsgInfo(pResp->hostId, xlc_msg_dev, xlc_playvod_complete, pResp->channel);
+			SendMsgInfo(pResp->hostId, xlc_msg_dev, xlc_playvod_complete, pResp->channel);
 		}
 	}
 
@@ -258,6 +258,18 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 		case xlc_get_rcd_info:
 			OnGetRctInfo(pAsioData);
 			m_ioCmdState = xl_read_head_state;
+			break;
+		case xlc_start_upload:
+			OnUploadStart(pAsioData);
+			m_ioCmdState = xl_write_body_state;
+			break;
+		case xlc_upload:
+			OnUploadFile(pAsioData);
+			m_ioCmdState = xl_read_head_state;
+			break;
+		case xlc_stop_upload:
+			OnUploadStop(pAsioData);
+			m_ioCmdState = xl_write_body_state;
 			break;
 		default:
 			ProcessConfig(pAsioData);
@@ -651,9 +663,9 @@ j_result_t CXlClient::StopAllVod()
 		if (pHost != NULL)
 		{
 			memset(&vodStopBody, 0, sizeof(VodStopBody));
-			//memcpy(vodStopBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
+			memcpy(vodStopBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
 			vodStopBody.data.sessionId = it->sessionId;
-			//vodStopBody.data.channel = it->nChanId;
+			vodStopBody.data.channel = it->nChanId;
 			CXlHelper::MakeRequest(xlc_stop_vod_view, (char *)&vodStopBody.data, sizeof(DevStopVod), (char *)&vodStopBody);
 
 			asioData.ioType = J_AsioDataBase::j_command_e;
@@ -895,6 +907,40 @@ j_result_t CXlClient::OnGetRctInfo(J_AsioDataBase *pAsioData)
 		pAsioData->ioCall = J_AsioDataBase::j_read_write_rcd_e;
 		m_ioAlarmState = xl_write_body_state;
 	}
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnUploadStart(J_AsioDataBase *pAsioData)
+{
+	CliUploadStart *pReq= (CliUploadStart *)(m_readBuff + sizeof(CmdHeader));
+
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
+	CliRetValue2 data = {0};
+	data.nRetVal = 0x00;
+	CXlHelper::MakeResponse(xlc_start_upload, (j_char_t *)&data, sizeof(CliRetValue2), m_writeBuff);
+	pAsioData->ioCall = J_AsioDataBase::j_write_e;
+	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
+
+	return J_OK;
+}
+
+j_result_t CXlClient::OnUploadFile(J_AsioDataBase *pAsioData)
+{
+	CmdHeader *pReq= (CmdHeader *)m_readBuff;
+	return J_OK;
+}
+
+j_result_t CXlClient::OnUploadStop(J_AsioDataBase *pAsioData)
+{
+	CliUploadStop *pReq= (CliUploadStop *)(m_readBuff + sizeof(CmdHeader));
+
+	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
+	CliRetValue2 data = {0};
+	data.nRetVal = 0x00;
+	CXlHelper::MakeResponse(xlc_stop_upload, (j_char_t *)&data, sizeof(CliRetValue2), m_writeBuff);
+	pAsioData->ioCall = J_AsioDataBase::j_write_e;
+	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 
 	return J_OK;
 }

@@ -24,7 +24,7 @@ int CXAsio::Init()
 	if (!m_bStarted)
 	{
 		m_hCompletionPort = INVALID_HANDLE_VALUE;
-		if ((m_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1)) == NULL)
+		if ((m_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0)) == NULL)
 		{
 			J_OS::LOGINFO( "CRdAsio::Init() CreateIoCompletionPort failed with error: %d\n", GetLastError());
 			return J_SOCKET_ERROR;
@@ -118,7 +118,7 @@ void CXAsio::OnWork()
 		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwBytesTransferred, (LPDWORD)&dwFlag, (LPOVERLAPPED *)&pPerIoData, 3000) == 0)
 		{
 			DWORD dwError = WSAGetLastError();
-			if (dwError == WAIT_TIMEOUT)
+			if (dwError == WAIT_TIMEOUT || dwError == ERROR_CONNECTION_ABORTED)
 			{
 				j_sleep(1);
 			}

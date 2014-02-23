@@ -25,6 +25,7 @@ public:
 	void GetLogInfo(const char *pDevId, time_t tmStart, time_t tmEnd);
 	void GetAlarmInfo(const char *pDevId, time_t tmStart, time_t tmEnd);
 	void StopAlarmInfo(const char *pDevId);
+	void UploadFile(const char *pFilePath, const char *pDevId);
 
 	///≈‰÷√ΩÁ√Ê
 	void GetDvrTotleInfo();

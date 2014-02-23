@@ -63,11 +63,13 @@ J_Host *CDeviceManager::CreateDevObj(j_int32_t nHostType, j_socket_t nSock)
 J_Host *CDeviceManager::GetDeviceObj(j_socket_t nSock)
 {
 	J_Host *pHost = NULL;
+	TLock(m_locker);
 	ConnectMap::iterator it = m_connMap.find(nSock);
 	if (it != m_connMap.end())
 	{
 		pHost = it->second.pHost;
 	}
+	TUnlock(m_locker);
 
 	return pHost;
 }

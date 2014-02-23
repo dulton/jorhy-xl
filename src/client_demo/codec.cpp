@@ -150,14 +150,14 @@ BOOL Codec::InputStream(LPBYTE pBuffer, ULONG ulSize)
 		return FALSE;
 
 	LPBLOCKHEADER lpBlock = (LPBLOCKHEADER) pBuffer;
-	if(lpBlock->VideoInfo.ulVideoSize + sizeof(BLOCKHEADER) != ulSize)
+	if(lpBlock->ulVideoSize + sizeof(BLOCKHEADER) != ulSize)
 		return FALSE;
 
 	if(m_szRMChannel[lpBlock->uChannelID] != NULL)
-		AMESDK_CODEC_DECODE(m_szRMChannel[lpBlock->uChannelID],  pBuffer + sizeof(BLOCKHEADER), ulSize - sizeof(BLOCKHEADER), lpBlock->VideoInfo.bIsKeyFrame);
+		AMESDK_CODEC_DECODE(m_szRMChannel[lpBlock->uChannelID],  pBuffer + sizeof(BLOCKHEADER), ulSize - sizeof(BLOCKHEADER), lpBlock->bIsKeyFrame);
 
 	if(m_szRecChannel[lpBlock->uChannelID] != NULL)
-		AMESDK_CODEC_DECODE(m_szRecChannel[lpBlock->uChannelID],  pBuffer + sizeof(BLOCKHEADER), ulSize - sizeof(BLOCKHEADER), lpBlock->VideoInfo.bIsKeyFrame);
+		AMESDK_CODEC_DECODE(m_szRecChannel[lpBlock->uChannelID],  pBuffer + sizeof(BLOCKHEADER), ulSize - sizeof(BLOCKHEADER), lpBlock->bIsKeyFrame);
 
 	if(m_bRecChannel[lpBlock->uChannelID])
 	{
@@ -221,16 +221,16 @@ DWORD Codec::RecPlayProc(LPVOID lParam)
 			
 		if(lpCodec->m_szRecFileChannel[block.uChannelID] != NULL)
 		{
-			PBYTE pTempBuffer = new BYTE[block.VideoInfo.ulVideoSize];
+			PBYTE pTempBuffer = new BYTE[block.ulVideoSize];
 
-			if(ReadFile(lpCodec->m_lRecFile, pTempBuffer, block.VideoInfo.ulVideoSize, &dwBytesOfRead, NULL) && dwBytesOfRead != 0)
-				AMESDK_CODEC_DECODE(lpCodec->m_szRecFileChannel[block.uChannelID], pTempBuffer, block.VideoInfo.ulVideoSize, block.VideoInfo.bIsKeyFrame);
+			if(ReadFile(lpCodec->m_lRecFile, pTempBuffer, block.ulVideoSize, &dwBytesOfRead, NULL) && dwBytesOfRead != 0)
+				AMESDK_CODEC_DECODE(lpCodec->m_szRecFileChannel[block.uChannelID], pTempBuffer, block.ulVideoSize, block.bIsKeyFrame);
 
 			delete[] pTempBuffer;
 			Sleep(1000 / 25);
 		}
 		else
-			SetFilePointer(lpCodec->m_lRecFile, block.VideoInfo.ulVideoSize, NULL, FILE_CURRENT);
+			SetFilePointer(lpCodec->m_lRecFile, block.ulVideoSize, NULL, FILE_CURRENT);
 
 	}
 

@@ -85,13 +85,9 @@ typedef struct _tagDevAlarmInfo
 {
 	time_t tmTimeStamp;				///< 时间戳
 	char bAlarm;								///< 报警信息
-	//struct  
-	//{
-	//	double dLatitude;
-	//	double dLongitude;
-	//	double dGPSSpeed;
-	//} gps;												///< GPS信息
-	//double	speed;									///< 车速
+	double dLatitude;
+	double dLongitude;
+	double dGPSSpeed;
 } DevAlarmInfo, *LPDevAlarmInfo;
 typedef std::queue<DevAlarmInfo> DevAlarmInfoQueue;
 
@@ -134,7 +130,7 @@ typedef struct _tagDevGetLogInfo
 typedef struct _tagDevRealPlay
 {
 	char hostId[32];				///< 设备ID
-	unsigned char channel;			///< 通道号				
+	unsigned char channel;			///< 通道号
 } DevRealPlay, *LPDevRealPlay;
 
 /// 开始历史回放  
@@ -151,8 +147,8 @@ typedef struct _tagDevStartVod
 typedef struct _tagDevStopVod 
 {
 	GUID sessionId;					///< 回话ID
-	//char hostId[32];						///< 设备ID
-	//char channel;					///< 通道号	
+	char hostId[32];						///< 设备ID
+	char channel;					///< 通道号	
 } DevStopVod, *LPDevStopVod;
 
 typedef struct _tagMsgInfo

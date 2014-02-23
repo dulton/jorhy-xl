@@ -77,4 +77,5 @@ public:
 	afx_msg void OnBnClickedBtnAddDepartmentInfo();
 	afx_msg void OnBnClickedBtnMfDepartmentInfo();
 	afx_msg void OnBnClickedBtnDeldepartment();
+	afx_msg void OnBnClickedBtnUpload();
 };

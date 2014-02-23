@@ -68,6 +68,11 @@ enum CliCmdType
 	///////////////////////////////////////////////////////////////////
 	xlc_get_loginfo,
 	///////////////////////////////////////////////////////////////////
+	xlc_start_upload = 0x60,			///< 开始上传文件
+	xlc_upload,							///< 上传数据
+	xlc_stop_upload,					///< 结束上传文件
+	xlc_upload_resp,					///< 文件上传反馈
+	///////////////////////////////////////////////////////////////////
 	xlc_get_dvr_summary = 0x81,	///< 获取DVR总数信息
 	xlc_get_dvr_list,							///< 获取DVR开关机日志
 	xlc_get_dvr_info,						///< 获取单个DVR信息
@@ -255,6 +260,27 @@ typedef struct _tagCliSendMsg
 	char hostId[32];						///< 设备ID
 	char pData[1];
 } CliSendMsg, *LPCliSendMsg;
+
+/// 开始文件上传
+typedef struct _tagUploadStart
+{ 
+	char szID[32];			 				///< 设备ID
+	char szFileName[512];					///< 文件名称
+} CliUploadStart, *LPCliUploadStart;
+
+/// 停止文件上传
+typedef struct _tagUploadStop
+{ 
+	char szID[32];						///< 设备ID
+	char szCheck[16];					///< MD5码校验
+} CliUploadStop, *LPCliUploadStop;
+
+/// 文件上传反馈
+typedef struct _tagUploadResp
+{ 
+	char szID[32];						///< 设备ID
+	char message[128];				
+} CliUploadResp, *LPCliUploadResp;
 
 /// 设备相关
 /// DVR总数信息
