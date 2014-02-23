@@ -211,11 +211,12 @@ void CClientImpl::UploadFile(const char *pFilePath, const char *pDevId)
 	} startUploadBody;
 	memset(&startUploadBody, 0, sizeof(StartUploadBody));
 	memcpy(startUploadBody.data.szID, pDevId, strlen(pDevId));
-	memcpy(startUploadBody.data.szFileName, pFilePath, strlen(pFilePath));
+	memcpy(startUploadBody.data.szFileName, "j_include.h", strlen("j_include.h"));
 	MakeCommand(xlc_start_upload, (char *)&startUploadBody.data, sizeof(CliUploadStart), (char *)&startUploadBody);
 	send(m_sock, (char *)&startUploadBody, sizeof(StartUploadBody), 0);
 	//文件上传
-	FILE *pFile = fopen(pFilePath, "rb+");
+	FILE *pFile = NULL;
+	fopen_s(&pFile, pFilePath, "rb+");
 	if (pFile)
 	{
 		char pBuffer[2048] = {0};
@@ -243,7 +244,7 @@ void CClientImpl::UploadFile(const char *pFilePath, const char *pDevId)
 		CliUploadStop data;
 		CmdTail tail;
 	} stopUploadBody;
-	memset(&stopUploadBody, 0, sizeof(StartUploadBody));
+	memset(&stopUploadBody, 0, sizeof(StopUploadBody));
 	memcpy(stopUploadBody.data.szID, pDevId, strlen(pDevId));
 	//memcpy(stopUploadBody.data.szCheck, pFilePath, strlen(pFilePath));
 	MakeCommand(xlc_stop_upload, (char *)&stopUploadBody.data, sizeof(CliUploadStop), (char *)&stopUploadBody);

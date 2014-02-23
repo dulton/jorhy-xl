@@ -41,6 +41,10 @@ public:
 	virtual j_result_t EnableAlarm(CRingBuffer *pRingBuffer, j_boolean_t bEnable = true);
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen);
+	/// 文件上传
+	virtual j_result_t OnStartUpload(j_string_t pFileName);
+	virtual j_result_t OnUploading(j_char_t *pData, j_int32_t nLen);
+	virtual j_result_t OnStopUpload(j_char_t *pMD5);
 
 private:
 	j_result_t ProcessClientCmd(J_AsioDataBase *pAsioData);
@@ -104,6 +108,7 @@ private:
 	j_char_t *m_readBuff;
 	j_char_t *m_writeBuff;
 	j_char_t *m_rcdBuffer;
+	j_char_t *m_fileBuffer;
 	j_int32_t m_ioState;				//1-读头数据,2-读数据区+尾数据
 	J_OS::TLocker_t m_vecLocker;
 	std::vector<CRingBuffer *> m_vecRingBuffer;

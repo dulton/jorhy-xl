@@ -29,6 +29,7 @@
 
 CXlClient::CXlClient(j_socket_t nSock)
  : m_socket(nSock)
+ , m_pUploadDev(NULL)
 {
 	memset(m_userName, 0, sizeof(m_userName));
 	strcpy(m_userName, "");
@@ -263,7 +264,7 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 			OnUploadStart(pAsioData);
 			m_ioCmdState = xl_write_body_state;
 			break;
-		case xlc_upload:
+		case xlc_uploading:
 			OnUploadFile(pAsioData);
 			m_ioCmdState = xl_read_head_state;
 			break;
@@ -914,6 +915,13 @@ j_result_t CXlClient::OnGetRctInfo(J_AsioDataBase *pAsioData)
 j_result_t CXlClient::OnUploadStart(J_AsioDataBase *pAsioData)
 {
 	CliUploadStart *pReq= (CliUploadStart *)(m_readBuff + sizeof(CmdHeader));
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReq->szID);
+	if (pHost != NULL)
+	{
+		pHost->OnStartUpload(pReq->szFileName);
+		m_uploadFile = pReq->szFileName;
+		m_pUploadDev = pHost;
+	}
 
 	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
 	CliRetValue2 data = {0};
@@ -928,12 +936,26 @@ j_result_t CXlClient::OnUploadStart(J_AsioDataBase *pAsioData)
 j_result_t CXlClient::OnUploadFile(J_AsioDataBase *pAsioData)
 {
 	CmdHeader *pReq= (CmdHeader *)m_readBuff;
+	if (m_pUploadDev)
+	{
+		m_pUploadDev->OnUploading(m_readBuff + sizeof(CmdHeader), pReq->length);
+	}
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+
 	return J_OK;
 }
 
 j_result_t CXlClient::OnUploadStop(J_AsioDataBase *pAsioData)
 {
 	CliUploadStop *pReq= (CliUploadStop *)(m_readBuff + sizeof(CmdHeader));
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReq->szID);
+	if (pHost != NULL)
+	{
+		pHost->OnStopUpload(pReq->szCheck);
+		m_pUploadDev = NULL;
+		m_uploadFile.clear();
+	}
 
 	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue2) + sizeof(CmdTail);
 	CliRetValue2 data = {0};

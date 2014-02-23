@@ -33,6 +33,9 @@ enum DvrCmdType
 	xld_vod_stop,						///< 停止录像回放
 	xld_msg_info,						///< 系统异常下载
 	xld_get_rcd_info,					///< 获取录像信息
+	xld_start_upload,					///< 开始文件上传
+	xld_uploading,						///< 上传文件
+	xld_stop_upload,					///< 结束文件上传
 };
 
 /// 消息类型定义
@@ -112,6 +115,12 @@ typedef struct _tagDevEquipmentId
 	char hostId[32];			   ///< 主机ID
 } DevEquipmentId, *LPDevEquipmentId;
 
+/// 文件信息
+typedef struct _tagDevFileInfo
+{
+	char fileName[512];			  ///< 文件名
+} DevFileInfo, *LPDevFileInfo;
+
 /// 时间设置 
 typedef struct _tagDevSetTime
 {
@@ -151,6 +160,7 @@ typedef struct _tagDevStopVod
 	char channel;					///< 通道号	
 } DevStopVod, *LPDevStopVod;
 
+/// 消息
 typedef struct _tagMsgInfo
 {
 	char hostId[32];								///< 车号
@@ -159,12 +169,26 @@ typedef struct _tagMsgInfo
 	unsigned char bReserve[16];			///< 会话ID
 } DevMsgInfo, *LPDevMsgInfo;
 
+/// 获取历史视频信息
 typedef struct _tagDevRcdInfo
 {
-	char szID[32];							///< 车辆ID
+	char szID[32];						///< 车辆ID
 	time_t tmRecIntervalStartPt;		///< 录像区间开始时间
-	time_t tmRecIntervalEndPt;		///< 录像区间结束时间
+	time_t tmRecIntervalEndPt;			///< 录像区间结束时间
 } DevRcdInfo, *LPDevRcdInfo;
+
+/// 开始文件上传
+typedef struct _tagDevUploadStart
+{ 
+	char szID[32];			 				///< 设备ID
+	char szFileName[512];					///< 文件名称
+} DevUploadStart, *LPDevUploadStart;
+
+/// 停止文件上传
+typedef struct _tagDevUploadStop
+{ 
+	char szCheck[16];					///< MD5码校验
+} DevUploadStop, *LPDevUploadStop;
 
 #pragma pack(pop)
 

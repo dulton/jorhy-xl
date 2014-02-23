@@ -124,6 +124,8 @@ private:
 	j_int32_t m_state;										//客户端状态
 	j_int32_t m_lastBreatTime;
 	CXlConfig m_config;
+	j_string_t m_uploadFile;
+	J_Host *m_pUploadDev;						//正在上传文件的设备
 	///操作集合
 	OptionMap m_optionMap;
 };

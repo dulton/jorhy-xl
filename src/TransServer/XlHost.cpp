@@ -30,6 +30,7 @@ CXlHost::CXlHost(j_socket_t nSock)
 	m_readBuff = new char[BUFFER_SIZE];			
 	m_writeBuff = new char[BUFFER_SIZE];	
 	m_rcdBuffer = new char[1024];
+	m_fileBuffer = new char[1500];
 	m_ioState = xl_init_state;
 }
 
@@ -38,6 +39,7 @@ CXlHost::~CXlHost()
 	delete m_readBuff;
 	delete m_writeBuff;
 	delete m_rcdBuffer;
+	delete m_fileBuffer;
 	DevHostInfo devInfo = {0};
 	strcpy(devInfo.hostId, m_hostId.c_str());
 	//devInfo.bOnline = false;
@@ -225,6 +227,21 @@ j_result_t CXlHost::ProcessClientCmd(J_AsioDataBase *pAsioData)
 			OnGetRcdInfo(pHostId->hostId);
 		}
 		break;
+	case xlc_start_upload:
+		{
+
+		}
+		break;
+	case xlc_uploading:
+		{
+
+		}
+		break;
+	case xlc_stop_upload:
+		{
+
+		}
+		break;
 	default:
 		break;
 	}
@@ -339,7 +356,7 @@ j_result_t CXlHost::OnHeartBeat(J_AsioDataBase *pAsioData)
 	m_lastBreatTime = time(0);
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
-	J_OS::LOGINFO("CXlHost::OnHeartBeat");
+	//J_OS::LOGINFO("CXlHost::OnHeartBeat");
 	return J_OK;
 }
 
@@ -678,5 +695,47 @@ j_result_t CXlHost::OnGetRcdInfo(j_string_t hostId)
 	strcpy(getRcdBody.data.hostId, m_hostId.c_str());
 	CXlHelper::MakeRequest(xld_get_rcd_info, (char *)&getRcdBody.data, sizeof(DevEquipmentId), (char *)&getRcdBody);
 	m_cmdSocket.Write_n((const char *)&getRcdBody, sizeof(GetRcdBody));
+
+	return J_OK;
+}
+
+j_result_t CXlHost::OnStartUpload(j_string_t pFileName)
+{
+	struct StartUploadBody
+	{
+		CmdHeader head;
+		DevUploadStart data;
+		CmdTail tail;
+	} startUploadBody;
+	memset (&startUploadBody, 0, sizeof(StartUploadBody));
+	strcpy(startUploadBody.data.szID, m_hostId.c_str());
+	strcpy(startUploadBody.data.szFileName, pFileName.c_str());
+	CXlHelper::MakeRequest(xld_start_upload, (char *)&startUploadBody.data, sizeof(DevUploadStart), (char *)&startUploadBody);
+	m_cmdSocket.Write_n((const char *)&startUploadBody, sizeof(StartUploadBody));
+
+	return J_OK;
+}
+
+j_result_t CXlHost::OnUploading(j_char_t *pData, j_int32_t nLen)
+{
+	CXlHelper::MakeRequest(xld_uploading, (char *)pData, nLen, m_fileBuffer);
+	m_cmdSocket.Write_n((const char *)m_fileBuffer, nLen + sizeof(CmdHeader) + nLen + sizeof(CmdTail));
+
+	return J_OK;
+}
+
+j_result_t CXlHost::OnStopUpload(j_char_t *pMD5)
+{
+	struct StopUploadBody
+	{
+		CmdHeader head;
+		DevUploadStop data;
+		CmdTail tail;
+	} stopUploadBody;
+	memset (&stopUploadBody, 0, sizeof(StopUploadBody));
+	memcpy(stopUploadBody.data.szCheck, pMD5, 16);
+	CXlHelper::MakeRequest(xld_stop_upload, (char *)&stopUploadBody.data, sizeof(DevUploadStop), (char *)&stopUploadBody);
+	m_cmdSocket.Write_n((const char *)&stopUploadBody, sizeof(StopUploadBody));
+
 	return J_OK;
 }

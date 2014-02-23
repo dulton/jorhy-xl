@@ -113,6 +113,19 @@ struct J_Host : virtual public J_Obj
 	///@param[in]			nLen 数据长度
 	///@return				参见x_errtype.h
 	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen) = 0;
+	///开始文件上传
+	///@param[in]			pFileName 文件名
+	///@return				参见x_errtype.h
+	virtual j_result_t OnStartUpload(j_string_t pFileName) = 0;
+	///传数据
+	///@param[in]			pData 数据
+	///@param[in]			nLen 数据长度
+	///@return				参见x_errtype.h
+	virtual j_result_t OnUploading(j_char_t *pData, j_int32_t nLen) = 0;
+	///结束文件上传
+	///@param[in]			pMD5 校验码
+	///@return				参见x_errtype.h
+	virtual j_result_t OnStopUpload(j_char_t *pMD5) = 0;
 };
 
 struct J_Client : virtual public J_Obj 
