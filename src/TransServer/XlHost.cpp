@@ -719,7 +719,7 @@ j_result_t CXlHost::OnStartUpload(j_string_t pFileName)
 j_result_t CXlHost::OnUploading(j_char_t *pData, j_int32_t nLen)
 {
 	CXlHelper::MakeRequest(xld_uploading, (char *)pData, nLen, m_fileBuffer);
-	m_cmdSocket.Write_n((const char *)m_fileBuffer, nLen + sizeof(CmdHeader) + nLen + sizeof(CmdTail));
+	m_cmdSocket.Write_n((const char *)m_fileBuffer, sizeof(CmdHeader) + nLen + sizeof(CmdTail));
 
 	return J_OK;
 }
