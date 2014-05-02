@@ -124,9 +124,9 @@ void CDataDownloader::StartDownLoad()
 				}
 				m_strLocalFile = strLocalPath + "\\" + m_strRemoteFile;
 				J_OS::LOGINFO("Begin DownLoad %s", m_strLocalFile.c_str());
-				if (m_ftpHelper.DownLoadFile(m_strRemoteFile.c_str(), m_strLocalFile.c_str(), CDataDownloader::OnDownLoadReturn, this) == J_OK)
+				if (m_ftpHelper.DownLoadFile(m_strRemoteFile.c_str(), m_strLocalFile.c_str(), CDataDownloader::OnDownLoadReturn, this) != J_OK)
 				{
-					m_bStartFile = true;
+					EndDownLoad();
 				}
 			}	
 			else
@@ -139,6 +139,7 @@ void CDataDownloader::StartDownLoad()
 
 void  CDataDownloader::EndDownLoad()
 {
+	TLock(m_locker);
 	VecFileName::iterator it = m_vecFileName.begin();
 	for (; it != m_vecFileName.end(); ++it)
 	{
@@ -149,4 +150,5 @@ void  CDataDownloader::EndDownLoad()
 			break;
 		}
 	}
+	TUnlock(m_locker);
 }

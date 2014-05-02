@@ -55,6 +55,7 @@ private:
 	j_string_t m_strPath;
 	j_string_t m_strRemoteFile;
 	j_string_t m_strLocalFile;
+	J_OS::CTLock m_locker;
 };
 
 #endif //~__DATA_DOWNLOADER_H_
