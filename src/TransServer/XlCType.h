@@ -27,37 +27,48 @@ enum CliCmdState
 enum CliMsgType
 {
 	xlc_msg_user = 0x01,			///< 用户消息
-	xlc_msg_dev,					///< 设备消息
-	xlc_msg_disk,					///< 磁盘消息
+	xlc_msg_dev,						///< 设备消息
+	xlc_msg_disk,						///< 磁盘消息
+	xlc_msg_upload,					///< 上传文件消息
 };
 
+/// 用户消息子类型
 enum CliMsgSubTypeForUser
 {
 	xlc_force_login = 0x01,			///< 用户强制下线
-	xlc_user_deleted,				///< 用户被删除
+	xlc_user_deleted,						///< 用户被删除
 };
 
+/// 设备消息子类型
 enum CliMsgSubTypeForDev
 {
 	xlc_alarm_complete = 0x01,				///< 报警下载完成
-	xlc_log_complete,					///< 日志下载完成
-	xlc_playvod_complete,				///< 回放完成
-	xlc_rcd_info_complete,				///< 获取录像区间完成
+	xlc_log_complete,								///< 日志下载完成
+	xlc_playvod_complete,						///< 回放完成
+	xlc_rcd_info_complete,						///< 获取录像区间完成
 };
 
+/// 磁盘消息子类型
 enum CliMsgSubTypeForDisk
 {
-	xlc_disk_full = 0x01,				///< 录像已满
+	xlc_disk_full = 0x01,								///< 录像已满
+};
+
+/// 文件上传消息子类型
+enum CliMsgSubTypeUpload
+{
+	xlc_upload_success = 0x01,				///< 传输成功
+	xlc_upload_failed,								///< 传输失败
 };
 	
 /// 操作指令定义  
 enum CliCmdType
 {
-	xlc_message = 0x51,				///< 消息
+	xlc_message = 0x51,			///< 消息
 	xlc_login,								///< 用户登录
 	xlc_logout,							///< 注销登录
-	xlc_start_real_alarm_info,		///< 开启获取实时报警信息
-	xlc_stop_real_alarm_info,		///< 停止获取实时报警信息
+	xlc_start_real_alarm_info,	///< 开启获取实时报警信息
+	xlc_stop_real_alarm_info,	///< 停止获取实时报警信息
 	xlc_start_real_view,				///< 开启实时视频浏览
 	xlc_stop_real_view,				///< 停止实时视频浏览
 	xlc_start_vod_view,				///< 开始录像回放（下载）
@@ -198,8 +209,8 @@ typedef struct _tagCliVodStopRetValue
 {
 	GUID sessionId;			///< 会话ID
 	char  pHostId[32];		///< 设备ID
-	int nChannelId;			///< 通道号 
-	int nRetVal;			///< 回复码 0-成功,1-失败
+	int nChannelId;				///< 通道号 
+	int nRetVal;					///< 回复码 0-成功,1-失败
 } CliVodStopRetValue, *LPCliVodStopRetValue;
 
 /// 设备ID
@@ -258,20 +269,23 @@ typedef struct _tagCliStopVod
 typedef struct _tagCliSendMsg
 {
 	char hostId[32];						///< 设备ID
-	char pData[1];
+	char pData[1];							///< 消息体
 } CliSendMsg, *LPCliSendMsg;
 
 /// 开始文件上传
 typedef struct _tagUploadStart
 { 
-	char szID[32];			 				///< 设备ID
-	char szFileName[512];					///< 文件名称
+	int nUserId;										///< 用户ID
+	int nFileId;											///< 文件ID
+	WCHAR szID[32];			 					///< 设备ID
+	WCHAR szFileName[512];				///< 文件名称
 } CliUploadStart, *LPCliUploadStart;
 
 /// 停止文件上传
 typedef struct _tagUploadStop
 { 
 	char szID[32];						///< 设备ID
+	int nFileId;								///< 文件ID
 	char szCheck[16];					///< MD5码校验
 } CliUploadStop, *LPCliUploadStop;
 

@@ -18,6 +18,12 @@
 #include "XlChannel.h"
 #include "MsSqlServer.h"
 #include "XlHelper.h"
+#include "ClientManager.h"
+
+#include <iostream>
+#include <strstream>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/lexical_cast.hpp>  
 
 #pragma comment (lib, "Debug\\core.lib")
 
@@ -30,7 +36,7 @@ CXlHost::CXlHost(j_socket_t nSock)
 	m_readBuff = new char[BUFFER_SIZE];			
 	m_writeBuff = new char[BUFFER_SIZE];	
 	m_rcdBuffer = new char[1024];
-	m_fileBuffer = new char[1500];
+	m_fileBuffer = new char[1024 * 1024];
 	m_ioState = xl_init_state;
 }
 
@@ -40,6 +46,7 @@ CXlHost::~CXlHost()
 	delete m_writeBuff;
 	delete m_rcdBuffer;
 	delete m_fileBuffer;
+	m_fileBuffer = NULL;
 	DevHostInfo devInfo = {0};
 	strcpy(devInfo.hostId, m_hostId.c_str());
 	//devInfo.bOnline = false;
@@ -48,7 +55,6 @@ CXlHost::~CXlHost()
 
 j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 {
-	//J_OS::LOGINFO("MakeChannel ch = %d", nChannelNum);
 	J_Obj *pChannel = NULL;
 	ChannelMap::iterator it = m_channelMap.find(nChannelNum);
 	if (it != m_channelMap.end())
@@ -72,10 +78,34 @@ j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 
 j_boolean_t CXlHost::IsReady()
 {
-	if (time(0) - m_lastBreatTime > 15)
+	if (time(0) - m_lastBreatTime > 15000)
 		m_bReady = false;
 
 	return m_bReady;
+}
+
+j_result_t CXlHost::OnBroken()
+{
+	TLock(m_fileUploadLocker);
+
+	VecFileUploadInfo::iterator it = m_vecFileUploadInfo.begin();
+	for (; it!=m_vecFileUploadInfo.end(); ++it)
+	{
+		JoDataBaseObj->UpdateFileInfo(it->nFileId,  2, false);
+		j_string_t userName;
+		if (JoDataBaseObj->GetUserNameById(it->nUserId, userName) == J_OK)
+		{
+			J_Client *pClient = JoClientManager->GetClientObj(userName);
+			if (pClient)
+			{
+				pClient->SendMsgInfo(m_hostId, xlc_msg_upload, xlc_upload_failed);
+			}
+		}
+	}
+	m_vecFileUploadInfo.clear();
+	TUnlock(m_fileUploadLocker);
+
+	return J_OK;
 }
 
 j_result_t CXlHost::GetHostId(j_string_t &strDevId)
@@ -180,6 +210,7 @@ j_result_t CXlHost::ParserRequest(J_AsioDataBase *pAsioData)
 	return J_OK;
 }
 
+/// 向车载设备发送消息
  j_result_t CXlHost::SendMessage(j_char_t *pData, j_int32_t nLen)
  {
 	 j_int32_t nBodyLen = sizeof(CmdHeader) + nLen + sizeof(CmdTail);
@@ -227,21 +258,6 @@ j_result_t CXlHost::ProcessClientCmd(J_AsioDataBase *pAsioData)
 			OnGetRcdInfo(pHostId->hostId);
 		}
 		break;
-	case xlc_start_upload:
-		{
-
-		}
-		break;
-	case xlc_uploading:
-		{
-
-		}
-		break;
-	case xlc_stop_upload:
-		{
-
-		}
-		break;
 	default:
 		break;
 	}
@@ -276,6 +292,10 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 		{
 		case xld_register:
 			OnRegister(pAsioData);
+			m_ioState = xl_read_head_state;
+			break;
+		case xld_send_message:
+			OnSendMessage(pAsioData);
 			m_ioState = xl_read_head_state;
 			break;
 		case xld_heartbeat:
@@ -351,6 +371,41 @@ j_result_t CXlHost::OnRegister(J_AsioDataBase *pAsioData)
 	return J_OK;
 }
 
+j_result_t CXlHost::OnSendMessage(J_AsioDataBase *pAsioData)
+{
+	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
+	char *pContent = (char *)(m_readBuff + sizeof(CmdHeader));
+	boost::property_tree::ptree pt;														//定义一个存放xml的容器指针
+	std::istrstream iss(pContent, pHeader->length);	
+	boost::property_tree::read_xml(iss, pt);											//读取内存中的数据 入口在pt这个指针
+	j_string_t userId = pt.get<j_string_t>("message.userid");			//获取message下一层id的值
+	j_string_t strType = pt.get<j_string_t>("message.type");			//获取message下一层id的值
+
+	int nUserId = boost::lexical_cast<int>(userId.c_str());
+	if (strType == "FILE_COPY")
+	{
+		j_string_t fileId = pt.get<j_string_t>("message.breserver");				//获取message下一层id的值
+		int nFileId = boost::lexical_cast<int>(fileId.c_str());
+		J_OS::LOGINFO("CXlHost::OnSendMessage file id = %d", nFileId);
+		JoDataBaseObj->UpdateFileInfo(nFileId,  3);
+	}
+	
+	j_string_t userName;
+	J_OS::LOGINFO("CXlHost::OnSendMessage user id = %d", nUserId);
+	if (JoDataBaseObj->GetUserNameById(nUserId, userName) == J_OK)
+	{
+		J_Client *pClient = JoClientManager->GetClientObj(userName);
+		if (pClient)
+		{
+			pClient->SendContentInfo(pContent, pHeader->length);
+		}
+	}
+	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+
+	return J_OK;
+}
+
 j_result_t CXlHost::OnHeartBeat(J_AsioDataBase *pAsioData)
 {
 	m_lastBreatTime = time(0);
@@ -398,7 +453,7 @@ j_result_t CXlHost::OnRealPlayData(J_AsioDataBase *pAsioData, j_int32_t nDadaLen
 {
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
 	DevRealPlay *pResp = (DevRealPlay *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("host hostId = %s, channel = %d", pResp->hostId, pResp->channel & 0xFF);
+	//J_OS::LOGINFO("host hostId = %s, channel = %d", pResp->hostId, pResp->channel & 0xFF);
 	TLock(m_channelLocker);
 	ChannelMap::iterator it = m_channelMap.find(pResp->channel & 0xFF);
 	if (it != m_channelMap.end())
@@ -576,6 +631,33 @@ j_result_t CXlHost::OnMsgInfo(J_AsioDataBase *pAsioData)
 			}
 			TUnlock(m_channelLocker);
 		}
+		else if (pReps->nMsgCode == xld_upload_success || pReps->nMsgCode == xld_upload_failed)
+		{
+			j_int32_t *pUserId = (j_int32_t *)pReps->bReserve;
+			j_int32_t *pFileId = (j_int32_t *)(pReps->bReserve + sizeof(j_int32_t));
+			j_string_t userName;
+			JoDataBaseObj->UpdateFileInfo(*pFileId,  pReps->nMsgCode == xld_upload_success ? 1 : 2, false);
+			if (JoDataBaseObj->GetUserNameById(*pUserId, userName) == J_OK)
+			{
+				J_Client *pClient = JoClientManager->GetClientObj(userName);
+				if (pClient)
+				{
+					pClient->SendMsgInfo(m_hostId, xlc_msg_upload, pReps->nMsgCode == xld_upload_success ? xlc_upload_success : xlc_upload_failed);
+				}
+			}
+			///删除已经上传完成的会话
+			TLock(m_fileUploadLocker);
+			VecFileUploadInfo::iterator it = m_vecFileUploadInfo.begin();
+			for (; it!=m_vecFileUploadInfo.end(); ++it)
+			{
+				if (it->nFileId == *pFileId)
+				{
+					m_vecFileUploadInfo.erase(it);
+					break;
+				}
+			}
+			TUnlock(m_fileUploadLocker);
+		}
 	}
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
@@ -699,32 +781,55 @@ j_result_t CXlHost::OnGetRcdInfo(j_string_t hostId)
 	return J_OK;
 }
 
-j_result_t CXlHost::OnStartUpload(j_string_t pFileName)
+j_result_t CXlHost::OnStartUpload(j_int32_t nUserId, j_int32_t nFileId, j_string_t pFileName)
 {
+	/// 添加上传文件会话信息
+	TLock(m_fileUploadLocker);
+	FileUploadInfo info = {0};
+	info.nUserId = nUserId;
+	info.nFileId = nFileId;
+	m_vecFileUploadInfo.push_back(info);
+	TUnlock(m_fileUploadLocker);
+
+	/// 转发开始信息
 	struct StartUploadBody
 	{
 		CmdHeader head;
 		DevUploadStart data;
 		CmdTail tail;
 	} startUploadBody;
+
 	memset (&startUploadBody, 0, sizeof(StartUploadBody));
+	startUploadBody.data.nUserId = nUserId;
+	startUploadBody.data.nFileId = nFileId;
 	strcpy(startUploadBody.data.szID, m_hostId.c_str());
 	strcpy(startUploadBody.data.szFileName, pFileName.c_str());
+
+	//u_long flag = 0;
+	//ioctlsocket(m_cmdSocket.GetHandle().sock, FIONBIO, &flag);
+
 	CXlHelper::MakeRequest(xld_start_upload, (char *)&startUploadBody.data, sizeof(DevUploadStart), (char *)&startUploadBody);
 	m_cmdSocket.Write_n((const char *)&startUploadBody, sizeof(StartUploadBody));
 
 	return J_OK;
 }
 
-j_result_t CXlHost::OnUploading(j_char_t *pData, j_int32_t nLen)
+j_result_t CXlHost::OnUploading(j_int32_t nFileId, j_char_t *pData, j_int32_t nLen)
 {
 	CXlHelper::MakeRequest(xld_uploading, (char *)pData, nLen, m_fileBuffer);
 	m_cmdSocket.Write_n((const char *)m_fileBuffer, sizeof(CmdHeader) + nLen + sizeof(CmdTail));
+	//u_long ret = 0;
+	//ioctlsocket(m_cmdSocket.GetHandle().sock, FIONBIO, &ret);
+	//if ((ret = send(m_cmdSocket.GetHandle().sock, m_fileBuffer, sizeof(CmdHeader) + nLen + sizeof(CmdTail), 0)) <= 0)
+	//	J_OS::LOGINFO("send len = %d", GetLastError());
+	//J_OS::LOGINFO("send len2222 = %d", ret);
+	//ret  = 1;
+	//ioctlsocket(m_cmdSocket.GetHandle().sock, FIONBIO, &ret);
 
 	return J_OK;
 }
 
-j_result_t CXlHost::OnStopUpload(j_char_t *pMD5)
+j_result_t CXlHost::OnStopUpload(j_int32_t nFileId, j_char_t *pMD5)
 {
 	struct StopUploadBody
 	{
@@ -733,9 +838,13 @@ j_result_t CXlHost::OnStopUpload(j_char_t *pMD5)
 		CmdTail tail;
 	} stopUploadBody;
 	memset (&stopUploadBody, 0, sizeof(StopUploadBody));
+	stopUploadBody.data.nFileId = nFileId;
 	memcpy(stopUploadBody.data.szCheck, pMD5, 16);
 	CXlHelper::MakeRequest(xld_stop_upload, (char *)&stopUploadBody.data, sizeof(DevUploadStop), (char *)&stopUploadBody);
 	m_cmdSocket.Write_n((const char *)&stopUploadBody, sizeof(StopUploadBody));
+
+	//u_long flag = 1;
+	//ioctlsocket(m_cmdSocket.GetHandle().sock, FIONBIO, &flag);
 
 	return J_OK;
 }

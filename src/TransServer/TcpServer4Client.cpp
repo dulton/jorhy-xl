@@ -44,6 +44,9 @@ j_result_t CTcpServer4Client::StopService()
 
 j_result_t CTcpServer4Client::OnAccept(J_AsioDataBase *pAsioData, int nRet)
 {
+	u_long ret = 0;
+	ioctlsocket(pAsioData->ioAccept.subHandle, FIONBIO, &ret);
+
 	j_socket_t nSocket = pAsioData->ioAccept.subHandle;
 	m_asio.AddUser(nSocket, this);
 	J_Client *pClient = JoClientManager->CreateClientObj(nSocket);

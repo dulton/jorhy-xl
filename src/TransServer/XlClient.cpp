@@ -20,9 +20,13 @@
 #include "ClientManager.h"
 #include "XlHelper.h"
 
+#include <iostream>
+#include <strstream>
+#include <boost/property_tree/xml_parser.hpp>
+
 #pragma comment (lib, "Debug\\core.lib")
 
-#define XL_CMD_BUFFER_SIZE (2 * 1024)
+#define XL_CMD_BUFFER_SIZE (1024 * 1024)
 #define XL_DATA_BUFFER_SIZE (1024 * 1024)
 #define XL_ALARM_BUFFER_SIZE (2 * 1024)
 #define XL_RCD_BUFFER_SIZE (64)
@@ -122,6 +126,16 @@ j_int32_t CXlClient::GetState()
 		return -1;
 
 	return 0;
+}
+
+j_result_t CXlClient::SendContentInfo(j_char_t *pContent, j_int32_t nLen)
+{
+	char *pDataBuff = new char[sizeof(CmdHeader) + nLen + sizeof(CmdTail)];
+	CXlHelper::MakeResponse(xlc_send_msg, (j_char_t *)pContent, nLen, (j_char_t *)pDataBuff);
+	m_socket.Write_n((j_char_t *)pDataBuff, sizeof(CmdHeader) + nLen + sizeof(CmdTail));
+	delete pDataBuff;
+
+	return J_OK;
 }
 
 j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
@@ -276,7 +290,7 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 			ProcessConfig(pAsioData);
 			break;
 		}
-		J_OS::LOGINFO("%d %X", pHeader->cmd, pHeader->flag & 0xFF);
+		//J_OS::LOGINFO("%d %X", pHeader->cmd, pHeader->flag & 0xFF);
 	}
 	else
 	{	
@@ -868,18 +882,24 @@ j_result_t CXlClient::OnStopAlarm(J_AsioDataBase *pAsioData)
 	return J_OK;
 }
 
+/// 客户端向车载设备发送文本消息
 j_result_t CXlClient::OnSendMsg(J_AsioDataBase *pAsioData)
 {
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
-	CliSendMsg *pReps = (CliSendMsg *)(m_readBuff + sizeof(CmdHeader));
-	//J_OS::LOGINFO("CXlClient::OnSendMsg = %s", pReps->pData);
-	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReps->hostId);
+	char *pContent = (char *)(m_readBuff + sizeof(CmdHeader));
+	boost::property_tree::ptree pt;												//定义一个存放xml的容器指针
+	std::istrstream iss(pContent, pHeader->length);	
+	boost::property_tree::read_xml(iss, pt);									//读取内存中的数据 入口在pt这个指针
+	j_string_t hostId = pt.get<j_string_t>("message.vehicleid");			//获取message下一层id的值
+	
+	//J_OS::LOGINFO("CXlClient::OnSendMsg = %s", pContent);
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(hostId);
 	if (pHost != NULL)
-		pHost->SendMessage(pReps->pData, pHeader->length - sizeof(DevEquipmentId));
+		pHost->SendMessage(pContent, pHeader->length);
 
 	int nBodyLen = sizeof(CmdHeader) + sizeof(CliRetValue) + sizeof(CmdTail);
 	CliRetValue data = {0};
-	strcpy(data.pHostId, pReps->hostId);
+	strcpy(data.pHostId, hostId.c_str());
 	data.nRetVal = 0x00;
 	CXlHelper::MakeResponse(xlc_send_msg, (j_char_t *)&data, sizeof(CliRetValue), m_writeBuff);
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
@@ -914,12 +934,19 @@ j_result_t CXlClient::OnGetRctInfo(J_AsioDataBase *pAsioData)
 
 j_result_t CXlClient::OnUploadStart(J_AsioDataBase *pAsioData)
 {
+	//sNum = 0;
 	CliUploadStart *pReq= (CliUploadStart *)(m_readBuff + sizeof(CmdHeader));
-	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReq->szID);
+	char hostId[32] = {0};
+	char fileName[512] = {0};
+	WideCharToMultiByte(CP_OEMCP, NULL, pReq->szID, -1, hostId, 32, NULL, FALSE);
+	WideCharToMultiByte(CP_OEMCP, NULL, pReq->szFileName, -1, fileName, 512, NULL, FALSE);
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(hostId);
+	//J_OS::LOGINFO("CXlClient::OnUploadStart %s %d", hostId, ++sNum);
 	if (pHost != NULL)
 	{
-		pHost->OnStartUpload(pReq->szFileName);
-		m_uploadFile = pReq->szFileName;
+		//J_OS::LOGINFO("CXlClient::OnUploadStart %s", pReq->szID);
+		pHost->OnStartUpload(pReq->nUserId, pReq->nFileId, fileName);
+		m_uploadFile = fileName;
 		m_pUploadDev = pHost;
 	}
 
@@ -936,12 +963,17 @@ j_result_t CXlClient::OnUploadStart(J_AsioDataBase *pAsioData)
 j_result_t CXlClient::OnUploadFile(J_AsioDataBase *pAsioData)
 {
 	CmdHeader *pReq= (CmdHeader *)m_readBuff;
-	if (m_pUploadDev)
+	DevEquipmentId *pHostId = (DevEquipmentId *)(m_readBuff + sizeof(CmdHeader));
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(pHostId->hostId);
+	J_OS::LOGINFO("%s %d", pHostId->hostId, *(int*)(m_readBuff + sizeof(CmdHeader) + sizeof(DevEquipmentId)));
+	if (pHost != NULL)
 	{
-		m_pUploadDev->OnUploading(m_readBuff + sizeof(CmdHeader), pReq->length);
+		J_OS::LOGINFO("%d", pReq->length - sizeof(DevEquipmentId));
+		pHost->OnUploading(0, m_readBuff + sizeof(CmdHeader) + sizeof(DevEquipmentId), pReq->length - sizeof(DevEquipmentId));
 	}
+	memset(m_readBuff, 0, XL_CMD_BUFFER_SIZE);
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
-	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+	pAsioData->ioCall = J_AsioDataBase::j_read_e; 
 
 	return J_OK;
 }
@@ -952,7 +984,8 @@ j_result_t CXlClient::OnUploadStop(J_AsioDataBase *pAsioData)
 	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReq->szID);
 	if (pHost != NULL)
 	{
-		pHost->OnStopUpload(pReq->szCheck);
+		J_OS::LOGINFO("CXlClient::OnUploadStop %s", pReq->szID);
+		pHost->OnStopUpload(pReq->nFileId, pReq->szCheck);
 		m_pUploadDev = NULL;
 		m_uploadFile.clear();
 	}

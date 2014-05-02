@@ -15,12 +15,13 @@
 ///////////////////////////////////////////////////////////////////////////  
 #include "MsSqlServer.h"
 #include <iostream>
+#include <boost/date_time/posix_time/posix_time.hpp>
 using namespace std;
 
 //#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll"no_namespace rename("EOF", "EndOfFile")
 JO_IMPLEMENT_SINGLETON(SqlServerAccess)
 
-	CSqlServerAccess::CSqlServerAccess()
+CSqlServerAccess::CSqlServerAccess()
 {
 	::CoInitialize(NULL); // 初始化OLE/COM库环境 ，为访问ADO接口做准备
 }
@@ -175,6 +176,28 @@ j_result_t CSqlServerAccess::Login(const char *pUserName, const char *pPasswd, i
 	return J_OK;
 }
 
+j_result_t CSqlServerAccess::GetUserNameById(j_int32_t userId, j_string_t &userName)
+{
+	try 
+	{
+		char strCmd[128] = {0};
+		sprintf(strCmd, "SELECT AccountName FROM UserInfo WHERE UserID=%d;", userId);
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (m_pRec->EndOfFile)
+			return J_DB_ERROR;
+		else
+		{
+			userName = (char*)_bstr_t(m_pRec->GetCollect("AccountName"));
+		}
+	}
+	catch(...)
+	{
+		return J_DB_ERROR;
+	}
+
+	return J_OK;
+}
+
 j_result_t CSqlServerAccess::Logout(const char *pUserName)
 {
 	try 
@@ -187,6 +210,33 @@ j_result_t CSqlServerAccess::Logout(const char *pUserName)
 	{
 		return J_DB_ERROR;
 	}
+	return J_OK;
+}
+
+j_result_t  CSqlServerAccess::UpdateFileInfo(j_int32_t nFileId, j_int32_t nState, bool bFlag)
+{
+	try 
+	{
+		time_t loacl_tm = time(0);
+		tm *today = localtime(&loacl_tm);
+		char strCmd[128] = {0};
+		if (bFlag)
+		{
+			sprintf(strCmd, "UPDATE FileInfo SET State=%d, CopyTime='%04d-%02d-%02d' WHERE FileID=%d;"
+				, nState, today->tm_year + 1900, today->tm_mon, today->tm_mday, nFileId);
+		}
+		else
+		{
+			sprintf(strCmd, "UPDATE FileInfo SET State=%d WHERE FileID=%d;"
+				, nState, nFileId);
+		}
+		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+	}
+	catch(...)
+	{
+		return J_DB_ERROR;
+	}
+
 	return J_OK;
 }
 

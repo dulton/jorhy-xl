@@ -53,6 +53,7 @@ public:
 	j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	j_result_t Broken();
 	j_int32_t GetState();
+	j_result_t SendContentInfo(j_char_t *pContent, j_int32_t nLen);
 
 private:
 	/// 生成数据接口

@@ -42,6 +42,8 @@ j_result_t CTcpServer4Device::StopService()
 
 j_result_t CTcpServer4Device::OnAccept(J_AsioDataBase *pAsioData, int nRet)
 {
+	u_long ret = 0;
+	ioctlsocket(pAsioData->ioAccept.subHandle, FIONBIO, &ret);
 	j_socket_t nSocket = pAsioData->ioAccept.subHandle;
 	m_asio.AddUser(nSocket, this);
 	J_Host *pHost = JoDeviceManager->CreateDevObj(1, nSocket);

@@ -30,6 +30,14 @@
 ///据库接口对象
 #define JoDataBaseObj \
 	JO_INSTANSE(SqlServerAccess)
+#define JoAccessObj \
+	JO_INSTANSE(AccessOprator)
+///FTP服务器管理对象
+#define JoHostManager \
+	JO_INSTANSE(HostManager)
+///数据总线对象
+#define JoDataBus \
+	JO_INSTANSE(DataBus)
 
 #include "x_errtype.h"
 
@@ -266,6 +274,12 @@ struct J_AsioDataBase
 		J_IoRead ioRead;
 		J_IoWrite ioWrite;
 	};
+};
+
+template <class k1, class k2>
+class compaird_obj
+{
+
 };
 
 #endif //~__JO_COMMON_H_

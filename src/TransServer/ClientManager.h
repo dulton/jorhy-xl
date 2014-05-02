@@ -55,10 +55,14 @@ public:
 	/// @param[out]   NULL-失败,否则为Client对象
 	/// @return			参见j_errtype.h 
 	J_Client *CreateClientObj(j_socket_t nSock);
-	/// 获取客户端对象
-	/// @param[in]		nnSock 设备连接 
+	/// 根据连接获取客户端对象
+	/// @param[in]		nSock 设备连接 
 	/// @return			Client对象,NULL-未找到   
 	J_Client *GetClientObj(j_socket_t nSock);
+	/// 根据用户名获取客户端对象 
+	/// @param[in]		userName 用户名 
+	/// @return			Client对象,NULL-未找到   
+	J_Client *GetClientObj(j_string_t userName);
 	///删除客户端对象
 	/// @param[in]		nSock 设备连接 
 	/// @return			

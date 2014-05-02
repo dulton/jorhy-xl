@@ -111,6 +111,7 @@ void CDeviceManager::DelDevice(J_Host *pHost)
 	{
 		if (it->second == pHost)
 		{
+			pHost->OnBroken();
 			delete pHost;
 			m_devMap.erase(it);
 			break;
@@ -154,9 +155,14 @@ void CDeviceManager::CheckDevice()
 
 J_Host *CDeviceManager::GetDeviceObj(j_string_t strDevId)
 {
+	TLock(m_devLocker);
 	DeviceMap::iterator it = m_devMap.find(strDevId);
 	if (it != m_devMap.end())
+	{
+		TUnlock(m_devLocker);
 		return it->second;
+	}
+	TUnlock(m_devLocker);
 
 	return NULL;
 }

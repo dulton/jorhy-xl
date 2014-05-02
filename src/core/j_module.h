@@ -83,6 +83,9 @@ struct J_Host : virtual public J_Obj
 	///判断设备是否就绪
 	///@return			true-就绪,false-未就绪
 	virtual j_boolean_t IsReady() = 0;
+	/// 设备断线
+	///@return			参见x_errtype.h
+	virtual j_result_t OnBroken() = 0;
 	///获取设备ID
 	///@param[out]	strDevId 设备ID
 	///@return			参见x_errtype.h
@@ -116,16 +119,16 @@ struct J_Host : virtual public J_Obj
 	///开始文件上传
 	///@param[in]			pFileName 文件名
 	///@return				参见x_errtype.h
-	virtual j_result_t OnStartUpload(j_string_t pFileName) = 0;
-	///传数据
+	virtual j_result_t OnStartUpload(j_int32_t nUserId, j_int32_t nFileId, j_string_t pFileName) = 0;
+	///上传文件数据
 	///@param[in]			pData 数据
 	///@param[in]			nLen 数据长度
 	///@return				参见x_errtype.h
-	virtual j_result_t OnUploading(j_char_t *pData, j_int32_t nLen) = 0;
+	virtual j_result_t OnUploading(j_int32_t nFileId, j_char_t *pData, j_int32_t nLen) = 0;
 	///结束文件上传
 	///@param[in]			pMD5 校验码
 	///@return				参见x_errtype.h
-	virtual j_result_t OnStopUpload(j_char_t *pMD5) = 0;
+	virtual j_result_t OnStopUpload(j_int32_t nFileId, j_char_t *pMD5) = 0;
 };
 
 struct J_Client : virtual public J_Obj 
@@ -146,6 +149,10 @@ struct J_Client : virtual public J_Obj
 	/// 获取状态
 	/// @return				客户端状态 
 	virtual j_int32_t GetState() = 0;
+	/// 发送文本消息
+	/// @param[in]			pContent 文本内容
+	/// @param[in]			nChannel 文本内容长度
+	virtual j_result_t SendContentInfo(j_char_t *pContent, j_int32_t nLen) = 0;
 };
 
 #endif //~__J_VIDEOADAPTER_H_

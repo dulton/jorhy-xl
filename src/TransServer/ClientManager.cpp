@@ -113,6 +113,20 @@ J_Client *CClientManager::GetClientObj(j_socket_t nSock)
 	return pClient;
 }
 
+J_Client *CClientManager::GetClientObj(j_string_t userName)
+{
+	J_Client *pClient = NULL;
+	TLock(m_lockerUser);
+	UserMap::iterator it = m_userMap.find(userName);
+	if (it != m_userMap.end())
+	{
+		pClient = it->second;
+	}
+	TUnlock(m_lockerUser);
+
+	return pClient;
+}
+
 void CClientManager::ReleaseClientObj(j_socket_t nSock)
 {
 	J_Client *pClient = NULL;

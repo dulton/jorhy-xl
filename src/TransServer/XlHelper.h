@@ -27,5 +27,6 @@ public:
 	static j_uint32_t CheckNum(j_char_t *pData, j_int32_t nLen);
 	static j_uint32_t CheckNum2(j_char_t *pData, j_int32_t nLen);
 	static j_result_t MakeNetData(J_AsioDataBase *pAsioData, j_char_t *pDataBuff, j_int32_t nLen);
+	//static j_result_t BlockSocket();
 };
 #endif // !__XLHELPER_H_

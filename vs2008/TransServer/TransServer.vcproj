@@ -179,6 +179,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\TransServer\DataBus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\TransServer\DataObj.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\TransServer\DeviceManager.h"
 				>
 			</File>
@@ -230,6 +238,10 @@
 			>
 			<File
 				RelativePath="..\..\src\TransServer\ClientManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\TransServer\DataBus.cpp"
 				>
 			</File>
 			<File

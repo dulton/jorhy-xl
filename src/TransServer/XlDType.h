@@ -21,11 +21,11 @@
 enum DvrCmdType
 {
 	xld_register = 0,					///< DVR主机注册
-	xld_set_time,						///< 服务器校时
+	xld_set_time,							///< 服务器校时
 	xld_get_loginfo,					///< 获取DVR开关机日志
-	xld_send_message,					///< 发送消息
-	xld_heartbeat = 4,					///< 心跳检测
-	xld_get_alraminfo,					///< 报警获取
+	xld_send_message,				///< 发送消息
+	xld_heartbeat = 4,				///< 心跳检测
+	xld_get_alraminfo,				///< 报警获取
 	xld_get_devinfo,					///< 设备信息获取
 	xld_real_play,						///< 开始实时视频播放
 	xld_real_stop,						///< 停止实时视频播放
@@ -41,12 +41,14 @@ enum DvrCmdType
 /// 消息类型定义
 enum DvrMsgType
 {
-	xld_alarm_complete = 0,				///< 报警下载完成
-	xld_log_complete,					///< 日志下载完成
+	xld_alarm_complete = 0x00,		///< 报警下载完成
+	xld_log_complete,						///< 日志下载完成
 	xld_playvod_complete,				///< 回放完成
-	xld_disk_full,						///< 录像已满
+	xld_disk_full,									///< 录像已满
 	xld_playreal_complete,				///< 实时播放完成
 	xld_rcd_info_complete,				///< 获取录像区间完成
+	xld_upload_success	 = 0x07,		///< 传送文件成功
+	xld_upload_failed	,						///< 传送文件失败
 };
 
 #pragma pack(push)
@@ -167,6 +169,7 @@ typedef struct _tagMsgInfo
 	unsigned char channel;					///< 通道号
 	unsigned int nMsgCode;				///< 消息码
 	unsigned char bReserve[16];			///< 会话ID
+	//unsigned char bReserve[2048];	///< 系统消息
 } DevMsgInfo, *LPDevMsgInfo;
 
 /// 获取历史视频信息
@@ -180,13 +183,16 @@ typedef struct _tagDevRcdInfo
 /// 开始文件上传
 typedef struct _tagDevUploadStart
 { 
-	char szID[32];			 				///< 设备ID
+	int nUserId;									///< 用户ID
+	int nFileId;										///< 文件ID
+	char szID[32];			 					///< 设备ID
 	char szFileName[512];					///< 文件名称
 } DevUploadStart, *LPDevUploadStart;
 
 /// 停止文件上传
 typedef struct _tagDevUploadStop
 { 
+	int nFileId;								///< 文件ID
 	char szCheck[16];					///< MD5码校验
 } DevUploadStop, *LPDevUploadStop;
 

@@ -211,7 +211,7 @@ void CClientImpl::UploadFile(const char *pFilePath, const char *pDevId)
 	} startUploadBody;
 	memset(&startUploadBody, 0, sizeof(StartUploadBody));
 	memcpy(startUploadBody.data.szID, pDevId, strlen(pDevId));
-	memcpy(startUploadBody.data.szFileName, "j_include.h", strlen("j_include.h"));
+	memcpy(startUploadBody.data.szFileName, "Friends.S01E04.mp4", strlen("Friends.S01E02.mp4"));
 	MakeCommand(xlc_start_upload, (char *)&startUploadBody.data, sizeof(CliUploadStart), (char *)&startUploadBody);
 	send(m_sock, (char *)&startUploadBody, sizeof(StartUploadBody), 0);
 	//文件上传
@@ -220,16 +220,17 @@ void CClientImpl::UploadFile(const char *pFilePath, const char *pDevId)
 	if (pFile)
 	{
 		char pBuffer[2048] = {0};
-		char pData[1024] = {0};
+		char pData[2048] = {0};
 		while (1)
 		{
 			memset(pData, 0, sizeof(pFile));
-			int nReadLen = fread(pData, 1, 1024, pFile);
+			memcpy(pData, pDevId, strlen(pDevId));
+			int nReadLen = fread(pData + 32, 1, 1024, pFile);
 			if (nReadLen > 0)
 			{
-				MakeCommand(xlc_upload, (char *)pData, nReadLen, (char *)pBuffer);
+				MakeCommand(xlc_upload, (char *)pData, nReadLen + 32, (char *)pBuffer);
 				int n = sizeof(CmdHeader) + sizeof(CmdTail) + nReadLen;
-				send(m_sock, (char *)pBuffer, sizeof(CmdHeader) + sizeof(CmdTail) + nReadLen, 0);
+				send(m_sock, (char *)pBuffer, sizeof(CmdHeader) + sizeof(CmdTail) + nReadLen + 32, 0);
 			}
 			else
 			{
