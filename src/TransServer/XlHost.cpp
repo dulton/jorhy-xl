@@ -42,15 +42,31 @@ CXlHost::CXlHost(j_socket_t nSock)
 
 CXlHost::~CXlHost()
 {
-	delete m_readBuff;
-	delete m_writeBuff;
-	delete m_rcdBuffer;
-	delete m_fileBuffer;
-	m_fileBuffer = NULL;
+	if (m_readBuff != NULL)
+	{
+		delete m_readBuff;
+		m_readBuff = NULL;
+	}
+	if (m_writeBuff != NULL)
+	{
+		delete m_writeBuff;
+		m_writeBuff = NULL;
+	}
+	if (m_rcdBuffer != NULL)
+	{
+		delete m_rcdBuffer;
+		m_rcdBuffer = NULL;
+	}
+	if (m_fileBuffer != NULL)
+	{
+		delete m_fileBuffer;
+		m_fileBuffer = NULL;
+	}
 	DevHostInfo devInfo = {0};
 	strcpy(devInfo.hostId, m_hostId.c_str());
 	//devInfo.bOnline = false;
 	JoDataBaseObj->UpdateDevInfo(devInfo, false);
+	J_OS::LOGINFO("CXlHost::~CXlHost()");
 }
 
 j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
@@ -78,7 +94,7 @@ j_result_t CXlHost::MakeChannel(const j_int32_t nChannelNum, J_Obj *&pObj)
 
 j_boolean_t CXlHost::IsReady()
 {
-	if (time(0) - m_lastBreatTime > 15000)
+	if (time(0) - m_lastBreatTime > 150000)
 		m_bReady = false;
 
 	return m_bReady;
@@ -86,8 +102,8 @@ j_boolean_t CXlHost::IsReady()
 
 j_result_t CXlHost::OnBroken()
 {
+	J_OS::LOGINFO("CXlHost::OnBroken()");
 	TLock(m_fileUploadLocker);
-
 	VecFileUploadInfo::iterator it = m_vecFileUploadInfo.begin();
 	for (; it!=m_vecFileUploadInfo.end(); ++it)
 	{
@@ -104,6 +120,18 @@ j_result_t CXlHost::OnBroken()
 	}
 	m_vecFileUploadInfo.clear();
 	TUnlock(m_fileUploadLocker);
+
+	TLock(m_vecClientLocker);
+	std::vector<J_Client *>::iterator it2 = m_vecClient.begin();
+	for (; it2!=m_vecClient.end(); ++it2)
+	{
+		J_Client *pClient = *it2;
+		if (pClient != NULL)
+		{
+			pClient->SendMsgInfo(m_hostId, xlc_msg_host, xlc_host_broken);
+		}
+	}
+	TUnlock(m_vecClientLocker);
 
 	return J_OK;
 }
@@ -268,6 +296,8 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 {
 	// 收到数据表示连接正常
 	m_lastBreatTime = time(0);
+	//J_OS::LOGINFO("%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X", m_readBuff[0] & 0xFF, m_readBuff[1] & 0xFF
+	//	, m_readBuff[2] & 0xFF, m_readBuff[3] & 0xFF, m_readBuff[4] & 0xFF, m_readBuff[5] & 0xFF, m_readBuff[6] & 0xFF, m_readBuff[7] & 0xFF);
 	if (m_ioState == xl_init_state)
 	{
 		CXlHelper::MakeRequest(xld_register, NULL, 0, (j_char_t *)m_writeBuff);
@@ -323,8 +353,14 @@ j_result_t CXlHost::ProcessDeviceCmd(J_AsioDataBase *pAsioData)
 			m_ioState = xl_read_head_state;
 			break;
 		case xld_msg_info:
-			OnMsgInfo(pAsioData);
-			m_ioState = xl_read_head_state;
+			if (OnMsgInfo(pAsioData) == J_OK)
+			{
+				m_ioState = xl_read_head_state;
+			}
+			else
+			{
+				m_ioState = xl_error_state;
+			}
 			break;
 		case xld_get_rcd_info:
 			OnRcdInfoData(pAsioData);
@@ -365,7 +401,7 @@ j_result_t CXlHost::OnRegister(J_AsioDataBase *pAsioData)
 	DevEquipmentId *pResp = (DevEquipmentId *)(m_readBuff + sizeof(CmdHeader));
 	m_hostId = pResp->hostId;
 	m_bReady = true;
-	J_OS::LOGINFO("XlHost hostId =%s", pResp->hostId);
+	J_OS::LOGINFO("CXlHost::OnRegister hostId =%s", pResp->hostId);
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
 	return J_OK;
@@ -411,7 +447,7 @@ j_result_t CXlHost::OnHeartBeat(J_AsioDataBase *pAsioData)
 	m_lastBreatTime = time(0);
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
-	//J_OS::LOGINFO("CXlHost::OnHeartBeat");
+	//J_OS::LOGINFO("CXlHost::OnHeartBeat %s %d", m_hostId.c_str(), m_cmdSocket.GetHandle().sock);
 	return J_OK;
 }
 
@@ -563,7 +599,7 @@ j_result_t CXlHost::OnSetSysTime(J_AsioDataBase *pAsioData)
 j_result_t CXlHost::OnGetDevInfo(J_AsioDataBase *pAsioData)
 {
 	DevHostInfo *pReps = (DevHostInfo *)(m_readBuff + sizeof(CmdHeader));
-	J_OS::LOGINFO("XlHost GetInfo hostId = %s, vehicleNum = %s, chnnelNum=%d, phoneNum = %s", 
+	J_OS::LOGINFO("CXlHost::OnGetDevInfo hostId = %s, vehicleNum = %s, chnnelNum=%d, phoneNum = %s", 
 		pReps->hostId, pReps->vehicleNum, pReps->totalChannels & 0xFF, pReps->phoneNum);
 	//pReps->bOnline = true;
 	JoDataBaseObj->UpdateDevInfo(*pReps, true);
@@ -590,6 +626,12 @@ j_result_t CXlHost::OnMsgInfo(J_AsioDataBase *pAsioData)
 	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
 	DevMsgInfo *pReps = (DevMsgInfo *)(m_readBuff + sizeof(CmdHeader));
 	J_OS::LOGINFO("XlHost OnMsgInfo msg_code=%d, msg_ch=%d, %d", pReps->nMsgCode, pReps->channel & 0xFF, pHeader->length);
+	//if (pReps->nMsgCode == xld_alarm_complete)
+	//{
+	//	pAsioData->ioCall = J_AsioDataBase::j_disconnect_e;
+	//	return J_OK;
+	//}
+
 	if (m_bReady)
 	{
 		if (pReps->nMsgCode == xld_rcd_info_complete)
@@ -658,9 +700,10 @@ j_result_t CXlHost::OnMsgInfo(J_AsioDataBase *pAsioData)
 			}
 			TUnlock(m_fileUploadLocker);
 		}
+		CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
+		pAsioData->ioCall = J_AsioDataBase::j_read_e;
 	}
-	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
-	pAsioData->ioCall = J_AsioDataBase::j_read_e;
+
 	return J_OK;
 }
 
@@ -674,6 +717,7 @@ j_result_t CXlHost::OnDefault(J_AsioDataBase *pAsioData)
 
 j_result_t CXlHost::OnRealPlay(j_int32_t nChannel)
 {
+	j_result_t nResult = J_UNKNOW;
 	TLock(m_channelLocker);
 	ChannelMap::iterator it = m_channelMap.find(nChannel);
 	if (it != m_channelMap.end())
@@ -690,13 +734,16 @@ j_result_t CXlHost::OnRealPlay(j_int32_t nChannel)
 			strcpy(realPlayBody.data.hostId, m_hostId.c_str());
 			realPlayBody.data.channel = nChannel;
 			CXlHelper::MakeRequest(xld_real_play, (char *)&realPlayBody.data, sizeof(DevRealPlay), (char *)&realPlayBody);
-			m_cmdSocket.Write_n((const char *)&realPlayBody, sizeof(RealPlayInfoBody));
+			if (m_cmdSocket.Write_n((const char *)&realPlayBody, sizeof(RealPlayInfoBody)) > 0)
+			{
+				nResult = J_OK;
+			}
 		}
 		++(it->second.nRef);
 	}
 	TUnlock(m_channelLocker);
 
-	return J_OK;
+	return nResult;
 }
 
 j_result_t CXlHost::OnRealStop(j_int32_t nChannel)

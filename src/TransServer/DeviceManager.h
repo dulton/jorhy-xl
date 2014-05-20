@@ -20,18 +20,24 @@
 #include "x_lock.h"
 
 /// 设备信息
-struct HostInfo
+struct NetHostInfo
 {
 	J_Host *pHost;				///< 设备对象
 	j_boolean_t bRegister;	///< 是否注册成功
+};
+
+struct LocalHostInfo
+{
+	J_Host *pHost;				///< 设备对象
+	j_socket_t sock;			///< 设备套接字
 };
 
 /// 本类的功能:  前端设备管理 
 /// 本类完成对前端设备的管理，包括注册、设备验证、心跳保活等功能
 class CDeviceManager
 {
-	typedef std::map<j_socket_t, HostInfo> ConnectMap;
-	typedef std::map<j_string_t, J_Host *> DeviceMap;
+	typedef std::map<j_socket_t, NetHostInfo> ConnectMap;
+	typedef std::map<j_string_t, LocalHostInfo> DeviceMap;
 public:
 	CDeviceManager();
 	~CDeviceManager();
@@ -69,7 +75,7 @@ private:
 	/// 添加设备
 	/// @param[in]		pHost 设备对象 
 	/// @return		    Host对象,=NULL-添加失败  
-	j_result_t AddDevice(J_Host *pHost);
+	j_result_t AddDevice(J_Host *pHost, j_socket_t sock);
 	/// 删除设备
 	/// @param[in]		pHost 设备对象 
 	/// @return

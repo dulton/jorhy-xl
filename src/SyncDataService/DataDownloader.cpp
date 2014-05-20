@@ -46,8 +46,8 @@ void CDataDownloader::OnReturn(j_boolean_t bFinish)
 	if (bFinish)
 	{
 		EndDownLoad();
-		JoAccessObj->UpdateFileInfo(m_info.strHostId, m_strRemoteFile.c_str());
-		J_OS::LOGINFO("Load Flie Success %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
+		//JoAccessObj->UpdateFileInfo(m_info.strHostId, m_strRemoteFile.c_str());
+		//J_OS::LOGINFO("Load Flie Success %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
 	}
 	else
 	{
@@ -56,7 +56,7 @@ void CDataDownloader::OnReturn(j_boolean_t bFinish)
 		JoHostManager->DelHost(m_info.strHostId);
 		m_ftpHelper.Logout();
 		remove(m_strLocalFile.c_str());
-		J_OS::LOGINFO("Load Flie Failed %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
+		//J_OS::LOGINFO("Load Flie Failed %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
 	}
 }
 
@@ -64,7 +64,7 @@ void CDataDownloader::OnWork()
 {
 	while (m_bStart)
 	{
-		j_sleep(500);
+		j_sleep(1);
 		if (!m_bStartHost)
 		{
 			if (!GetFileList())
@@ -115,7 +115,8 @@ void CDataDownloader::StartDownLoad()
 		else
 		{
 			m_strRemoteFile = it->c_str();
-			if (!JoAccessObj->HasDownLoaded(m_strRemoteFile.c_str()))
+			//if (!JoAccessObj->HasDownLoaded(m_strRemoteFile.c_str()))
+			if (true)
 			{
 				j_string_t strLocalPath = m_strPath + "\\" + m_info.strHostId;
 				if (_access(strLocalPath.c_str(), 0) == -1)
@@ -123,7 +124,7 @@ void CDataDownloader::StartDownLoad()
 					mkdir(strLocalPath.c_str());
 				}
 				m_strLocalFile = strLocalPath + "\\" + m_strRemoteFile;
-				J_OS::LOGINFO("Begin DownLoad %s", m_strLocalFile.c_str());
+				//J_OS::LOGINFO("Begin DownLoad %s", m_strLocalFile.c_str());
 				if (m_ftpHelper.DownLoadFile(m_strRemoteFile.c_str(), m_strLocalFile.c_str(), CDataDownloader::OnDownLoadReturn, this) != J_OK)
 				{
 					EndDownLoad();

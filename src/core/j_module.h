@@ -73,6 +73,7 @@ struct J_Vod : virtual public J_Obj
 	virtual j_result_t CloseVod(const j_guid_t &sessionId, CRingBuffer *pRingBuffer) = 0;
 };
 
+struct J_Client;
 struct J_Host : virtual public J_Obj 
 {
 	///获取通道对象
@@ -116,6 +117,18 @@ struct J_Host : virtual public J_Obj
 	///@param[in]			nLen 数据长度
 	///@return				参见x_errtype.h
 	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen) = 0;
+	/// 增加客户端
+	///@param[in]			pClientObj 客户端对象
+	///@return					参见x_errtype.h
+	virtual j_result_t AddClient(J_Client *pClientObj) = 0;
+	/// 删除客户端
+	///@param[in]			pClientObj 客户端对象
+	///@return					参见x_errtype.h
+	virtual j_result_t DelClient(J_Client *pClientObj) = 0;
+	/// 重新开始传输视频
+	///@param[in]			nChannel 通道号
+	///@return					参见x_errtype.h
+	virtual j_result_t ReConnect(j_int32_t nChannel) = 0;
 	///开始文件上传
 	///@param[in]			pFileName 文件名
 	///@return				参见x_errtype.h

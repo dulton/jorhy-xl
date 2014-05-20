@@ -49,7 +49,7 @@ J_Host *CDeviceManager::CreateDevObj(j_int32_t nHostType, j_socket_t nSock)
 
 	if (pHost != NULL)
 	{
-		HostInfo info = {0};
+		NetHostInfo info = {0};
 		info.pHost = pHost;
 		info.bRegister = false;
 		TLock(m_locker);
@@ -86,16 +86,25 @@ void CDeviceManager::ReleaseDevObj(j_socket_t nSock)
 	TUnlock(m_locker);
 }
 
-j_result_t CDeviceManager::AddDevice(J_Host *pHost)
+j_result_t CDeviceManager::AddDevice(J_Host *pHost, j_socket_t sock)
 {
 	if (pHost != NULL)
 	{
 		j_string_t strDevId;
 		if (pHost->GetHostId(strDevId) == J_OK)
 		{
+			DeviceMap::iterator hostIt = m_devMap.find(strDevId);
+			if (hostIt != m_devMap.end())
+			{
+				j_close_socket(hostIt->second.sock.sock);
+				ReleaseDevObj(hostIt->second.sock);
+			}
 			TLock(m_devLocker);
 			//设备添加成功
-			m_devMap[strDevId] = pHost;
+			LocalHostInfo info = {0};
+			info.pHost = pHost;
+			info.sock = sock;
+			m_devMap[strDevId] = info;
 			TUnlock(m_devLocker);
 		}
 	}
@@ -109,7 +118,7 @@ void CDeviceManager::DelDevice(J_Host *pHost)
 	DeviceMap::iterator it = m_devMap.begin();
 	for (; it!=m_devMap.end(); ++it)
 	{
-		if (it->second == pHost)
+		if (it->second.pHost == pHost)
 		{
 			pHost->OnBroken();
 			delete pHost;
@@ -129,12 +138,11 @@ void CDeviceManager::CheckDevice()
 		J_Host *pHost = it->second.pHost;
 		if (pHost->IsReady())
 		{
-			//pHost->SendMessage("qqqqqqq", strlen("qqqqqqq"));
 			if (!it->second.bRegister)
 			{
 				pHost->GetDeviceInfo();
 				pHost->SetTime(time(0));
-				AddDevice(pHost);
+				AddDevice(pHost, it->first);
 				it->second.bRegister = true;
 			}
 		}
@@ -160,7 +168,7 @@ J_Host *CDeviceManager::GetDeviceObj(j_string_t strDevId)
 	if (it != m_devMap.end())
 	{
 		TUnlock(m_devLocker);
-		return it->second;
+		return it->second.pHost;
 	}
 	TUnlock(m_devLocker);
 
@@ -173,7 +181,7 @@ j_result_t CDeviceManager::SetDeviceTime(j_time_t sysTime)
 	DeviceMap::iterator it = m_devMap.begin();
 	for (; it!=m_devMap.end(); ++it)
 	{
-		J_Host *pHost = it->second;
+		J_Host *pHost = it->second.pHost;
 		if (pHost->IsReady())
 		{
 			pHost->SetTime(sysTime);

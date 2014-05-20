@@ -19,12 +19,12 @@ int main(int argc, char **argv)
 	JoAccessObj->Init();
 
 	///启动下载服务程序
-	downLoader.Start("E:");
+	downLoader.Start("D:");
 
 	///启动客户监听服务
 	if (listener.StartService(8504) != J_OK)
 	{
-		J_OS::LOGINFO("启动客户监听服务失败, 端口:%d", 5050);
+		J_OS::LOGINFO("启动客户监听服务失败, 端口:%d", 8504);
 		return -1;
 	}
 

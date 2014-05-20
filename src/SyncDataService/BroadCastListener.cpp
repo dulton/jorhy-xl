@@ -54,13 +54,13 @@ j_result_t CBroadCastListener::StopService()
 
 void CBroadCastListener::OnWork()
 {
-	BroadCastFtpInfo info = {0};
-	strcpy(info.ftp_addr, "127.0.0.1");
-	info.ftp_port = 8504;
-	strcpy(info.host_id, "111");
-	strcpy(info.user_name, "joo");
-	strcpy(info.pass_word, "1");
-	JoHostManager->UpdateHostInfo(info);
+	//BroadCastFtpInfo info = {0};
+	//strcpy(info.ftp_addr, "127.0.0.1");
+	//info.ftp_port = 8504;
+	//strcpy(info.host_id, "111");
+	//strcpy(info.user_name, "joo");
+	//strcpy(info.pass_word, "1");
+	//JoHostManager->UpdateHostInfo(info);
 	SOCKADDR_IN	sockAddrInClient = {0};
 	int iAddrLen = sizeof(sockAddrInClient);
 	int nSockAddrSize;
@@ -79,6 +79,7 @@ void CBroadCastListener::OnWork()
 		else
 		{
 			BroadCastFtpInfo *pInfo = (BroadCastFtpInfo *)m_recvBuff;
+			//J_OS::LOGINFO("BroadCast Recive %s ", pInfo->host_id);
 			JoHostManager->UpdateHostInfo(*pInfo);
 		}
 	}

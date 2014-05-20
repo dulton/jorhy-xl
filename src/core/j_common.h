@@ -80,8 +80,7 @@ typedef unsigned char					j_uuid_t[16];
 
 #ifdef WIN32
 #define j_sleep(x)	Sleep(x)
-#define j_close_socket(x)	closesocket(x); \
-	J_OS::LOGINFO("close %d", x)
+#define j_close_socket(x)	closesocket(x); 
 #else
 #define j_sleep(x)	usleep(x*1000)
 #define j_close_socket(x)	close(x)

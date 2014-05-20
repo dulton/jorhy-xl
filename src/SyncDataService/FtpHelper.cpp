@@ -21,6 +21,9 @@ void CFtpNotificationHelper::OnEndReceivingData(long lReceivedBytes)
 {
 	if (m_callback)
 	{
+		m_callback(m_pUsesr, true);
+		return;
+
 		if (lReceivedBytes == m_totleSize)
 		{
 			m_callback(m_pUsesr, true);

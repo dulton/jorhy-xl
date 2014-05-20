@@ -120,6 +120,7 @@ void CXAsio::OnWork()
 			DWORD dwError = WSAGetLastError();
 			if (dwError == WAIT_TIMEOUT || dwError == ERROR_CONNECTION_ABORTED)
 			{
+				//J_OS::LOGINFO("GetQueuedCompletionStatus %d", dwError);
 				j_sleep(1);
 			}
 			else
@@ -144,27 +145,30 @@ void CXAsio::OnWork()
 		if (pPerIoData->ioCall == J_AsioDataBase::j_read_e)
 		{
 			//read
-			j_sleep(1);
+			//j_sleep(1);
 			try 
 			{
 				J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>((J_Obj *)pPerIoData->ioUser);
-				if (pPerIoData->ioRead.bufLen < 0)
+				if (pAsioUser != NULL)
 				{
-					pPerIoData->ioRead.finishedLen += dwBytesTransferred;
-					if (strstr(pPerIoData->ioRead.buf, pPerIoData->ioRead.until_buf) == NULL)
-						Read(pPerIoData->ioHandle, pPerIoData);
-					else
-						pAsioUser->OnRead(pPerIoData, J_OK);
-				}
-				else
-				{
-					pPerIoData->ioRead.finishedLen += dwBytesTransferred;
-					if (pPerIoData->ioRead.finishedLen < pPerIoData->ioRead.bufLen)
+					if (pPerIoData->ioRead.bufLen < 0)
 					{
-						Read(pPerIoData->ioHandle, pPerIoData);
+						pPerIoData->ioRead.finishedLen += dwBytesTransferred;
+						if (strstr(pPerIoData->ioRead.buf, pPerIoData->ioRead.until_buf) == NULL)
+							Read(pPerIoData->ioHandle, pPerIoData);
+						else
+							pAsioUser->OnRead(pPerIoData, J_OK);
 					}
 					else
-						pAsioUser->OnRead(pPerIoData, J_OK);
+					{
+						pPerIoData->ioRead.finishedLen += dwBytesTransferred;
+						if (pPerIoData->ioRead.finishedLen < pPerIoData->ioRead.bufLen)
+						{
+							Read(pPerIoData->ioHandle, pPerIoData);
+						}
+						else
+							pAsioUser->OnRead(pPerIoData, J_OK);
+					}
 				}
 			}
 			catch(...){
@@ -174,14 +178,17 @@ void CXAsio::OnWork()
 		else if (pPerIoData->ioCall == J_AsioDataBase::j_write_e)
 		{
 			//write
-			j_sleep(1);
+			//j_sleep(1);
 			assert(pPerIoData->ioWrite.bufLen == dwBytesTransferred);
 			//printf("%d = %d\n", pPerIoData->ioWrite.bufLen, dwBytesTransferred);
 			pPerIoData->ioWrite.finishedLen = dwBytesTransferred;
 			try 
 			{
 				J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>((J_Obj *)pPerIoData->ioUser);
-				pAsioUser->OnWrite(pPerIoData, J_OK);
+				if (pAsioUser != NULL)
+				{
+					pAsioUser->OnWrite(pPerIoData, J_OK);
+				}
 			}
 			catch(...)
 			{
@@ -305,7 +312,10 @@ int CXAsio::ProcessAccept(j_socket_t nSocket, J_AsioDataBase *asioData)
 {
 	TLock(m_listen_locker);
 	J_AsioUser *pAsioUser = dynamic_cast<J_AsioUser *>(asioData->ioUser);
-	pAsioUser->OnAccept(asioData, J_OK);
+	if (pAsioUser != NULL)
+	{
+		pAsioUser->OnAccept(asioData, J_OK);
+	}
 	TUnlock(m_listen_locker);
 	return J_OK;
 }

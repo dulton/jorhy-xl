@@ -21,6 +21,7 @@ enum CliCmdState
 	xl_read_head_state,
 	xl_read_data_state,
 	xl_write_body_state,
+	xl_error_state,
 };
 
 /// 消息类型
@@ -30,6 +31,7 @@ enum CliMsgType
 	xlc_msg_dev,						///< 设备消息
 	xlc_msg_disk,						///< 磁盘消息
 	xlc_msg_upload,					///< 上传文件消息
+	xlc_msg_host,						///< 设备消息
 };
 
 /// 用户消息子类型
@@ -59,6 +61,12 @@ enum CliMsgSubTypeUpload
 {
 	xlc_upload_success = 0x01,				///< 传输成功
 	xlc_upload_failed,								///< 传输失败
+};
+
+/// 设备消息子类型
+enum CliMsgSubTypeHost
+{
+	xlc_host_broken = 0x01,
 };
 	
 /// 操作指令定义  

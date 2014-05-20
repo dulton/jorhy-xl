@@ -103,6 +103,7 @@ j_result_t CTcpServer4Device::OnBroken(J_AsioDataBase *pAsioData, int nRet)
 	JoDeviceManager->ReleaseDevObj(nSocket);
 	m_asio.DelUser(nSocket);
 	j_close_socket(nSocket.sock);
+	J_OS::LOGINFO("CTcpServer4Device::OnBroken");
 	m_state = 0;
 
 	return J_OK;
