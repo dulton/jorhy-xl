@@ -41,6 +41,9 @@ public:
 	/// @return		  参见j_errtype.h  
 	j_result_t StopService();
 
+	/// 发送数据
+	j_result_t SentData(j_socket_t nSocket);
+
 private:
 	J_AsioDataBase m_asioData;
 	CXAsio m_asio;

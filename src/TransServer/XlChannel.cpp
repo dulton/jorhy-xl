@@ -61,7 +61,26 @@ j_result_t CXlChannel::InputData(const j_int32_t nType, const j_char_t *pData, j
 		for (; it != m_vecRingBuffer.end(); it++)
 		{
 			//J_OS::LOGINFO("CXlChannel::InputData %d", m_nChannelNum);
-			(*it)->PushBuffer(pData, streamHeader);
+			int nTotleLen = nLen;
+			int nOffset = 0;
+			while (nTotleLen > 0)
+			{
+				J_StreamHeader streamHeader = {0};
+				if (nTotleLen > 1024)
+				{
+					streamHeader.dataLen = 1024;
+					(*it)->PushBuffer(pData + nOffset, streamHeader);
+					nOffset += 1024;
+					nTotleLen -= 1024;
+				}
+				else
+				{
+					streamHeader.dataLen = nTotleLen;
+					(*it)->PushBuffer(pData + nOffset, streamHeader);
+					nTotleLen = 0;
+				}
+			}
+			//(*it)->PushBuffer(pData, streamHeader);
 		}
 		TUnlock(m_vecLocker);
 	}
@@ -75,7 +94,26 @@ j_result_t CXlChannel::InputData(const j_int32_t nType, const j_char_t *pData, j
 		std::map<j_guid_t, CRingBuffer *>::iterator it = m_mapRingBuffer.find(*pGuid);
 		if (it != m_mapRingBuffer.end())
 		{
-			it->second->PushBuffer(pData, streamHeader);
+			int nTotleLen = nLen;
+			int nOffset = 0;
+			while (nTotleLen > 0)
+			{
+				J_StreamHeader streamHeader = {0};
+				if (nTotleLen > 1024)
+				{
+					streamHeader.dataLen = 1024;
+					it->second->PushBuffer(pData + nOffset, streamHeader);
+					nOffset += 1024;
+					nTotleLen -= 1024;
+				}
+				else
+				{
+					streamHeader.dataLen = nTotleLen;
+					it->second->PushBuffer(pData + nOffset, streamHeader);
+					nTotleLen = 0;
+				}
+			}
+			//it->second->PushBuffer(pData, streamHeader);
 		}
 		TUnlock(m_mapLocker);
 		//if(memcmp(pGuid, &guidNull, sizeof(GUID)) == 0)

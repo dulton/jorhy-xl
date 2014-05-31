@@ -5,7 +5,7 @@
 
 ///环形流队列
 #define CACHE_FRAME_NUM 100
-#define BUFFER_SIZE (1024 * 1024 * 5)
+#define BUFFER_SIZE (1024 * 1024)
 
 struct J_MEMNODE
 {

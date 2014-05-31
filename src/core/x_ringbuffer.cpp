@@ -114,7 +114,16 @@ void CRingBuffer::Write(const char *pData, int nLen)
 
 int CRingBuffer::GetData(char *pData, int nLen, int nOffset)
 {
-	char *pCurPoint = m_pReadPoint + nOffset;
+	char *pCurPoint = NULL;
+	if (m_pEnd - m_pReadPoint <= nOffset)
+	{
+		int nLastLen = m_pEnd - (char *)m_pReadPoint;
+		pCurPoint = m_pBegin + (nOffset - nLastLen);
+	}
+	else
+	{
+		pCurPoint = m_pReadPoint + nOffset;
+	}
 	if (m_pEnd - (char *)pCurPoint <= nLen)
 	{
 		int nLastLen = m_pEnd - (char *)pCurPoint;

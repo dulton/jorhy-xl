@@ -89,7 +89,6 @@ private:
 	j_result_t OnRealStop(J_AsioDataBase *pAsioData);
 	j_result_t OnVodPlay(J_AsioDataBase *pAsioData);
 	j_result_t OnVodStop(J_AsioDataBase *pAsioData);
-	j_result_t OnSetTime(J_AsioDataBase *pAsioData);
 	j_result_t OnStartAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnStopAlarm(J_AsioDataBase *pAsioData);
 	j_result_t OnSendMsg(J_AsioDataBase *pAsioData);

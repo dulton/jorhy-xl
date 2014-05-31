@@ -119,7 +119,7 @@ j_result_t CDataBus::Response(j_string_t strHostId, CDataObj *pRespInfo)
 	return J_OK;
 }
 
-j_result_t CDataBus::OnMessage(j_string_t strHostId, j_int32_t nMsgType, CDataObj *pMsgInfo)
+j_result_t CDataBus::OnMessage(j_string_t strHostId, j_int32_t nMsgType, j_int32_t nSubType, CDataObj *pMsgInfo)
 {
 	TLock(m_locker);
 	MsgMap::iterator itMsg = m_msgMap.find(strHostId);
@@ -132,9 +132,26 @@ j_result_t CDataBus::OnMessage(j_string_t strHostId, j_int32_t nMsgType, CDataOb
 			for (; itCliVec!=itMsgCli->second.end(); ++itCliVec)
 			{
 				/// 发送消息
+				(*itCliVec)->SendMsgInfo(strHostId, nMsgType, nSubType);
 			}
 		}
 	}
+
+	itMsg = m_msgMap.find("all");
+	if (itMsg != m_msgMap.end())
+	{
+		MsgClientMap::iterator itMsgCli = itMsg->second.find(nMsgType);
+		if (itMsgCli != itMsg->second.end())
+		{
+			MsgClientVec::iterator itCliVec = itMsgCli->second.begin();
+			for (; itCliVec!=itMsgCli->second.end(); ++itCliVec)
+			{
+				/// 发送消息
+				(*itCliVec)->SendMsgInfo(strHostId, nMsgType, nSubType);
+			}
+		}
+	}
+
 	TUnlock(m_locker);
 
 	return J_OK;

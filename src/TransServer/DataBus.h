@@ -52,9 +52,11 @@ public:
 	j_result_t Response(j_string_t strHostId, CDataObj *pRespInfo);
 	/// 事件消息
 	/// @param[in]		strHostId 设备ID
+	/// @param[in]		nMsgType 消息类型
+	/// @param[in]		nSubType 消息子类型
 	/// @param[in]		pMsgInfo 事件消息内容
 	/// @return			参见j_errtype.h 
-	j_result_t OnMessage(j_string_t strHostId, j_int32_t nMsgType, CDataObj *pMsgInfo);
+	j_result_t OnMessage(j_string_t strHostId, j_int32_t nMsgType, j_int32_t nSubType, CDataObj *pMsgInfo = NULL);
 
 private:
 	static void OnTimer(void *pUser)

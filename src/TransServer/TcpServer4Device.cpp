@@ -87,12 +87,25 @@ j_result_t CTcpServer4Device::OnWrite(J_AsioDataBase *pAsioData, int nRet)
 	if (pHost == NULL)
 		return J_NOT_FOUND;
 
+begin_write:
 	pAsioData->ioUser = this;
 	pHost->ParserRequest(pAsioData);
 	if (pAsioData->ioCall == J_AsioDataBase::j_read_e)
 		m_asio.Read(nSocket, pAsioData);
 	else if (pAsioData->ioCall == J_AsioDataBase::j_write_e)
+	{
+		if (pAsioData->ioWrite.bufLen == 0)
+		{
+			j_sleep(1);
+			goto begin_write;
+		}
 		m_asio.Write(nSocket, pAsioData);
+	}
+	else if (pAsioData->ioCall == J_AsioDataBase::j_write_end_e)
+	{
+		delete pAsioData;
+		pAsioData = NULL;
+	}
 
 	return J_OK;
 }
@@ -105,6 +118,33 @@ j_result_t CTcpServer4Device::OnBroken(J_AsioDataBase *pAsioData, int nRet)
 	j_close_socket(nSocket.sock);
 	J_OS::LOGINFO("CTcpServer4Device::OnBroken");
 	m_state = 0;
+
+	return J_OK;
+}
+
+j_result_t CTcpServer4Device::SentData(j_socket_t nSocket)
+{
+	J_Host *pHost = JoDeviceManager->GetDeviceObj(nSocket);
+	if (pHost == NULL)
+		return J_NOT_FOUND;
+
+
+	J_AsioDataBase *pDataBase = new J_AsioDataBase;
+	memset(pDataBase, 0, sizeof(J_AsioDataBase));
+	pDataBase->ioUser = this;
+	pDataBase->ioType = J_AsioDataBase::j_upload_e;
+	pDataBase->ioUser = this;
+
+	pHost->ParserRequest(pDataBase);
+	if (pDataBase->ioCall == J_AsioDataBase::j_read_e)
+		m_asio.Read(nSocket, pDataBase);
+	else if (pDataBase->ioCall == J_AsioDataBase::j_write_e)
+		m_asio.Write(nSocket, pDataBase);
+	else if (pDataBase->ioCall == J_AsioDataBase::j_write_end_e)
+	{
+		delete pDataBase;
+		pDataBase = NULL;
+	}
 
 	return J_OK;
 }

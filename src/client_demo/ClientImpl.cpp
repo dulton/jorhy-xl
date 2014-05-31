@@ -25,6 +25,17 @@ CClientImpl::~CClientImpl()
 	WSACleanup();
 }
 
+void CClientImpl::HeartBreat()
+{
+	struct HeartBreatBody {
+		CmdHeader head;
+		CmdTail tail;
+	} heartBreatBody;
+	memset(&heartBreatBody, 0, sizeof(heartBreatBody)) ;
+	MakeCommand(xlc_heart_beat, NULL, 0, (char *)&heartBreatBody);
+	send(m_sock, (char *)&heartBreatBody, sizeof(HeartBreatBody), 0);
+}
+
 void CClientImpl::Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd, int nFlag)
 {
 	if (!m_bLogin)

@@ -210,6 +210,7 @@ struct J_AsioDataBase
 		j_read_e,
 		j_write_e,
 		j_write_keep_e,
+		j_write_end_e,
 		j_read_write_e,
 		j_read_write_log_e,
 		j_read_write_alarm_e,
@@ -232,6 +233,7 @@ struct J_AsioDataBase
 		j_dvr_list_e,
 		j_user_list_e,
 		j_department_list_e,
+		j_upload_e,
 	};
 
 	struct J_IoAccept

@@ -3,6 +3,8 @@
 
 // CClientDlg dialog
 
+extern CClientImpl m_impl;
+
 CClientDlg::CClientDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CClientDlg::IDD, pParent)
 {
@@ -20,6 +22,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CClientDlg::OnTcnSelchangeTab1)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -73,6 +76,9 @@ BOOL CClientDlg::OnInitDialog()
 	m_videoDlg.ShowWindow(1);
 	m_configDlg.ShowWindow(0);
 	m_tabCtrl.SetCurSel(0);
+
+	SetTimer( 1, 1000, NULL);
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -130,4 +136,11 @@ void CClientDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 		break;
     }
 	*pResult = 0;
+}
+
+void CClientDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	m_impl.HeartBreat();
+	CDialogEx::OnTimer(nIDEvent);
 }

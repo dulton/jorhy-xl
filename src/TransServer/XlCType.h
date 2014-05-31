@@ -67,6 +67,7 @@ enum CliMsgSubTypeUpload
 enum CliMsgSubTypeHost
 {
 	xlc_host_broken = 0x01,
+	xlc_host_connected,
 };
 	
 /// 操作指令定义  

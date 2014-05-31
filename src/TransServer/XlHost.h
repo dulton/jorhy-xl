@@ -77,7 +77,7 @@ public:
 	}
 	j_result_t ReConnect(j_int32_t nChannel) 
 	{
-		return OnRealPlay(nChannel);
+		return ReqRealPlay(nChannel);
 	}
 	/// 文件上传
 	virtual j_result_t OnStartUpload(j_int32_t nUserId, j_int32_t nFileId, j_string_t pFileName);
@@ -89,6 +89,8 @@ private:
 	j_result_t ProcessClientCmd(J_AsioDataBase *pAsioData);
 	/// 车载设备从网络传来的消息
 	j_result_t ProcessDeviceCmd(J_AsioDataBase *pAsioData);
+	/// 上传数据
+	j_result_t ProcessUploadData(J_AsioDataBase *pAsioData);
 
 	/// 注册消息
 	j_result_t OnRegister(J_AsioDataBase *pAsioData);
@@ -120,15 +122,15 @@ private:
 	j_result_t OnDefault(J_AsioDataBase *pAsioData);
 	//////////////////////////////////////////////////////////////////////////////////////
 	/// 客户端发来的请求实时视频
-	j_result_t OnRealPlay(j_int32_t nChannel);
+	j_result_t ReqRealPlay(j_int32_t nChannel);
 	/// 客户端发来的停止实时视频
-	j_result_t OnRealStop(j_int32_t nChannel);
+	j_result_t ReqRealStop(j_int32_t nChannel);
 	/// 客户端发来的请求历史视频
-	j_result_t OnVodPlay(GUID sessionId, j_int32_t nChannel, j_time_t startTime, j_time_t endTime);
+	j_result_t ReqVodPlay(GUID sessionId, j_int32_t nChannel, j_time_t startTime, j_time_t endTime);
 	/// 客户端发来的停止实时视频
-	j_result_t OnVodStop(GUID sessionId, j_int32_t nChannel);
+	j_result_t ReqVodStop(GUID sessionId, j_int32_t nChannel);
 	/// 客户端发来的查询历史录像区间
-	j_result_t OnGetRcdInfo(j_string_t hostId);
+	j_result_t ReqGetRcdInfo(j_string_t hostId);
 
 private:
 	int AddRingBuffer(J_OS::TLocker_t &locker, std::vector<CRingBuffer *> &ringBufferVec, CRingBuffer *pRingBuffer)
@@ -176,6 +178,7 @@ private:
 	std::vector<CRingBuffer *> m_vecRingBuffer;
 	J_OS::TLocker_t m_vecRcdLocker;
 	std::vector<CRingBuffer *> m_vecRcdRingBuffer;
+	CRingBuffer m_uploadRingBuffer;
 
 	J_OS::TLocker_t m_vecClientLocker;
 	std::vector<J_Client *> m_vecClient;

@@ -68,10 +68,10 @@ BOOL CLoginDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-	m_ipAddr.SetAddress(127, 0, 0, 1);
+	m_ipAddr.SetAddress(222, 214, 218, 237);
 	m_strPort.SetCueBanner(L"8502");
-	m_strUser.SetString(L"admin");
-	m_strPasswd.SetString(L"admin");
+	m_strUser.SetString(L"test1");
+	m_strPasswd.SetString(L"test1");
 	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control

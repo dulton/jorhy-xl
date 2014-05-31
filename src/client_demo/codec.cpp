@@ -153,7 +153,7 @@ BOOL Codec::InputStream(LPBYTE pBuffer, ULONG ulSize)
 	if(lpBlock->ulVideoSize + sizeof(BLOCKHEADER) != ulSize)
 		return FALSE;
 
-	if(m_szRMChannel[lpBlock->uChannelID] != NULL)
+	//if(m_szRMChannel[lpBlock->uChannelID] != NULL)
 		AMESDK_CODEC_DECODE(m_szRMChannel[lpBlock->uChannelID],  pBuffer + sizeof(BLOCKHEADER), ulSize - sizeof(BLOCKHEADER), lpBlock->bIsKeyFrame);
 
 	if(m_szRecChannel[lpBlock->uChannelID] != NULL)

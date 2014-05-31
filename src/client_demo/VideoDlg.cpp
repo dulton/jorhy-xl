@@ -190,12 +190,12 @@ void CVideoDlg::OnBnClickedBtn1()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_1)
 	{
-		m_impl.RealPlay("XLL325487EDC", 0, m_video_1.m_hWnd);
+		m_impl.RealPlay("XL004", 0, m_video_1.m_hWnd);
 		m_bPlay_1 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 0);
+		m_impl.RealStop("XL004", 0);
 		m_bPlay_1 = FALSE;
 	}
 }
@@ -206,12 +206,12 @@ void CVideoDlg::OnBnClickedBtn2()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_2)
 	{
-		m_impl.RealPlay("XLL325487EDC", 1, m_video_2.m_hWnd);
+		m_impl.RealPlay("XL004", 1, m_video_2.m_hWnd);
 		m_bPlay_2 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 1);
+		m_impl.RealStop("XL004", 1);
 		m_bPlay_2 = FALSE;
 	}
 }
@@ -222,12 +222,12 @@ void CVideoDlg::OnBnClickedBtn3()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_3)
 	{
-		m_impl.RealPlay("XLL325487EDC", 2, m_video_3.m_hWnd);
+		m_impl.RealPlay("XL004", 2, m_video_3.m_hWnd);
 		m_bPlay_3 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 2);
+		m_impl.RealStop("XL004", 2);
 		m_bPlay_3 = FALSE;
 	}
 }
@@ -238,12 +238,12 @@ void CVideoDlg::OnBnClickedBtn4()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_4)
 	{
-		m_impl.RealPlay("XLL325487EDC", 3, m_video_8.m_hWnd);
+		m_impl.RealPlay("XL004", 3, m_video_8.m_hWnd);
 		m_bPlay_4 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 3);
+		m_impl.RealStop("XL004", 3);
 		m_bPlay_4 = FALSE;
 	}
 }
@@ -254,12 +254,12 @@ void CVideoDlg::OnBnClickedBtn5()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_5)
 	{
-		m_impl.RealPlay("XLL325487EDC", 4, m_video_4.m_hWnd);
+		m_impl.RealPlay("XL004", 4, m_video_4.m_hWnd);
 		m_bPlay_5 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 4);
+		m_impl.RealStop("XL004", 4);
 		m_bPlay_5 = FALSE;
 	}
 }
@@ -270,12 +270,12 @@ void CVideoDlg::OnBnClickedBtn6()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_6)
 	{
-		m_impl.RealPlay("XLL325487EDC", 5, m_video_5.m_hWnd);
+		m_impl.RealPlay("XL004", 5, m_video_5.m_hWnd);
 		m_bPlay_6 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 5);
+		m_impl.RealStop("XL004", 5);
 		m_bPlay_6 = FALSE;
 	}
 }
@@ -286,12 +286,12 @@ void CVideoDlg::OnBnClickedBtn7()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_7)
 	{
-		m_impl.RealPlay("XLL325487EDC", 6, m_video_6.m_hWnd);
+		m_impl.RealPlay("XL004", 6, m_video_6.m_hWnd);
 		m_bPlay_7 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 6);
+		m_impl.RealStop("XL004", 6);
 		m_bPlay_7 = FALSE;
 	}
 }
@@ -302,12 +302,12 @@ void CVideoDlg::OnBnClickedBtn8()
 	// TODO: Add your control notification handler code here
 	if (!m_bPlay_8)
 	{
-		m_impl.RealPlay("XLL325487EDC", 7, m_video_7.m_hWnd);
+		m_impl.RealPlay("XL004", 7, m_video_7.m_hWnd);
 		m_bPlay_8 = TRUE;
 	}
 	else
 	{
-		m_impl.RealStop("XLL325487EDC", 7);
+		m_impl.RealStop("XL004", 7);
 		m_bPlay_8 = FALSE;
 	}
 }

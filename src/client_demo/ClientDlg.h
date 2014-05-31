@@ -35,4 +35,5 @@ public:
 	CVideoDlg m_videoDlg;
 	CConfigDlg m_configDlg;
 	afx_msg void OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

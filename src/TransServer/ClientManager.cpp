@@ -61,7 +61,7 @@ j_result_t CClientManager::Logout(const char *pUserName, J_Client *pClient)
 		}
 	}
 	TUnlock(m_lockerUser);
-	
+
 	return J_OK;
 }
 
@@ -95,7 +95,7 @@ J_Client *CClientManager::CreateClientObj(j_socket_t nSock)
 		m_clientMap[nSock] = pClient;
 		TUnlock(m_locker);
 	}
-	
+
 	return pClient;
 }
 
@@ -146,12 +146,17 @@ void CClientManager::CheckClient()
 {
 	TLock(m_locker);
 	ClientMap::iterator it = m_clientMap.begin();
-	for (; it!=m_clientMap.end(); ++it)
+	for (; it!=m_clientMap.end(); it++)
 	{
 		J_Client *pClient = it->second;
 		if (pClient->GetState() != 0)
 		{
 			///处理客户端状态
+			pClient = it->second;
+			pClient->Broken();
+			delete pClient;
+			m_clientMap.erase(it);
+			break;
 		}
 	}
 	TUnlock(m_locker);

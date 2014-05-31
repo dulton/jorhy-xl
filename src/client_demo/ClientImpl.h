@@ -11,6 +11,7 @@ public:
 	~CClientImpl();
 
 public:
+	void HeartBreat();
 	/// ”∆µΩÁ√Ê
 	void Login(DWORD dwAddr, int nPort, const char *pUser, const char *pPasswd, int nFlag);
 	void Logout(const char *pUser, const char *pPasswd);

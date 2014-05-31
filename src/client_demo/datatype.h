@@ -50,17 +50,19 @@ typedef struct _tagVideoInfoSeg
 #pragma pack(1)
 typedef struct _tagBlockHeader
 {
-	unsigned char szID[32];	 //车号
-	unsigned char uChannelID;	 //通道号
-	time_t tmTimeStamp;	 // 戳
-	double dLatitude;	 //维度
-	double dLongtude;	 //经度
-	double dGPSSpeed;	 //GPS速度
-	double dSpeed;	 //速度
-	unsigned char bAlarm;	 //报警值
-	unsigned long ulVideoSize;	 //视频帧长度
-	bool bIsKeyFrame;	 //视频帧是否是关键帧
+	long long tagTimeStamp;
+	time_t tmTimeStamp;						//时间戳
+	unsigned char szID[32];					//车号
+	unsigned char uChannelID;				//通道号	
+	double dLatitude;								//维度
+	double dLongtude;							//经度
+	double dGPSSpeed;							//GPS速度
+	double dSpeed;									//速度
+	unsigned char bAlarm;						//报警值
+	unsigned long ulVideoSize;				//视频帧长度
+	bool bIsKeyFrame;							//视频帧是否是关键帧
 }BLOCKHEADER,*LPBLOCKHEADER;
+
 
 #pragma pack(pop)
 

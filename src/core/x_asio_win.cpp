@@ -115,13 +115,13 @@ void CXAsio::OnWork()
 	while (m_bStarted)
 	{
 		SetLastError(ERROR_SUCCESS);
-		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwBytesTransferred, (LPDWORD)&dwFlag, (LPOVERLAPPED *)&pPerIoData, 3000) == 0)
+		if (GetQueuedCompletionStatus(m_hCompletionPort, &dwBytesTransferred, (LPDWORD)&dwFlag, (LPOVERLAPPED *)&pPerIoData, 1) == 0)
 		{
 			DWORD dwError = WSAGetLastError();
 			if (dwError == WAIT_TIMEOUT || dwError == ERROR_CONNECTION_ABORTED)
 			{
 				//J_OS::LOGINFO("GetQueuedCompletionStatus %d", dwError);
-				j_sleep(1);
+				//j_sleep(1);
 			}
 			else
 			{
@@ -131,8 +131,9 @@ void CXAsio::OnWork()
 			}
 			continue;
 		}
+
 		// 检查数据传送完了吗
-		if (dwBytesTransferred)
+		if (dwBytesTransferred == 0)
 		{
 			DWORD dwError = WSAGetLastError();
 			if (dwError != ERROR_SUCCESS && dwError != ERROR_IO_PENDING)
@@ -142,6 +143,7 @@ void CXAsio::OnWork()
 				continue;
 			}
 		}  
+
 		if (pPerIoData->ioCall == J_AsioDataBase::j_read_e)
 		{
 			//read

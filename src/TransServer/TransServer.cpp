@@ -19,6 +19,9 @@
 
 #pragma comment(lib, "Debug\\core.lib")
 
+CTcpServer4Device g_deviceServer;
+CTcpServer4Client g_clientServer;
+
 int main(int argc, char **argv)
 {
 	///帮助函数
@@ -67,8 +70,6 @@ int main(int argc, char **argv)
 	}
 	JoDataBaseObj->Init();
 
-	CTcpServer4Device g_deviceServer;
-	CTcpServer4Client g_clientServer;
 	///启动设备监听服务
 	if (g_deviceServer.StartService(nDevPort) != J_OK)
 	{
