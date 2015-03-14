@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		if (strcmp(argv[i], "--dbpassword") == 0)
 			strcpy(strDbPassWord, argv[i + 1]);
 		if (strcmp(argv[i], "--debug") == 0)
-			CLog.Instance()->SetDebug();
+			J_OS::ENABLE_DEBUG();
 	}
 
 	///初始化数据库

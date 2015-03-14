@@ -8,6 +8,7 @@
 
 namespace J_OS
 {
+#define ENABLE_DEBUG() CLog::Instance()->SetDebug()
 #define LOGINFO(...) CLog::Instance()->WriteLogInfo(__VA_ARGS__)
 #define LOGERROR(...) CLog::Instance()->WriteLogError(__VA_ARGS__)
 #define LOGDEBUG(...) CLog::Instance()->WriteLogDebug(__VA_ARGS__)
