@@ -18,7 +18,6 @@
 #include "MsSqlServer.h"
 
 JO_IMPLEMENT_SINGLETON(ClientManager)
-#pragma comment(lib, "Debug\\core.lib")
 
 CClientManager::CClientManager()
 {
@@ -136,6 +135,7 @@ void CClientManager::ReleaseClientObj(j_socket_t nSock)
 	{
 		pClient = it->second;
 		pClient->Broken();
+		j_close_socket(it->first.sock);
 		delete pClient;
 		m_clientMap.erase(it);
 	}
@@ -154,6 +154,7 @@ void CClientManager::CheckClient()
 			///处理客户端状态
 			pClient = it->second;
 			pClient->Broken();
+			j_close_socket(it->first.sock);
 			delete pClient;
 			m_clientMap.erase(it);
 			break;

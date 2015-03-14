@@ -10,6 +10,7 @@ namespace J_OS
 {
 #define LOGINFO(...) CLog::Instance()->WriteLogInfo(__VA_ARGS__)
 #define LOGERROR(...) CLog::Instance()->WriteLogError(__VA_ARGS__)
+#define LOGDEBUG(...) CLog::Instance()->WriteLogDebug(__VA_ARGS__)
 
 //#define LOGINFO CLog::Instance()->WriteLogInfo
 //#define LOGERROR CLog::Instance()->WriteLogError
@@ -21,8 +22,10 @@ public:
 
 public:
 	static CLog* Instance();
+	void SetDebug();
 	int WriteLogInfo(const char *format, ...);
 	int WriteLogError(const char *format, ...);
+	int WriteLogDebug(const char *format, ...);
 
 protected:
 	CLog();
@@ -39,6 +42,7 @@ private:
 	void *m_pFile;
 	char *m_dataBuff;
 	CTLock m_locker;
+	bool m_bDebug;
 #ifdef WIN32
 	void *m_hConsloe;
 #endif

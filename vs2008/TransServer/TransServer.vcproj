@@ -213,11 +213,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\TransServer\XlConfig.h"
+				RelativePath="..\..\src\TransServer\XlCType.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\TransServer\XlCType.h"
+				RelativePath="..\..\src\TransServer\XLDataRealPlay.h"
 				>
 			</File>
 			<File
@@ -275,7 +275,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\TransServer\XlConfig.cpp"
+				RelativePath="..\..\src\TransServer\XLDataRealPlay.cpp"
 				>
 			</File>
 			<File

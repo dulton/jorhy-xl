@@ -21,7 +21,6 @@
 #include "x_timer.h"
 #include "XlDType.h"
 #include "XlCType.h"
-#include "XlConfig.h"
 /// 本类的功能:  客户端业务处理类
 class CXlClient : public J_Client
 {
@@ -54,6 +53,7 @@ public:
 	///J_Client
 	j_result_t SendMsgInfo(j_string_t strHostId, j_int32_t nType, j_int32_t nNo, j_int32_t nChannel = 0);
 	j_result_t ParserRequest(J_AsioDataBase *pAsioData);
+	j_result_t SendRespInfo(void *pData);
 	j_result_t Broken();
 	j_int32_t GetState();
 	j_result_t SendContentInfo(j_char_t *pContent, j_int32_t nLen);
@@ -97,60 +97,6 @@ private:
 	j_result_t OnUploadFile(J_AsioDataBase *pAsioData);
 	j_result_t OnUploadStop(J_AsioDataBase *pAsioData);
 	/// 操作处理
-	j_result_t AddHostRef(const j_string_t strHostId)
-	{
-		j_result_t nResult = J_UNKNOW;
-		TLock(m_mapHostLocker);
-		HostInfoMap::iterator it = m_hostMap.find(strHostId);
-		if (it == m_hostMap.end())
-		{
-			m_hostMap[strHostId] = 1;
-			nResult = J_OK;
-		}
-		else
-		{
-			++m_hostMap[strHostId];
-		}
-		TUnlock(m_mapHostLocker);
-
-		return nResult;
-	}
-
-	j_result_t DelHostRef(const j_string_t strHostId, j_boolean_t bForceClearn = false)
-	{
-		j_result_t nResult = J_UNKNOW;
-		TLock(m_mapHostLocker);
-		HostInfoMap::iterator it = m_hostMap.find(strHostId);
-		if (it != m_hostMap.end())
-		{
-			if (bForceClearn)
-			{
-				m_hostMap.erase(it);
-				nResult = J_OK;
-			}
-			else
-			{
-				if (m_hostMap[strHostId] > 1)
-				{
-					--m_hostMap[strHostId];
-				}
-				else
-				{
-					m_hostMap.erase(it);
-					nResult = J_OK;
-				}
-			}
-		}
-		TUnlock(m_mapHostLocker);
-		return nResult;
-	}
-
-private:
-	static void OnTimer(void *pUser)
-	{
-		(static_cast<CXlClient *>(pUser))->ReConnect();
-	}
-	void ReConnect();
 
 private:
 	j_char_t m_userName[32];							//用户名
@@ -181,13 +127,9 @@ private:
 	AlarmInfoVec m_alarmInfoVec;					//报警访问信息
 	j_int32_t m_state;										//客户端状态
 	j_int32_t m_lastBreatTime;
-	//CXlConfig m_config;
 	j_string_t m_uploadFile;
 	J_Host *m_pUploadDev;						//正在上传文件的设备
 	///操作集合
-	J_OS::CTimer m_reconnectTimer;
-	HostInfoMap m_hostMap;
-	J_OS::CTLock m_mapHostLocker;				//设备访问锁
 	OptionMap m_optionMap;
 };
 #endif // ~__CLIENT_H_

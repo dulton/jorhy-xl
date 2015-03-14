@@ -25,8 +25,6 @@
 #include <strstream>
 #include <boost/property_tree/xml_parser.hpp>
 
-#pragma comment (lib, "Debug\\core.lib")
-
 #define XL_CMD_BUFFER_SIZE (1024 * 1024)
 #define XL_DATA_BUFFER_SIZE (1024 * 1024)
 #define XL_ALARM_BUFFER_SIZE (2 * 1024)
@@ -51,15 +49,12 @@ CXlClient::CXlClient(j_socket_t nSock)
 	m_nAlarmRefCnt = 0;
 	m_lastBreatTime = time(0);
 
-	//m_config.Init(m_readBuff, m_writeBuff);
-	//m_reconnectTimer.Create(3000, CXlClient::OnTimer, this);
-
 	J_OS::LOGINFO("CXlClient::CXlClient() %d", this);
 }
 
 CXlClient::~CXlClient()
 {
-	//m_reconnectTimer.Destroy();
+	StopAll();
 
 	delete m_readBuff;
 	delete m_writeBuff;
@@ -77,8 +72,6 @@ j_result_t CXlClient::SendMsgInfo(j_string_t strHostId, j_int32_t nType, j_int32
 		J_OS::LOGINFO("CXlClient::SendMsgInfo xlc_msg_host sub = %d", nNo);
 		if (nNo == xlc_host_broken)
 		{
-			DelHostRef(strHostId, true);
-
 			TLock(m_vecLocker);
 			VideoInfoVec::iterator it = m_videoInfoVec.begin();
 			for (; it!=m_videoInfoVec.end(); ++it)
@@ -148,16 +141,14 @@ j_result_t CXlClient::ParserRequest(J_AsioDataBase *pAsioData)
 	case J_AsioDataBase::j_rcd_e: case J_AsioDataBase::j_rcd_keep_e:
 		nResult = ProcessRcd(pAsioData);
 		break;
-	case J_AsioDataBase::j_log_e:
-	case J_AsioDataBase::j_alarm_history_e:
-	case J_AsioDataBase::j_dvr_list_e:
-	case J_AsioDataBase::j_user_list_e:
-	case J_AsioDataBase::j_department_list_e:
-		//nResult = m_config.ProcessConfigData(pAsioData->ioType, pAsioData);
-		break;
 	}
 
 	return nResult;
+}
+
+j_result_t CXlClient::SendRespInfo(void *pData)
+{
+	return J_OK;
 }
 
 j_result_t CXlClient::Broken()
@@ -199,7 +190,7 @@ j_result_t CXlClient::MakeTransData(J_AsioDataBase *pAsioData)
 	{
 		CmdHeader *pHeader = (CmdHeader *)m_dataBuff;
 		//J_OS::LOGINFO("%d", pHeader->cmd);
-		if (pHeader->cmd == xlc_playvod_complete_inner)
+		if (pHeader->beginCode == 0xFF && pHeader->cmd == xlc_playvod_complete_inner)
 		{
 			DevStopVod *pResp = (DevStopVod *)(m_dataBuff + sizeof(CmdHeader));
 
@@ -334,7 +325,7 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 			m_ioCmdState = xl_write_body_state;
 			break;
 		default:
-			ProcessConfig(pAsioData);
+			J_OS::LOGINFO("%d %X", pHeader->cmd, pHeader->flag & 0xFF);
 			break;
 		}
 		//J_OS::LOGINFO("%d %X", pHeader->cmd, pHeader->flag & 0xFF);
@@ -347,53 +338,6 @@ j_result_t CXlClient::ProcessRequest(J_AsioDataBase *pAsioData)
 		m_ioCmdState = xl_read_head_state;
 	}
 
-	return J_OK;
-}
-
-j_result_t CXlClient::ProcessConfig(J_AsioDataBase *pAsioData)
-{
-	CmdHeader *pHeader = (CmdHeader *)m_readBuff;
-	switch (pHeader->cmd)
-	{
-		//case xl_set_time:
-		//	OnSetTime(pAsioData);
-		//	m_ioCmdState = xl_write_body_state;
-		//	break;
-		//case xl_get_devinfo:
-		//	OnGetDevInfo(pAsioData);
-		//	m_ioCmdState = xl_write_body_state;
-		//	break;
-		//case xl_get_loginfo:
-		//	OnGetLogInfo(pAsioData);
-		//	m_ioCmdState = xl_read_head_state;
-		//	break;
-		case xlc_get_alarm_info:
-		case xlc_get_dvr_list:
-		case xlc_get_user_list:
-		case xlc_get_department_list:
-			//m_config.ProcessConfigRequest(pHeader->cmd, pAsioData);
-			//m_ioCmdState = xl_read_head_state;
-			break;
-		case xlc_get_dvr_summary:
-		case xlc_get_user_summary:
-		case xlc_get_dvr_info:
-		case xlc_get_user_info:
-		case xlc_get_department_info:
-		case xlc_add_dvr_info:
-		case xlc_add_user_info:
-		case xlc_add_department_info:
-		case xlc_mod_dvr_info:
-		case xlc_mod_user_info:
-		case xlc_mod_department_info:
-		case xlc_del_dvr_info:
-		case xlc_del_user_info:
-		case xlc_del_department_info:
-			//m_config.ProcessConfigRequest(pHeader->cmd, pAsioData);
-			//m_ioCmdState = xl_write_body_state;
-			break;
-		default: 
-			break;
-	}
 	return J_OK;
 }
 
@@ -496,6 +440,10 @@ j_result_t CXlClient::StartView(const CliRealPlay &realPlay, J_AsioDataBase *pAs
 			if (pChannel != NULL)
 				pChannel->OpenStream(&m_ringBuffer);
 		}
+		else
+		{
+			J_OS::LOGINFO("CXlClient::StartView transmission");
+		}
 
 		if (pAsioData != NULL)
 		{
@@ -518,14 +466,6 @@ j_result_t CXlClient::StartView(const CliRealPlay &realPlay, J_AsioDataBase *pAs
 			J_OS::LOGINFO(" pHost->ReConnect(%d)", realPlay.channel);
 			if (pHost->ReConnect(realPlay.channel) == J_OK)
 			{
-				J_Host *pHost = JoDeviceManager->GetDeviceObj(realPlay.hostId);
-				if (pHost != NULL)
-				{
-					if (AddHostRef(realPlay.hostId) == J_OK)
-					{
-						pHost->AddClient(this);
-					}
-				}
 				return J_OK;
 			}
 		}
@@ -704,14 +644,14 @@ j_result_t CXlClient::StopAllReal()
 	} realPlayBody;
 
 	TLock(m_vecLocker);
+	J_OS::LOGINFO("CXlClient::StopAllReal There is %d real video channel", m_videoInfoVec.size());
+
 	VideoInfoVec::iterator it = m_videoInfoVec.begin();
 	for (; it!=m_videoInfoVec.end(); ++it)
 	{
 		pHost = JoDeviceManager->GetDeviceObj(it->strHost.c_str());
 		if (pHost != NULL)
 		{
-			pHost->DelClient(this);
-
 			memset(&realPlayBody, 0, sizeof(RealPlayBody));
 			memcpy(realPlayBody.data.hostId, it->strHost.c_str(), strlen(it->strHost.c_str()));
 			realPlayBody.data.channel = it->nChanId;
@@ -728,8 +668,22 @@ j_result_t CXlClient::StopAllReal()
 			{
 				J_Channel *pChannel = dynamic_cast<J_Channel *>(pObj);
 				if (pChannel != NULL)
+				{
 					pChannel->CloseStream(&m_ringBuffer);
+				}
+				else
+				{
+					J_OS::LOGINFO("CXlClient::StopAllReal channel obj issue");
+				}
 			}
+			else
+			{
+				J_OS::LOGINFO("CXlClient::StopAllReal channel not found, channel_num = %d", it->nChanId);
+			}
+		}
+		else
+		{
+			J_OS::LOGINFO("CXlClient::StopAllReal host not found, host_id = %s", it->strHost.c_str());
 		}
 	}
 	m_videoInfoVec.clear();
@@ -854,16 +808,11 @@ j_result_t CXlClient::OnRealPlay(J_AsioDataBase *pAsioData)
 	CliRealPlay *pReps = (CliRealPlay *)(m_readBuff + sizeof(CmdHeader));
 	J_OS::LOGINFO("CXlClient::OnRealPlay hostId = %s, channel = %d", pReps->hostId, pReps->channel & 0xFF);
 
-	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReps->hostId);
-	if (pHost != NULL)
+	if (StartView(*pReps, pAsioData) != J_OK)
 	{
-		if (AddHostRef(pReps->hostId) == J_OK)
-		{
-			pHost->AddClient(this);
-		}
+		J_OS::LOGINFO("CXlClient::OnRealPlay StartView failed");
 	}
 
-	StartView(*pReps, pAsioData);
 	pAsioData->ioCall = J_AsioDataBase::j_read_e;
 	CXlHelper::MakeNetData(pAsioData, m_readBuff, sizeof(CmdHeader));
 	if (m_nRefCnt == 0)
@@ -877,15 +826,6 @@ j_result_t CXlClient::OnRealStop(J_AsioDataBase *pAsioData)
 {
 	CliRealPlay *pReps = (CliRealPlay *)(m_readBuff + sizeof(CmdHeader));
 	J_OS::LOGINFO("CXlClient::OnRealStop hostId = %s, channel = %d", pReps->hostId, pReps->channel & 0xFF);
-
-	J_Host *pHost = JoDeviceManager->GetDeviceObj(pReps->hostId);
-	if (pHost != NULL)
-	{
-		if (DelHostRef(pReps->hostId) == J_OK)
-		{
-			pHost->DelClient(this);
-		}
-	}
 
 	StopView(*pReps, pAsioData);
 
@@ -1089,24 +1029,4 @@ j_result_t CXlClient::OnUploadStop(J_AsioDataBase *pAsioData)
 	CXlHelper::MakeNetData(pAsioData, m_writeBuff, nBodyLen);
 
 	return J_OK;
-}
-
-void CXlClient::ReConnect()
-{
-	TLock(m_vecLocker);
-	VideoInfoVec::iterator it = m_videoInfoVec.begin();
-	for (; it!=m_videoInfoVec.end(); ++it)
-	{
-		if (!it->bConnected)
-		{
-			CliRealPlay realPlay = {0};
-			strcpy(realPlay.hostId, it->strHost.c_str());
-			realPlay.channel = it->nChanId;
-			if (StartView(realPlay, NULL) == J_OK)
-			{
-				it->bConnected = true;
-			}
-		}
-	}
-	TUnlock(m_vecLocker);
 }

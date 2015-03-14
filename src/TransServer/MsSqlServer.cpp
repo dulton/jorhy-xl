@@ -267,6 +267,26 @@ j_result_t CSqlServerAccess::UpdateDevInfo(const DevHostInfo &devInfo, bool bOnl
 				bOnline, devInfo.hostId);
 		}
 		m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+
+		for (int i=0; i<devInfo.totalChannels; i++)
+		{
+			memset(strCmd, 0, sizeof(strCmd));
+			sprintf(strCmd, "SELECT * FROM EquipmentDetail WHERE EquipmentID='%s' AND channel=%d;", devInfo.hostId, i + 1);
+			m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+			
+			memset(strCmd, 0, sizeof(strCmd));
+			if (m_pRec->EndOfFile)
+			{
+				sprintf(strCmd, "INSERT INTO EquipmentDetail (EquipmentID,channel,channelType,channelName) VALUES ('%s',%d,%d,'%s');", 
+					devInfo.hostId, i+1, devInfo.mediaType[i] & 0xFF, devInfo.chName[i]);
+			}
+			else
+			{
+				sprintf(strCmd, "UPDATE EquipmentDetail SET channelType=%d,channelName='%s' WHERE EquipmentID='%s' AND channel = %d;",
+					devInfo.mediaType[i] & 0xFF, devInfo.chName[i], devInfo.hostId, i+1);
+			}
+			m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		}
 	}
 	catch(...)
 	{

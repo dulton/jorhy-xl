@@ -47,9 +47,9 @@ public:
 	j_result_t DownLoadFile(const char *pRemoteFile, const char *pLocalFile, StateCallback pCallback, void *pUser);
 	void ClearDownLoad();
 
-private:
-	tstring ConvertToTString(const char *strSource);
-	j_string_t ConvertToSTDString(const wchar_t *strSource);
+public:
+	static tstring ConvertToTString(const char *strSource);
+	static j_string_t ConvertToSTDString(const wchar_t *strSource);
 
 private:
 	CFTPClient m_client;

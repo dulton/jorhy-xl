@@ -51,30 +51,6 @@ public:
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData);
 	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen);
 	/// 客户端管理
-	virtual j_result_t AddClient(J_Client *pClient)
-	{
-		TLock(m_vecClientLocker);
-		m_vecClient.push_back(pClient);
-		TUnlock(m_vecClientLocker);
-
-		return J_OK;
-	}
-	virtual j_result_t DelClient(J_Client *pClient)
-	{
-		TLock(m_vecClientLocker);
-		std::vector<J_Client *>::iterator it = m_vecClient.begin();
-		for (; it != m_vecClient.end(); ++it)
-		{
-			if (*it == pClient)
-			{
-				m_vecClient.erase(it);
-				break;
-			}
-		}
-		TUnlock(m_vecClientLocker);
-
-		return J_OK;
-	}
 	j_result_t ReConnect(j_int32_t nChannel) 
 	{
 		return ReqRealPlay(nChannel);

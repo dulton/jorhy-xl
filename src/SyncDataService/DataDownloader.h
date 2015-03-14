@@ -14,8 +14,9 @@ public:
 public: 
 	/// 启动
 	/// @param[in]	  pFilePath 文件存储路径
+	/// @param[in]	  nMaxSize 最大存储空间,单位M
 	/// @return		  参见j_errtype.h  
-	j_result_t Start(const char *pFilePath);
+	j_result_t Start(const char *pFilePath, j_uint64_t nMaxSize);
 	/// 停止
 	/// @return		  参见j_errtype.h    
 	j_result_t Stop();
@@ -42,6 +43,7 @@ private:
 	j_boolean_t GetFileList();
 	void StartDownLoad();
 	void EndDownLoad();
+	void PrepareSpace();
 
 private:
 	j_thread_parm m_param;
@@ -53,6 +55,7 @@ private:
 	CFtpHelper m_ftpHelper;
 	VecFileName m_vecFileName;
 	j_string_t m_strPath;
+	j_uint64_t m_nMaxFreeSize;
 	j_string_t m_strRemoteFile;
 	j_string_t m_strLocalFile;
 	J_OS::CTLock m_locker;

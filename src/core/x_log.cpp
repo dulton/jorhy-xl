@@ -16,6 +16,7 @@ CLog* CLog::m_pInstance = NULL;
 
 CLog::CLog()
 : m_pFile(NULL)
+, m_bDebug(false)
 {
 #ifdef WIN32
 	InitConsole();
@@ -48,6 +49,11 @@ CLog* CLog::Instance()
 	}
 
 	return m_pInstance;
+}
+
+void CLog::SetDebug()
+{
+	m_bDebug = true;
 }
 
 int CLog::WriteLogInfo(const char *format, ...)
@@ -136,6 +142,33 @@ int CLog::CreateFile()
 	}
 
 	m_pFile = fopen(fileName, "wb+");
+
+	return J_OK;
+}
+
+int CLog::WriteLogDebug(const char *format, ...)
+{
+	if (m_bDebug)
+	{
+		m_locker._Lock();
+		int nArgLen = 0;
+
+		va_list arg_ptr;
+		va_start(arg_ptr, format);
+		nArgLen = vsprintf(m_dataBuff, format, arg_ptr);
+		va_end(arg_ptr);
+
+		j_string_t strLocalTime = JoTime->GetLocalTime();
+		fwrite(strLocalTime.c_str(), 1, strLocalTime.length(), (FILE *)m_pFile);
+		fwrite(" : ", 1, 3, (FILE *)m_pFile);
+		fwrite(m_dataBuff, 1, nArgLen, (FILE *)m_pFile);
+		fwrite("\r\n", 1, 2, (FILE *)m_pFile);
+
+		fflush((FILE *)m_pFile);
+
+		printf("%s : %s\n", strLocalTime.c_str(), m_dataBuff);
+		m_locker._Unlock();
+	}
 
 	return J_OK;
 }

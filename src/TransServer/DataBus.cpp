@@ -1,7 +1,6 @@
 #include "DataBus.h"
 
 JO_IMPLEMENT_SINGLETON(DataBus)
-#pragma comment(lib, "Debug\\core.lib")
 
 CDataBus::CDataBus()
 {
@@ -113,6 +112,7 @@ j_result_t CDataBus::Response(j_string_t strHostId, CDataObj *pRespInfo)
 	if (it != m_rexMap.end())
 	{
 		/// »Ø¸´Êý¾Ý
+		it->second.pClient->SendRespInfo(pRespInfo);
 		m_rexMap.erase(it);
 	}
 	TUnlock(m_locker);

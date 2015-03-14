@@ -17,12 +17,13 @@ CDataDownloader::~CDataDownloader()
 
 }
 
-j_result_t CDataDownloader::Start(const char *pFilePath)
+j_result_t CDataDownloader::Start(const char *pFilePath, j_uint64_t nMaxSize )
 {
 	if (!m_bStart)
 	{
 		m_bStart = true;
 		m_strPath = pFilePath;
+		m_nMaxFreeSize = nMaxSize;
 		m_param.entry = CDataDownloader::OnWorkFunc;
 		m_param.data = this;
 		m_workTread.Create(m_param);
@@ -46,8 +47,8 @@ void CDataDownloader::OnReturn(j_boolean_t bFinish)
 	if (bFinish)
 	{
 		EndDownLoad();
-		//JoAccessObj->UpdateFileInfo(m_info.strHostId, m_strRemoteFile.c_str());
-		//J_OS::LOGINFO("Load Flie Success %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
+		JoAccessObj->UpdateFileInfo(m_info.strHostId, m_strRemoteFile.c_str());
+		J_OS::LOGINFO("Load Flie Success %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
 	}
 	else
 	{
@@ -56,7 +57,8 @@ void CDataDownloader::OnReturn(j_boolean_t bFinish)
 		JoHostManager->DelHost(m_info.strHostId);
 		m_ftpHelper.Logout();
 		remove(m_strLocalFile.c_str());
-		//J_OS::LOGINFO("Load Flie Failed %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
+		JoAccessObj->UpdateFileInfo(m_info.strHostId, m_strRemoteFile.c_str(), false);
+		J_OS::LOGINFO("Load Flie Failed %s-%s", m_info.strHostId, m_strRemoteFile.c_str());
 	}
 }
 
@@ -115,8 +117,8 @@ void CDataDownloader::StartDownLoad()
 		else
 		{
 			m_strRemoteFile = it->c_str();
-			//if (!JoAccessObj->HasDownLoaded(m_strRemoteFile.c_str()))
-			if (true)
+			if (!JoAccessObj->HasDownLoaded(m_strRemoteFile.c_str()))
+			//if (true)
 			{
 				j_string_t strLocalPath = m_strPath + "\\" + m_info.strHostId;
 				if (_access(strLocalPath.c_str(), 0) == -1)
@@ -125,6 +127,7 @@ void CDataDownloader::StartDownLoad()
 				}
 				m_strLocalFile = strLocalPath + "\\" + m_strRemoteFile;
 				//J_OS::LOGINFO("Begin DownLoad %s", m_strLocalFile.c_str());
+				PrepareSpace();
 				if (m_ftpHelper.DownLoadFile(m_strRemoteFile.c_str(), m_strLocalFile.c_str(), CDataDownloader::OnDownLoadReturn, this) != J_OK)
 				{
 					EndDownLoad();
@@ -152,4 +155,25 @@ void  CDataDownloader::EndDownLoad()
 		}
 	}
 	TUnlock(m_locker);
+}
+
+void CDataDownloader::PrepareSpace()
+{
+	ULARGE_INTEGER freeByteAvailable = {0};
+	ULARGE_INTEGER totleNumberOfBytes = {0};
+	ULARGE_INTEGER totleNumberOfFreeBytes = {0};
+	GetDiskFreeSpaceEx(CFtpHelper::ConvertToTString(m_strPath.c_str()).c_str(), &freeByteAvailable, &totleNumberOfBytes, &totleNumberOfFreeBytes);
+	
+	while (totleNumberOfFreeBytes.QuadPart < m_nMaxFreeSize)
+	{
+		j_string_t strHostId;
+		j_string_t strDelFile = JoAccessObj->GetDelItem(strHostId);
+		if (strDelFile != "")
+		{
+			j_string_t strDelFilePath = m_strPath + "\\" + strHostId + "\\" + strDelFile;
+			remove(strDelFilePath.c_str());
+			JoAccessObj->UpdateFileInfo("", strDelFile.c_str(), false);
+		}
+		GetDiskFreeSpaceEx(CFtpHelper::ConvertToTString(m_strPath.c_str()).c_str(), &freeByteAvailable, &totleNumberOfBytes, &totleNumberOfFreeBytes);
+	}
 }

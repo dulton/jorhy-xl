@@ -9,8 +9,6 @@
 #include "TcpServer4Device.h"
 #include "DeviceManager.h"
 
-#pragma comment(lib, "Debug\\core.lib")
-
 #define BUFFER_SIZE (1024 * 1024)
 
 CTcpServer4Device::CTcpServer4Device()

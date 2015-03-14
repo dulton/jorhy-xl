@@ -25,7 +25,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v110_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
@@ -41,9 +41,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>D:\Program Files %28x86%29\boost_1_56_0\lib32-msvc-11.0;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\common;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1\Include;D:\Program Files %28x86%29\boost_1_56_0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\common;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1\Include;D:\Program Files %28x86%29\boost_1_56_0;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Program Files %28x86%29\boost_1_56_0\lib32-msvc-11.0;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -81,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\TransServer\ClientManager.cpp" />
+    <ClCompile Include="..\..\src\TransServer\DataBus.cpp" />
     <ClCompile Include="..\..\src\TransServer\DeviceManager.cpp" />
     <ClCompile Include="..\..\src\TransServer\MsSqlServer.cpp" />
     <ClCompile Include="..\..\src\TransServer\TcpServer4Client.cpp" />

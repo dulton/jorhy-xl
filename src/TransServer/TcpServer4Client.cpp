@@ -16,7 +16,6 @@
 #include "TcpServer4Client.h"
 #include "ClientManager.h"
 
-#pragma comment(lib, "Debug\\core.lib")
 CTcpServer4Client::CTcpServer4Client()
 {
 

@@ -17,7 +17,11 @@
 #include "TcpServer4Device.h"
 #include "MsSqlServer.h"
 
-#pragma comment(lib, "Debug\\core.lib")
+#ifdef _DEBUG
+#pragma comment (lib, "Debug\\core.lib")
+#else
+#pragma comment (lib, "Release\\core.lib")
+#endif
 
 CTcpServer4Device g_deviceServer;
 CTcpServer4Client g_clientServer;
@@ -60,6 +64,8 @@ int main(int argc, char **argv)
 			strcpy(strDbUser, argv[i + 1]);
 		if (strcmp(argv[i], "--dbpassword") == 0)
 			strcpy(strDbPassWord, argv[i + 1]);
+		if (strcmp(argv[i], "--debug") == 0)
+			CLog.Instance()->SetDebug();
 	}
 
 	///初始化数据库

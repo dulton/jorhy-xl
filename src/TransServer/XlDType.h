@@ -81,8 +81,8 @@ typedef struct _tagDevHostInfo
 	char vehicleNum[16];		///< 列车号
 	char phoneNum[12];			///< 电话号码
 	char totalChannels;			///< 通道数目
-	//bool bOnline;				///< 在线状态
-	//bool bState;				///< 设备状态
+	char  mediaType[24];				///< 媒体类型
+	char chName[24][32];				///< 通道名称
 } DevHostInfo, *PLDevHostInfo;
 
 /// 报警信息
@@ -147,11 +147,11 @@ typedef struct _tagDevRealPlay
 /// 开始历史回放  
 typedef struct _tagDevStartVod
 {
-	GUID sessionId;					///< 回话ID
+	GUID sessionId;						///< 回话ID
 	char hostId[32];						///< 设备ID
 	unsigned char channel;			///< 通道号	
 	time_t tmStartTime;				///< 开始时间
-	time_t tmEndTime;				///< 结束时间
+	time_t tmEndTime;					///< 结束时间
 } DevStartVod, *LPDevStartVod;
 
 /// 停止历史回放  

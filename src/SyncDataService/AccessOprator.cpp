@@ -141,6 +141,15 @@ j_boolean_t CAccessOprator::HasDownLoaded(const j_char_t *pFileName)
 		{
 			return true;
 		}
+
+		j_string_t strTimeStamp = GetTimeStamp(pFileName);
+		memset (strCmd, 0, sizeof(strCmd));
+		sprintf(strCmd, "SELECT * FROM FileInfo WHERE [TimeStamp] <= (SELECT  MIN([TimeStamp]) FROM FileInfo);");
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (!m_pRec->EndOfFile && strTimeStamp < (char*)_bstr_t(m_pRec->GetCollect("TimeStamp")))
+		{
+			return true;
+		}
 	}
 	catch (...){}
 
@@ -154,12 +163,13 @@ j_result_t CAccessOprator::UpdateFileInfo(const j_char_t *pEquipmentId, const j_
 		char strCmd[512] = {0};
 		if (bFlag)	/// ADD
 		{
-			sprintf(strCmd, "INSERT INTO FileInfo(EquipmentID,FileName)VALUES('%s','%s');", pEquipmentId, pFileName);
+			j_string_t strTimeStamp = GetTimeStamp(pFileName);
+			sprintf(strCmd, "INSERT INTO FileInfo(EquipmentID,FileName,[TimeStamp])VALUES('%s','%s','%s');", pEquipmentId, pFileName, strTimeStamp.c_str());
 			m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 		}
 		else///DEL
 		{
-			sprintf(strCmd, "DELETE Equipment WHERE FileName='%s';", pFileName);
+			sprintf(strCmd, "DELETE FROM FileInfo WHERE FileName='%s';", pFileName);
 			m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
 		}
 	}
@@ -169,4 +179,34 @@ j_result_t CAccessOprator::UpdateFileInfo(const j_char_t *pEquipmentId, const j_
 	}
 
 	return J_OK;
+}
+
+j_string_t CAccessOprator::GetDelItem(j_string_t &strHostId)
+{
+	try
+	{
+		char strCmd[512] = {0};
+		sprintf(strCmd, "SELECT * FROM FileInfo WHERE [TimeStamp] <= (SELECT  MIN([TimeStamp]) FROM FileInfo);");
+		m_pRec = m_pConn->Execute((_bstr_t)strCmd, NULL, adCmdText);
+		if (!m_pRec->EndOfFile)
+		{
+			strHostId = (char*)_bstr_t(m_pRec->GetCollect("EquipmentID"));
+			return (char*)_bstr_t(m_pRec->GetCollect("FileName"));
+		}
+	}
+	catch (...){}
+	
+	return "";
+}
+
+j_string_t CAccessOprator::GetTimeStamp(const char *pFileName)
+{
+	j_string_t strTimeStamp = pFileName;
+	int _begin = strTimeStamp.find_first_of('_');
+	int _end = strTimeStamp.find_last_of('_');
+	strTimeStamp = strTimeStamp.substr(_begin + 1, _end - _begin - 1);
+	_begin = strTimeStamp.find_first_of('_');
+	strTimeStamp = strTimeStamp.substr(_begin + 1);
+
+	return strTimeStamp;
 }

@@ -2,8 +2,8 @@
 #define __ACCESS_OPRATOR_H_
 #include "j_includes.h"
 
-#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" no_namespace rename("EOF", "EndOfFile")
-//#import "msado15.dll" no_namespace rename("EOF", "EndOfFile")
+//#import "c:\\Program Files\\Common Files\\System\\ADO\\msado15.dll" no_namespace rename("EOF", "EndOfFile")
+#import "msado15.dll" no_namespace rename("EOF", "EndOfFile")
 class CAccessOprator : public J_DbAccess
 {
 public:
@@ -21,6 +21,10 @@ public:
 	j_result_t UpdateEquipment(const j_char_t *pEquipmentId, const j_char_t *pFilePath, j_boolean_t bFlag = true);
 	j_boolean_t HasDownLoaded(const j_char_t *pFileName);
 	j_result_t UpdateFileInfo(const j_char_t *pEquipmentId, const j_char_t *pFileName, j_boolean_t bFlag = true);
+	j_string_t GetDelItem(j_string_t &strHostId);
+
+private:
+	j_string_t GetTimeStamp(const char *pFileName);
 
 private:  
 	_ConnectionPtr m_pConn;		/// 连接对象  

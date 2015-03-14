@@ -117,14 +117,6 @@ struct J_Host : virtual public J_Obj
 	///@param[in]			nLen 数据长度
 	///@return				参见x_errtype.h
 	virtual j_result_t SendMessage(j_char_t *pData, j_int32_t nLen) = 0;
-	/// 增加客户端
-	///@param[in]			pClientObj 客户端对象
-	///@return					参见x_errtype.h
-	virtual j_result_t AddClient(J_Client *pClientObj) = 0;
-	/// 删除客户端
-	///@param[in]			pClientObj 客户端对象
-	///@return					参见x_errtype.h
-	virtual j_result_t DelClient(J_Client *pClientObj) = 0;
 	/// 重新开始传输视频
 	///@param[in]			nChannel 通道号
 	///@return					参见x_errtype.h
@@ -156,6 +148,10 @@ struct J_Client : virtual public J_Obj
 	/// @param[in][out]	pAsioData异步数据	
 	/// @return				参见j_errtype.h 
 	virtual j_result_t ParserRequest(J_AsioDataBase *pAsioData) = 0;
+	/// 异步调用返回
+	/// @param[in]			pData异步调用返回数据	
+	/// @return				参见j_errtype.h 
+	virtual j_result_t SendRespInfo(void *pData) = 0;
 	/// 用户断线
 	/// @return				参见j_errtype.h 
 	virtual j_result_t Broken() = 0;

@@ -5,6 +5,8 @@
 
 JO_IMPLEMENT_SINGLETON(XAsio)
 
+#define TCP_PACKET_SIZE 1024
+
 CXAsio::CXAsio()
 {
 	m_bStarted = false;
@@ -292,12 +294,29 @@ int CXAsio::Write(j_socket_t nSocket, J_AsioDataBase *pAsioData)
 	}
 	TUnlock(m_user_locker);
 
-	WSABUF buf;
-	buf.buf = (CHAR *)pAsioData->ioWrite.buf;
-	buf.len = pAsioData->ioWrite.bufLen;
+	int bufCount = (pAsioData->ioWrite.bufLen + TCP_PACKET_SIZE - 1) / TCP_PACKET_SIZE;
+	if (bufCount == 0)
+	{
+		bufCount = 1;
+	}
+	//J_OS::LOGINFO("Write buffsize = %d, buffer count = %d", pAsioData->ioWrite.bufLen, bufCount);
+	WSABUF *lpBuffer = (WSABUF *)malloc(sizeof(WSABUF) * bufCount);
+	for (int i=0; i<bufCount; i++)
+	{
+		lpBuffer[i].buf = (CHAR *)pAsioData->ioWrite.buf + (i * TCP_PACKET_SIZE);
+		if (i == bufCount-1)
+		{
+			lpBuffer[i].len = pAsioData->ioWrite.bufLen - i * TCP_PACKET_SIZE;
+		}
+		else
+		{
+			lpBuffer[i].len = TCP_PACKET_SIZE;
+		}
+	}
+
 	pAsioData->ioHandle = nSocket.sock;
 	pAsioData->ioCall = J_AsioDataBase::j_write_e;
-	if (WSASend(nSocket.sock, &buf, 1, (LPDWORD)&pAsioData->ioWrite.finishedLen, 0, pAsioData, NULL) == SOCKET_ERROR)
+	if (WSASend(nSocket.sock, lpBuffer, bufCount, (LPDWORD)&pAsioData->ioWrite.finishedLen, 0, pAsioData, NULL) == SOCKET_ERROR)
 	{
 		DWORD dwError = WSAGetLastError();
 		if (dwError != ERROR_IO_PENDING)
@@ -306,6 +325,8 @@ int CXAsio::Write(j_socket_t nSocket, J_AsioDataBase *pAsioData)
 			J_OS::LOGINFO("WSASend error = %d sock = %d", dwError, nSocket.sock);
 		}
 	}
+
+	free(lpBuffer);
 
 	return J_OK;
 }

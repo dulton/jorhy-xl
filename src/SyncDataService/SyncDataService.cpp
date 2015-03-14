@@ -7,6 +7,28 @@
 
 int main(int argc, char **argv)
 {
+	///帮助函数
+	if (argc == 2 && strcmp(argv[1], "--help") == 0)
+	{
+		printf("--file_path 	文件存储路径\n");
+		printf("--free_size 	最大剩余空间, 单位M\n");
+		return 0;
+	}
+
+	///初始化相关参数
+	char strFilePath[512] = {0};
+	int nFreeSize = 100;
+
+	strcpy(strFilePath, "C:");
+
+	for (int i=1; i<argc; i+=2)
+	{
+		if (strcmp(argv[i], "--file_path") == 0)
+			strcpy(strFilePath, argv[i + 1]);
+		if (strcmp(argv[i], "--free_size") == 0)
+			nFreeSize = atoi(argv[i + 1]);
+	}
+
 	CBroadCastListener listener;
 	CDataDownloader downLoader;
 
@@ -19,7 +41,7 @@ int main(int argc, char **argv)
 	JoAccessObj->Init();
 
 	///启动下载服务程序
-	downLoader.Start("D:");
+	downLoader.Start(strFilePath, (j_uint64_t)nFreeSize * 1024 * 1024);
 
 	///启动客户监听服务
 	if (listener.StartService(8504) != J_OK)
@@ -27,6 +49,7 @@ int main(int argc, char **argv)
 		J_OS::LOGINFO("启动客户监听服务失败, 端口:%d", 8504);
 		return -1;
 	}
+	J_OS::LOGINFO("Start BroadcastListener Success");
 
 	while (true)
 	{
